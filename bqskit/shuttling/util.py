@@ -21,7 +21,7 @@ def get_gate_time(gate: Gate, qtm_machine: QtmMachine) -> float:
         return qtm_machine.tq_time
     if gate.num_qudits == 1:
         return qtm_machine.sq_time
-    raise ValueError("Invalid gate.")
+    raise ValueError(f"Invalid gate. {gate} is not supported")
 
 
 def get_duration_from_circ(circuit: Circuit, qtm_machine: QtmMachine) -> float:

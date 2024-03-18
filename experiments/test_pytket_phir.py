@@ -8,7 +8,7 @@ from pytket.phir.qtm_machine import QtmMachine
 from circuit_generator import circuit_generate
 
 
-circuit = circuit_generate("QuantumVolume", 4, 4)
+circuit = circuit_generate("Toffoli", 3)
 
 # pytket_circuit = Circuit(3)
 # pytket_circuit.H(0)
@@ -19,7 +19,7 @@ circuit = circuit_generate("QuantumVolume", 4, 4)
 # pytket_circuit.H(2)
 # pytket_circuit.SWAP(0, 2)
 pytket_circuit = bqskit_to_pytket(circuit)
-json_phir = pytket_to_phir(circuit=pytket_circuit, qtm_machine=QtmMachine.H1_3)
+json_phir = pytket_to_phir(circuit=pytket_circuit, qtm_machine=QtmMachine.H1_1)
 phir = json.loads(json_phir)
 # print(phir)
 total_duration = 0

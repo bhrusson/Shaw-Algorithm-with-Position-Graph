@@ -69,9 +69,6 @@ class HeuristicSearch(HeuristicFunction):
             circuit: Circuit,
             target: UnitaryMatrix | StateVector | StateSystem,
     ) -> float:
-        # cost = 0.0
-        # for gate in circuit.gate_set:
-        #     cost += float(circuit.count(gate))*get_gate_time(gate, self.qtm_machine)
         cost = get_duration_from_circ(circuit, self.qtm_machine)
         heuristic = self.cost_gen.calc_cost(circuit, target)
         return self.heuristic_factor * heuristic + self.cost_factor * cost

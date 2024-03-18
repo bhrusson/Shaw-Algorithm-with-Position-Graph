@@ -1,2 +1,4 @@
 from .layergen import ShuttlingLayerGenerator
 from .heuristic_search import HeuristicSearch
+from .embed import ShuttlingEmbedAllPermutationsPass
+from .gatezone_selection import GateZoneSelectionPass

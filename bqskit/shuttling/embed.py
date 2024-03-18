@@ -3,20 +3,23 @@ from __future__ import annotations
 
 import copy
 import itertools as it
+import numpy as np
 import logging
 from typing import Callable
-
+from .gatezone_selection import GateZoneSelectionPass
+from .layergen import ShuttlingLayerGenerator
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.machine import MachineModel
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 from bqskit.passes.mapping.topology import SubtopologySelectionPass
+from bqskit.passes.control.foreach import ForEachBlockPass
 from bqskit.passes.synthesis.leap import LEAPSynthesisPass
 from bqskit.passes.synthesis.synthesis import SynthesisPass
 from bqskit.qis.graph import CouplingGraph
 from bqskit.qis.permutation import PermutationMatrix
 from bqskit.runtime import get_runtime
-
+from pytket.phir.qtm_machine import QtmMachine
 
 _logger = logging.getLogger(__name__)
 
@@ -27,16 +30,18 @@ def multi_qudit_op_count(circuit: Circuit) -> float:
     return float(x)
 
 
-class EmbedAllPermutationsPass(BasePass):
+class ShuttlingEmbedAllPermutationsPass(BasePass):
     """Embed permutation aware synthesis results into a flow for future use."""
 
     def __init__(
-        self,
-        input_perm: bool = False,
-        output_perm: bool = True,
-        vary_topology: bool = True,
-        inner_synthesis: SynthesisPass = LEAPSynthesisPass(),
-        scoring_fn: Callable[[Circuit], float] = multi_qudit_op_count,
+            self,
+            input_perm: bool = False,
+            output_perm: bool = True,
+            vary_topology: bool = True,
+            vary_gatezone: bool = True,
+            inner_synthesis: SynthesisPass = LEAPSynthesisPass(),
+            scoring_fn: Callable[[Circuit], float] = multi_qudit_op_count,
+            qtm_machine: QtmMachine = QtmMachine.H1_1,
     ) -> None:
         """
         Construct a EmbedAllPermutationsPass.
@@ -59,6 +64,7 @@ class EmbedAllPermutationsPass(BasePass):
                 circuit with the same configuration. The smallest score wins.
                 (Default: :func:`multi_qudit_op_count`)
         """
+
         if not isinstance(inner_synthesis, SynthesisPass):
             bad_type = type(inner_synthesis)
             raise TypeError(f'Expected SynthesisPass object, got {bad_type}.')
@@ -71,8 +77,10 @@ class EmbedAllPermutationsPass(BasePass):
         self.input_perm = input_perm
         self.output_perm = output_perm
         self.vary_topology = vary_topology
+        self.vary_gatezone = vary_gatezone
         self.inner_synthesis = inner_synthesis
         self.scoring_fn = scoring_fn
+        self.qtm_machine = qtm_machine
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
         """Perform the pass's operation, see :class:`BasePass` for more."""
@@ -127,21 +135,56 @@ class EmbedAllPermutationsPass(BasePass):
                     'Subtopology information for block size'
                     f' {width} is not available.',
                 )
-
+            print("All topologies: ", data[SubtopologySelectionPass.key])
             graphs = data[SubtopologySelectionPass.key][width]
 
         else:
             graphs = [CouplingGraph.all_to_all(width)]
+        print("Graphs: ", graphs)
 
+        # Calculate the possible gate zones
+        '''
+        Consider the case when there exits gate zone place in block
+        Assume that no tq_zone is next to each other
+        '''
+        if self.vary_gatezone and width != 1:
+            if GateZoneSelectionPass.key not in data:
+                raise RuntimeError(
+                    'Cannot find gatezone, try running a'
+                    ' GateZoneSelectionPass first.',
+                )
+            for possible_gatezone_amount in range(1, ((width + 1) // 2) + 1):
+                if possible_gatezone_amount not in data[GateZoneSelectionPass.key]:
+                    raise RuntimeError(
+                        'Possible gate zone information for block size'
+                        f' {width} is not available.',
+                    )
+            gate_zones = data[GateZoneSelectionPass.key]
+        else:
+            gate_zones = set(i for i in range(0, width, 2))
+        print("Gate zones: ", gate_zones)
+
+        # Flatten gate zone
+        extended_gate_zones = []
+        for idx in gate_zones:
+            for zone in gate_zones[idx]:
+                extended_gate_zones.append(zone)
+
+        # Distribute subgraph connectivity and gate zone to data
         datas = []
         for graph in graphs:
-            model = MachineModel(
-                circuit.num_qudits, graph,
-                data.gate_set, data.model.radixes,
-            )
-            target_data = copy.deepcopy(data)
-            target_data.model = model
-            datas.append(target_data)
+            for idx in gate_zones:
+                for zone in gate_zones[idx]:
+                    model = MachineModel(
+                        circuit.num_qudits, graph,
+                        data.gate_set, data.model.radixes,
+                    )
+                    target_data = copy.deepcopy(data)
+                    target_data.model = model
+                    target_data[ShuttlingLayerGenerator.key] = zone
+                    extended_gate_zones.append(zone)
+                    print(f"Connectivity: {target_data.connectivity} with zone {zone}")
+                    datas.append(target_data)
 
         # Create parallel arrays for map
         extended_targets = []
@@ -149,33 +192,42 @@ class EmbedAllPermutationsPass(BasePass):
         for t, d in it.product(targets, datas):
             extended_targets.append(t)
             extended_datas.append(d)
-
+        print("Amount of target: ", len(extended_targets))
+        print("Amount of data: ", len(extended_datas))
         # Synthesize all permuted targets
         circuits: list[Circuit] = await get_runtime().map(
             self.inner_synthesis.synthesize,
-            extended_targets,
-            extended_datas,
+            extended_targets,  # extend target
+            extended_datas,  # modify
         )
-
         # Store results
-        perm_data: dict[
+        zone_perm_data: dict[set[int], dict[
             CouplingGraph,
-            dict[tuple[tuple[int, ...], tuple[int, ...]], Circuit],
+            dict[tuple[tuple[int, ...], tuple[int, ...]], Circuit]],
         ] = {}
         for i, c in enumerate(circuits):
-            graph = graphs[i % len(graphs)]
-            perm = permsbyperms[i // len(graphs)]
-            if graph not in perm_data:
-                perm_data[graph] = {}
+            print(f"Perm data at {i} : {zone_perm_data}")
+            zone = gate_zones[i % len(extended_gate_zones)]
+            graph = graphs[i // len(extended_gate_zones)]
+            perm = permsbyperms[i // (len(graphs) * len(extended_gate_zones))]
+            print("Current zone:", zone)
+            print("Current graph: ", graph)
+            print("Permutation: ", perm)
+            print("Circuit connectivity:", c.coupling_graph)
+            print("Circuit QASM:", c.to('qasm'))
+            if zone not in zone_perm_data:
+                zone_perm_data[zone] = {}
+            if graph not in zone_perm_data[zone]:
+                zone_perm_data[zone][graph] = {}
 
-            if perm in perm_data[graph]:
+            if perm in zone_perm_data[zone][graph]:
                 # Update if it is better than whats already there
-                s1 = self.scoring_fn(perm_data[graph][perm])
+                s1 = self.scoring_fn(zone_perm_data[zone][graph][perm])
                 s2 = self.scoring_fn(c)
                 if s2 < s1:
-                    perm_data[graph][perm] = c
+                    zone_perm_data[zone][graph][perm] = c
             else:
-                perm_data[graph][perm] = c
+                zone_perm_data[zone][graph][perm] = c
 
             # Calculate number of multi-qudit gates
             num_mq_gates = 0
@@ -191,17 +243,24 @@ class EmbedAllPermutationsPass(BasePass):
                 new_pi = tuple(univ_perm[i] for i in perm[0])
                 new_pf = tuple(univ_perm[i] for i in perm[1])
                 new_graph = renumber_c.coupling_graph
-                if new_graph not in perm_data:
-                    perm_data[new_graph] = {}
+                new_zone = set()  # TODO: return gate_zone after rotate by universal permutations
+                for z in zone:
+                    new_zone.add(new_pi[z])
+
+                if new_zone not in zone_perm_data:
+                    zone_perm_data[new_zone] = {}
+
+                if new_graph not in zone_perm_data[new_zone]:
+                    zone_perm_data[new_zone][new_graph] = {}
 
                 new_perm = (new_pi, new_pf)
-                if new_perm not in perm_data[new_graph]:
-                    perm_data[new_graph][new_perm] = renumber_c
+                if new_perm not in zone_perm_data[new_zone][new_graph]:
+                    zone_perm_data[new_zone][new_graph][new_perm] = renumber_c
                 else:
-                    s1 = self.scoring_fn(perm_data[new_graph][new_perm])
+                    s1 = self.scoring_fn(zone_perm_data[new_zone][new_graph][new_perm])
                     s2 = self.scoring_fn(renumber_c)
                     if s2 < s1:
-                        perm_data[new_graph][new_perm] = renumber_c
+                        zone_perm_data[new_zone][new_graph][new_perm] = renumber_c
 
         # Override no perm result if original is better and compatible
         if circuit.gate_set.issubset(data.model.gate_set):
@@ -211,14 +270,17 @@ class EmbedAllPermutationsPass(BasePass):
                 renumber_c = circuit.copy()
                 renumber_c.renumber_qudits(univ_perm)
                 new_graph = renumber_c.coupling_graph
+                new_zone = renumber_c  # TODO: return gate_zone given a circuit after renumbering
                 new_score = self.scoring_fn(renumber_c)
-                for graph, graph_data in perm_data.items():
-                    if all(e in graph for e in new_graph):
-                        if uperm not in graph_data:
-                            graph_data[uperm] = renumber_c
-                        else:
-                            if new_score < self.scoring_fn(graph_data[uperm]):
-                                graph_data[uperm] = renumber_c
+                for zone, zone_data in zone_perm_data.items():
+                    for graph, graph_data in zone_data.items():
+                        if all(z in zone for z in new_zone):
+                            if all(e in graph for e in new_graph):
+                                if uperm not in graph_data:
+                                    graph_data[uperm] = renumber_c
+                                else:
+                                    if new_score < self.scoring_fn(graph_data[uperm]):
+                                        graph_data[uperm] = renumber_c
 
         # Record permutation data in the pass data
-        data['permutation_data'] = perm_data
+        data['permutation_data'] = zone_perm_data
