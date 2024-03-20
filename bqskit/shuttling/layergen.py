@@ -99,7 +99,7 @@ class ShuttlingLayerGenerator(LayerGenerator):
                 successor.append_gate(RZZGate(), [i, i + 1])
                 successor.append_gate(U3Gate(), [i])
                 successor.append_gate(U3Gate(), [i + 1])
-                successor.append_gate(RZZGate(), [i, i + 1])
+                # successor.append_gate(RZZGate(), [i, i + 1])
                 successors.append(successor)
 
             if i != 0:
@@ -107,7 +107,7 @@ class ShuttlingLayerGenerator(LayerGenerator):
                 successor.append_gate(RZZGate(), [i - 1, i])
                 successor.append_gate(U3Gate(), [i])
                 successors.append(successor)
-                successor.append_gate(RZZGate(), [i - 1, i])
+                # successor.append_gate(RZZGate(), [i - 1, i])
 
         # Shuttling generation
         for edge in cg:

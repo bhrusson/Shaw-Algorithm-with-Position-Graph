@@ -137,7 +137,6 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                 )
             print("All topologies: ", data[SubtopologySelectionPass.key])
             graphs = data[SubtopologySelectionPass.key][width]
-
         else:
             graphs = [CouplingGraph.all_to_all(width)]
         print("Graphs: ", graphs)
@@ -201,13 +200,13 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
             extended_datas,  # modify
         )
         # Store results
-        zone_perm_data: dict[set[int], dict[
+        zone_perm_data: dict[tuple[int], dict[
             CouplingGraph,
             dict[tuple[tuple[int, ...], tuple[int, ...]], Circuit]],
         ] = {}
         for i, c in enumerate(circuits):
-            print(f"Perm data at {i} : {zone_perm_data}")
-            zone = gate_zones[i % len(extended_gate_zones)]
+            print(f"Perm data at {i} in the begining: {zone_perm_data}")
+            zone = extended_gate_zones[i % len(extended_gate_zones)]
             graph = graphs[i // len(extended_gate_zones)]
             perm = permsbyperms[i // (len(graphs) * len(extended_gate_zones))]
             print("Current zone:", zone)
@@ -215,6 +214,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
             print("Permutation: ", perm)
             print("Circuit connectivity:", c.coupling_graph)
             print("Circuit QASM:", c.to('qasm'))
+            zone = tuple(zone)
             if zone not in zone_perm_data:
                 zone_perm_data[zone] = {}
             if graph not in zone_perm_data[zone]:
@@ -228,6 +228,8 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                     zone_perm_data[zone][graph][perm] = c
             else:
                 zone_perm_data[zone][graph][perm] = c
+
+            print(f"Perm data at {i} after update: {zone_perm_data}")
 
             # Calculate number of multi-qudit gates
             num_mq_gates = 0
@@ -243,10 +245,11 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                 new_pi = tuple(univ_perm[i] for i in perm[0])
                 new_pf = tuple(univ_perm[i] for i in perm[1])
                 new_graph = renumber_c.coupling_graph
-                new_zone = set()  # TODO: return gate_zone after rotate by universal permutations
+                new_zone = list()  # TODO: return gate_zone after rotate by universal permutations
                 for z in zone:
-                    new_zone.add(new_pi[z])
+                    new_zone.append(new_pi[z])
 
+                new_zone = tuple(new_zone)
                 if new_zone not in zone_perm_data:
                     zone_perm_data[new_zone] = {}
 
@@ -261,6 +264,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                     s2 = self.scoring_fn(renumber_c)
                     if s2 < s1:
                         zone_perm_data[new_zone][new_graph][new_perm] = renumber_c
+            print(f"Perm data at {i} after generating the extra circuits through universal permutations: {zone_perm_data}")
 
         # Override no perm result if original is better and compatible
         if circuit.gate_set.issubset(data.model.gate_set):

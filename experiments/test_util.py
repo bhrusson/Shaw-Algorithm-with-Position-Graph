@@ -7,50 +7,26 @@ from bqskit.shuttling.util import get_duration_from_circ
 from pytket.phir.qtm_machine import QtmMachine
 
 qtm_machine = QtmMachine.H1_1
-tofolli_gate = UnitaryMatrix([
-    [1, 0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1],
-    [0, 0, 0, 0, 0, 0, 1, 0],
-])
 
-fredkin_gate = UnitaryMatrix([
-    [1, 0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1],
-])
 # target_circuit = circuit_generate("QFT", 3, 3, False)
 # print("QASM: ")
 # print(target_circuit.to("qasm"))
 # target_circuit.save("experiments/results/input_QFT.qasm")
 
 num_qudits = 3
-circuit_type = "QuantumVolume"
+circuit_type = "qv"
+print(circuit_type)
 target_circuit = Circuit(num_qudits).from_file(f"experiments/results/experiment_circuits/input_circuits/{circuit_type}"
                                                ".qasm")
 
-qsearch_target_circuit = Circuit(num_qudits).from_file(f"experiments/results/experiment_circuits/input_circuits/{circuit_type}_after_qsearch"
-                                               ".qasm")
-
 circ = Circuit(num_qudits).from_file(f"experiments/results/experiment_circuits/output_circuits/{circuit_type}.qasm")
-# print(circ.gate_counts)
+print(circ.gate_counts)
 # print("QASM: ")
 # print(circ.to("qasm"))
-# circ.append_gate(PermutationGate(num_qudits, [0, 1, 2]), [0, 1, 2])
-print("Distance from qsearch wanted unitary to the wanted unitary: ", qsearch_target_circuit.get_unitary().get_distance_from(
-                                                            target_circuit.get_unitary(), 1))
+circ.append_gate(PermutationGate(num_qudits,  [0, 1, 2]), [0, 1, 2])
 
 print("Distance from final unitary to the wanted unitary: ", circ.get_unitary().get_distance_from(
                                                             target_circuit.get_unitary(), 1))
 
 # qc = QuantumVolume(num_qudits, depth=num_qudits, seed=0)
-# qasm2.dump(qc, "experiments/results/input_circuits/QuantumVolume.qasm")
+# qasm2.dump(qc, "experiments/results/input_circuits/qv.qasm")
