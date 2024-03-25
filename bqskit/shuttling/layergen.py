@@ -1,4 +1,6 @@
 from __future__ import annotations
+import logging
+import numpy as np
 
 from bqskit import Circuit
 from bqskit.compiler import PassData
@@ -6,24 +8,11 @@ from bqskit.ir.gates import U3Gate, RZZGate, SwapGate
 from bqskit.passes import LayerGenerator
 from bqskit.qis import UnitaryMatrix, StateVector, StateSystem
 
+_logger = logging.getLogger(__name__)
+
 
 class ShuttlingLayerGenerator(LayerGenerator):
     key = "__ShuttlingLayerGenerator_gatezone"
-
-    # def __init__(self, gate_zones: set[int]):
-    # unique_gate_zones = set(gate_zones)
-    # if len(unique_gate_zones) != len(gate_zones):
-    #     raise ValueError(f"Duplicate gate zone detected: {gate_zones=}")
-    #
-    # for idx, gate_zone in enumerate(gate_zones):
-    #     if gate_zone + 1 in gate_zones:
-    #         raise ValueError(f"Invalid gate zone at index {idx}, gate zone {gate_zone + 1} is described twice.")
-    #
-    # self.tq_zones = gate_zones
-    # self.sq_zones = []
-    # for i in gate_zones:
-    #     self.sq_zones.append(i)
-    #     self.sq_zones.append(i + 1)
 
     def retrieve_gatezones(self, num_qudits: int, data: PassData):
         if self.key not in data:
@@ -31,15 +20,21 @@ class ShuttlingLayerGenerator(LayerGenerator):
         else:
             gate_zones = data[self.key]
 
-        for idx, gate_zone in enumerate(gate_zones):
-            if gate_zone + 1 in gate_zones:
-                raise ValueError(f"Invalid gate zone at index {idx}, gate zone {gate_zone + 1} is described twice.")
-
-        tq_zones = gate_zones
-        sq_zones = []
-        for i in gate_zones:
-            sq_zones.append(i)
-            sq_zones.append(i + 1)
+        cg = data.connectivity
+        if len(gate_zones) > 1:
+            tq_zones = gate_zones
+            sq_zones = []
+            for i in gate_zones:
+                sq_zones.append(i)
+                for neighbor in cg.get_neighbors_of(i):
+                    sq_zones.append(neighbor)
+            sq_zones = set(sq_zones)
+        else:
+            tq_zone_value = list(gate_zones)[0]
+            tq_zones = {int(tq_zone_value)}
+            sq_zones = {int(tq_zone_value), int(np.round((tq_zone_value - int(tq_zone_value))*10))}
+            # _logger.debug(f"sq_zones: {sq_zones}")
+        # _logger.debug(f'Retrive gate zone successfully. Single qubit zone: {sq_zones}; Two qubit zones: {tq_zones}.')
         return sq_zones, tq_zones
 
     def gen_initial_layer(
@@ -91,23 +86,25 @@ class ShuttlingLayerGenerator(LayerGenerator):
         successors = []
 
         # Computational gate generation
-        for i in tq_zones:
-            if i >= circuit.num_qudits:
-                continue
-            if i != circuit.num_qudits - 1:
+        if len(tq_zones) > 1:
+            for i in tq_zones:
+                if i >= circuit.num_qudits:
+                    continue
                 successor = circuit.copy()
-                successor.append_gate(RZZGate(), [i, i + 1])
+                successor.append_gate(RZZGate(), [i, cg.get_neighbors_of(i)[0]])
                 successor.append_gate(U3Gate(), [i])
-                successor.append_gate(U3Gate(), [i + 1])
-                # successor.append_gate(RZZGate(), [i, i + 1])
-                successors.append(successor)
+                successor.append_gate(U3Gate(), [cg.get_neighbors_of(i)[0]])
 
-            if i != 0:
+                successors.append(successor)
+        else:
+            tq_zone_val = list(tq_zones)[0]
+            for i in cg.get_neighbors_of(tq_zone_val):
                 successor = circuit.copy()
-                successor.append_gate(RZZGate(), [i - 1, i])
+                successor.append_gate(RZZGate(), [tq_zone_val, i])
+                successor.append_gate(U3Gate(), [tq_zone_val])
+                #if i in sq_zones:
                 successor.append_gate(U3Gate(), [i])
                 successors.append(successor)
-                # successor.append_gate(RZZGate(), [i - 1, i])
 
         # Shuttling generation
         for edge in cg:
@@ -119,6 +116,9 @@ class ShuttlingLayerGenerator(LayerGenerator):
                     continue
             successor = circuit.copy()
             successor.append_gate(SwapGate(), location=edge)
+            if edge[0] in sq_zones:
+                successor.append_gate(U3Gate(), [edge[0]])
+            if edge[1] in sq_zones:
+                successor.append_gate(U3Gate(), [edge[1]])
             successors.append(successor)
-
         return successors

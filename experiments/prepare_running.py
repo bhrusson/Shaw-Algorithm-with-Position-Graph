@@ -17,9 +17,10 @@ enable_logging(True)
 qtm_machine = QtmMachine.H1_1
 machine = QTM_MACHINES_MAP.get(qtm_machine)
 machine_model = MachineModel(machine.size, CouplingGraph.linear(machine.size),
-                             {RZGate(), U1qPi2Gate, U1qPiGate, RZZGate()})
+                             {RZGate(),
+                              U1qPi2Gate, U1qPiGate, RZZGate()})
 
-target = circuit_generate("QFT", 2, 3, True)
+target = circuit_generate("Toffoli", 3, 3, True)
 circuit = Circuit.from_unitary(target)
 
 sq_synthesis = QSearchSynthesisPass(
@@ -40,6 +41,10 @@ def estimated_runtime(circ: Circuit) -> float:
 
 qsearch_pass = QSearchSynthesisPass(layer_generator=ShuttlingLayerGenerator(),
                                     heuristic_function=HeuristicSearch(heuristic_factor=10, qtm_machine=qtm_machine))
+
+# qleap_pass = LEAPSynthesisPass(layer_generator=ShuttlingLayerGenerator(),
+#                                heuristic_function=HeuristicSearch(heuristic_factor=10, qtm_machine=qtm_machine))
+
 # workflow = [
 #     SetModelPass(machine_model),
 #     PermutationAwareSynthesisPass(inner_synthesis=qsearch_pass, scoring_fn=estimated_runtime),
@@ -50,10 +55,13 @@ qsearch_pass = QSearchSynthesisPass(layer_generator=ShuttlingLayerGenerator(),
 #     UnfoldPass(),
 #     ScanningGateRemovalPass()
 # ]
-
-block_size = 2
+# 96
+# machine_model = MachineModel(machine.size, CouplingGraph([(0, 1), (1, 2)]),
+#                              {RZGate(), U1qPi2Gate, U1qPiGate, RZZGate()})
+block_size = 3
 workflow = [
     SetModelPass(machine_model),
+    # UpdateDataPass("__ShuttlingLayerGenerator_gatezone", {1.2}),
     SubtopologySelectionPass(block_size),
     GateZoneSelectionPass(block_size),
     QuickPartitioner(block_size),

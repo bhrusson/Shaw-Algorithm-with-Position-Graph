@@ -1,0 +1,598 @@
+(.venv) (base) baobach@Baos-MacBook-Pro bqskit-shuttling % python run.py
+19:42:23.960 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: RZZGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CPGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CCPGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CRXGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CRYGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CRZGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: FSIMGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: RXGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: RXXGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: RYGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: RYYGate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: U1Gate, with args (), and kwargs {}
+19:42:23.969 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: U2Gate, with args (), and kwargs {}
+19:42:23.970 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CUGate, with args (), and kwargs {}
+19:42:23.970 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: BGate, with args (), and kwargs {}
+19:42:23.972 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CCXGate, with args (), and kwargs {}
+19:42:23.972 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CHGate, with args (), and kwargs {}
+19:42:23.972 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CSGate, with args (), and kwargs {}
+19:42:23.972 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CTGate, with args (), and kwargs {}
+19:42:23.972 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: CYGate, with args (), and kwargs {}
+19:42:23.972 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: HGate, with args (), and kwargs {}
+19:42:23.973 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: IdentityGate, with args (1,), and kwargs {}
+19:42:23.973 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: ISwapGate, with args (), and kwargs {}
+19:42:23.973 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: SGate, with args (), and kwargs {}
+19:42:23.973 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: SdgGate, with args (), and kwargs {}
+19:42:23.973 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: SqrtCNOTGate, with args (), and kwargs {}
+19:42:23.973 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: SwapGate, with args (), and kwargs {}
+19:42:23.974 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: TGate, with args (), and kwargs {}
+19:42:23.974 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: TdgGate, with args (), and kwargs {}
+19:42:23.974 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: XXGate, with args (), and kwargs {}
+19:42:23.974 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: YGate, with args (), and kwargs {}
+19:42:23.974 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: YYGate, with args (), and kwargs {}
+19:42:23.974 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: ZGate, with args (), and kwargs {}
+19:42:23.977 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: RCCXGate, with args (), and kwargs {}
+19:42:23.977 - DEBUG    | bqskit.utils.cachedclass: Creating cached instance for class: RC3XGate, with args (), and kwargs {}
+19:42:23.977 - DEBUG    | bqskit.ir.lang.qasm2.visitor: Qubit register q declared with size 3.
+19:42:23.987 - DEBUG    | bqskit.compiler.compiler: Starting runtime server process.
+19:42:27.761 - DEBUG    | bqskit.compiler.compiler: Successfully connected to runtime server.
+Block size:  3
+19:42:27.878 - DEBUG    | bqskit.compiler.workflow: Running SetModelPass
+19:42:27.878 - DEBUG    | bqskit.compiler.workflow: Running SubtopologySelectionPass
+19:42:27.881 - DEBUG    | bqskit.compiler.workflow: Running GateZoneSelectionPass
+19:42:27.881 - DEBUG    | bqskit.compiler.workflow: Running QuickPartitioner
+19:42:27.881 - DEBUG    | bqskit.compiler.workflow: Running ForEachBlockPass
+All topologies:  {2: [{(0, 1)}], 3: [{(0, 2), (1, 2)}, {(0, 1), (0, 2)}, {(0, 1), (1, 2)}, {(0, 1), (0, 2), (1, 2)}]}
+Graphs:  [{(0, 2), (1, 2)}, {(0, 1), (0, 2)}, {(0, 1), (1, 2)}, {(0, 1), (0, 2), (1, 2)}]
+Gate zones:  {1: [{0}, {1}, {2}], 2: [{0, 2}]}
+Connectivity: CouplingGraph({(0, 2), (1, 2)}) with zone {2}
+Connectivity: CouplingGraph({(0, 2), (1, 2)}) with zone {0, 1}
+Connectivity: CouplingGraph({(0, 1), (0, 2)}) with zone {0}
+Connectivity: CouplingGraph({(0, 1), (0, 2)}) with zone {1, 2}
+Connectivity: CouplingGraph({(0, 1), (1, 2)}) with zone {1}
+Connectivity: CouplingGraph({(0, 1), (1, 2)}) with zone {0, 2}
+Extended gate zone : [{2}, {0, 1}, {0}, {1, 2}, {1}, {0, 2}]
+Amount of target:  36
+Amount of data:  36
+19:42:27.935 - DEBUG    | bqskit.compiler.workflow: Running ShuttlingEmbedAllPermutationsPass
+19:42:27.963 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.16284745991586613.
+19:42:27.964 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7126591453225768.
+19:42:27.976 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.560306768851872.
+19:42:27.991 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5390292368337452.
+19:42:28.016 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5603227578763827.
+19:42:28.059 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.1628474397183054.
+19:42:28.067 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.553423851083361.
+19:42:28.133 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 9.387260593236e-02.
+19:42:28.182 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.454060179411e-01.
+19:42:28.187 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7900321379734552.
+19:42:28.195 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5603017726176247.
+19:42:28.205 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5390615647276752.
+19:42:28.234 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.170441334294e-01.
+19:42:28.260 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7368924511967561.
+19:42:28.421 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.384130072397e-01.
+19:42:28.427 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.440309371154e-01.
+19:42:28.429 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 4.664470399599e-01.
+19:42:28.437 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.263178095907e-01.
+19:42:28.614 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7150209499441669.
+19:42:28.618 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.263175473177e-01.
+19:42:28.700 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.454017917046e-01.
+19:42:28.707 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.190308456027e-01.
+19:42:28.710 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 4.446052409435e-01.
+19:42:28.736 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.170406725439e-01.
+19:42:28.877 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 9.387256092937e-02.
+19:42:28.887 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.000051665736e-01.
+19:42:28.889 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 4.044042664638e-01.
+19:42:28.891 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 4.044038492023e-01.
+19:42:28.891 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 7.205957691723e-01.
+19:42:28.893 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 7.060532169485e-01.
+19:42:28.900 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.190305542377e-01.
+19:42:28.938 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.704565284322e-01.
+19:42:28.951 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 4.445992798044e-01.
+19:42:29.139 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 4.233598231845e-01.
+19:42:29.149 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.454014683675e-01.
+19:42:29.237 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7500044794515377.
+19:42:29.300 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7518572460755213.
+19:42:29.324 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5885465779329646.
+19:42:29.343 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 4.233595947422e-01.
+19:42:29.381 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.005898895675e-01.
+19:42:29.393 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 9.387255891817e-02.
+19:42:29.399 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.170609791294e-01.
+19:42:29.402 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.000015874098e-01.
+19:42:29.408 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 3.592721352326e-01.
+19:42:29.414 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 9.387260245423e-02.
+19:42:29.417 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 9.387258929683e-02.
+19:42:29.610 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 6.227323119750e-01.
+19:42:29.620 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.467660573886e-01.
+19:42:29.739 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.603242143096e-01.
+19:42:29.741 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.673953224860e-01.
+19:42:29.743 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.617087718416e-01.
+19:42:29.749 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.280059657278e-01.
+19:42:29.919 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 3.592716808980e-01.
+19:42:29.923 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 1.628475160982e-01.
+19:42:29.929 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 4.233594207026e-01.
+19:42:29.943 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.263175422670e-01.
+19:42:29.949 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.263418110367e-02.
+19:42:29.956 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.190309768843e-01.
+19:42:29.969 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.096089103824e-01.
+19:42:29.964 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000050071071e-01.
+19:42:29.969 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.976333724875e-01.
+19:42:29.982 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000001645228e-01.
+19:42:30.083 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 4.233594616003e-01.
+19:42:30.205 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.669161928901e-01.
+19:42:30.290 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.000002128181e-01.
+19:42:30.332 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.190309665717e-01.
+19:42:30.376 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 7.612046802418e-02.
+19:42:30.448 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000015774842e-01.
+19:42:30.499 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 1.921471985556e-02.
+19:42:30.680 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.000015122574e-01.
+19:42:30.956 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 1.921471963675e-02.
+19:42:30.962 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.190305843811e-01.
+19:42:31.417 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 5.263173430760e-01.
+19:42:31.587 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.000001545381e-01.
+19:42:32.031 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000013678100e-01.
+19:42:32.117 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 5.000001374453e-01.
+19:42:32.491 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.876305453237e-01.
+19:42:32.503 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.592729685307e-01.
+19:42:32.894 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 4.773828942881e-01.
+19:42:32.940 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.096943078843e-01.
+19:42:33.369 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 3.467194212025e-01.
+19:42:33.556 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.002522990502e-01.
+19:42:33.560 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 4.954202869076e-01.
+19:42:33.564 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 4.664474573122e-01.
+19:42:33.768 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 5.190305123080e-01.
+19:42:33.865 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 5.263423138893e-02.
+19:42:34.760 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 1.506156886772e-01.
+19:42:35.079 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 9.387257302189e-02.
+19:42:35.443 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.592716548808e-01.
+19:42:35.629 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 1.506151477094e-01.
+19:42:35.962 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.993952404126e-01.
+19:42:36.398 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:42:36.594 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 9.387256662568e-02.
+19:42:36.658 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 4.233593614647e-01.
+19:42:36.678 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 5.000013710394e-01.
+19:42:36.730 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 1.921472591086e-02.
+19:42:36.807 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 4.664473069261e-01.
+19:42:36.886 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7900325148737946.
+19:42:37.150 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 4.568210923146e-01.
+19:42:37.246 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.467192876278e-01.
+19:42:37.253 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 2.928938016792e-01.
+19:42:37.486 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 2.318232530250e-01.
+19:42:37.951 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5390644860836682.
+19:42:38.057 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 7.244545010071e-01.
+19:42:38.059 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 7.150171364027e-01.
+19:42:38.111 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 4.233596024056e-01.
+19:42:38.136 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 9.387256341681e-02.
+19:42:38.210 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 7.612051406018e-02.
+19:42:38.276 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5390230567674494.
+19:42:39.122 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 7.612047811116e-02.
+19:42:39.131 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 5.263417802216e-02.
+19:42:39.264 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 4.044511712389e-01.
+19:42:39.277 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.172377798575e-01.
+19:42:39.451 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 1.464467525524e-01.
+19:42:39.461 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 1.464467221801e-01.
+19:42:39.676 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 5.000010343785e-01.
+19:42:39.711 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 5.263417279184e-02.
+19:42:39.887 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.170479723516e-01.
+19:42:39.891 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.000068654755e-01.
+19:42:40.330 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:42:40.333 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 1.628474645669e-01.
+19:42:40.442 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 3.985522075293e-01.
+19:42:40.665 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 4.233594782873e-01.
+19:42:40.670 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 4.120623322492e-01.
+19:42:40.805 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 9.387259754430e-02.
+19:42:40.810 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 9.387259605389e-02.
+19:42:40.825 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.876323903508e-01.
+19:42:40.830 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.291783964468e-01.
+19:42:40.903 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:42:41.093 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7125892959448423.
+19:42:41.179 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 9.387262400793e-02.
+19:42:41.184 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 7.612048080693e-02.
+19:42:41.190 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 7.612047742361e-02.
+19:42:41.205 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 1.506152606593e-01.
+19:42:41.312 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 4.233594326158e-01.
+19:42:41.352 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.592718336187e-01.
+19:42:41.509 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.440313868258e-01.
+19:42:41.511 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.883634144023e-01.
+19:42:41.695 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 9.387259227031e-02.
+19:42:41.845 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:42:41.847 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 1.339747759706e-01.
+19:42:41.854 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 5.263417947430e-02.
+19:42:42.040 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 3.064801929102e-01.
+19:42:42.080 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.080697214153e-01.
+19:42:42.246 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 6.440356015443e-01.
+19:42:42.379 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 4.233593785091e-01.
+19:42:42.661 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 1.921473603394e-02.
+19:42:42.737 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 9.387256016892e-02.
+19:42:42.745 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 9.387255649056e-02.
+19:42:42.969 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000062923368e-01.
+19:42:43.017 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.993950231235e-01.
+19:42:43.324 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:42:43.321 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.467662566589e-01.
+19:42:43.851 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.263418671255e-02.
+19:42:43.869 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000062415788e-01.
+19:42:43.876 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 9.387265206250e-02.
+19:42:43.944 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.064801396597e-01.
+19:42:44.118 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000404307136e-01.
+19:42:44.132 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.064801940432e-01.
+19:42:44.531 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:42:44.668 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 15 layers and cost: 9.387255621946e-02.
+19:42:44.884 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 1.628474967557e-01.
+19:42:44.957 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 23 layers and cost: 5.263173328987e-01.
+19:42:45.051 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 9.387266338170e-02.
+19:42:45.060 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 9.387259711337e-02.
+19:42:45.121 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7150210680180351.
+19:42:45.195 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 3.064801183918e-01.
+19:42:45.571 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 1.921472429309e-02.
+19:42:45.578 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 1.921472190697e-02.
+19:42:45.692 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 9.387256216780e-02.
+19:42:45.996 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7150172090401583.
+19:42:46.337 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.6981154967701586.
+19:42:46.342 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 1.921472087683e-02.
+19:42:46.361 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 5.263418853704e-02.
+19:42:46.459 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.938337026775e-01.
+19:42:47.063 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 9.387258695613e-02.
+19:42:47.141 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.701042314525e-01.
+19:42:47.146 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.885116877108e-01.
+19:42:47.153 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 9.387256020677e-02.
+19:42:47.809 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 3.064801457248e-01.
+19:42:47.819 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 3.064801261843e-01.
+19:42:48.189 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.467658767330e-01.
+19:42:48.194 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.000003239288e-01.
+19:42:48.893 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7606470772835827.
+19:42:48.975 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.533395018489e-01.
+19:42:48.978 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.814249634537e-01.
+19:42:49.025 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7500046948814478.
+19:42:49.097 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 18 layers and cost: 5.000001355778e-01.
+19:42:49.581 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 3.407419281197e-02.
+19:42:49.789 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.673954176373e-01.
+19:42:49.791 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.603271219072e-01.
+19:42:50.310 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 7.500030158018e-01.
+19:42:50.311 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 7.150173737438e-01.
+19:42:50.798 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 4.077112352513e-01.
+19:42:50.940 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 6.938366462761e-01.
+19:42:50.985 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5883978911430693.
+19:42:51.181 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.469966254820e-01.
+19:42:51.184 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.176381999156e-01.
+19:42:52.539 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 4.342426794772e-01.
+19:42:52.560 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 1.628475597403e-01.
+19:42:52.569 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.000004132436e-01.
+19:42:52.695 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 5.263417556291e-02.
+19:42:52.727 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 24 layers and cost: 5.190304977248e-01.
+19:42:53.413 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 4.233598174630e-01.
+19:42:53.419 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.993948565492e-01.
+19:42:53.473 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 9.387256236892e-02.
+19:42:53.754 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 3.407417925926e-02.
+19:42:54.469 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.876280675096e-01.
+19:42:54.508 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 9.387255939245e-02.
+19:42:54.577 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.000002804059e-01.
+19:42:54.785 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 9.387255642365e-02.
+19:42:54.816 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.407417814004e-02.
+19:42:55.396 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 3.876279461930e-01.
+19:42:55.813 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 6.733760231150e-01.
+19:42:56.184 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:42:56.904 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 6.464990707777e-01.
+19:42:56.910 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.380676704568e-01.
+19:42:56.925 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.876279265739e-01.
+19:42:56.949 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000002506549e-01.
+19:42:57.627 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 9.387255596454e-02.
+19:42:57.660 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.000064320099e-01.
+19:42:57.777 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 9.387255609888e-02.
+19:42:58.277 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 4.303080255687e-01.
+19:42:58.976 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 4.233593739939e-01.
+19:42:59.720 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 19 layers and cost: 9.387255667033e-02.
+19:43:00.145 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 3.407417668995e-02.
+19:43:02.030 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.876278976211e-01.
+19:43:02.695 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 3.064801121333e-01.
+19:43:03.523 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.993947747543e-01.
+19:43:03.632 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000512172807e-01.
+19:43:03.638 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000194107553e-01.
+19:43:03.643 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000120351437e-01.
+19:43:04.241 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.064801118058e-01.
+19:43:04.981 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 14 layers and cost: 3.064801093731e-01.
+19:43:09.462 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 1.628475613116e-01.
+19:43:09.473 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 14 layers and cost: 3.064801056780e-01.
+19:43:10.832 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 1.464466707172e-01.
+19:43:12.362 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.876281977420e-01.
+19:43:12.365 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 4.568221312636e-01.
+19:43:13.399 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.592749504781e-01.
+19:43:14.971 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 9.387255533687e-02.
+19:43:16.604 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 2.929122348654e-01.
+19:43:18.129 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 1.464466696123e-01.
+19:43:19.112 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 9.387268428029e-02.
+19:43:19.752 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 17 layers and cost: 6.938309701313e-01.
+19:43:20.415 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 3.064801077835e-01.
+19:43:21.239 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 15 layers and cost: 3.064801048368e-01.
+19:43:22.812 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 9.387265785095e-02.
+19:43:22.825 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 7.612049996438e-02.
+19:43:22.836 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:43:22.987 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 3.876280512194e-01.
+19:43:23.638 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5390360191956904.
+19:43:23.666 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.6981172316005697.
+19:43:24.095 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.538944503826e-01.
+19:43:24.859 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 9.387255514892e-02.
+19:43:26.440 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.327472198323e-01.
+19:43:26.724 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 29 layers and cost: 5.000001348473e-01.
+19:43:31.547 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.170987620334e-01.
+19:43:32.298 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 20 layers and cost: 3.407417541137e-02.
+19:43:32.574 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.524511114508e-01.
+19:43:32.678 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 3.876279352729e-01.
+19:43:32.701 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 36 layers and cost: 9.387255616377e-02.
+19:43:34.243 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.469420454980e-01.
+19:43:35.026 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.876279340628e-01.
+19:43:35.335 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.16284740889677896.
+19:43:35.627 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 3.876279287293e-01.
+19:43:35.836 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.170897383633e-01.
+19:43:35.841 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000213713473e-01.
+19:43:36.785 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 1.464466251025e-01.
+19:43:36.792 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 9.387255679285e-02.
+19:43:37.870 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.876279180910e-01.
+19:43:38.224 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.976342881655e-01.
+19:43:38.518 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 7.612046793478e-02.
+19:43:39.408 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.876282468976e-01.
+19:43:39.415 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.876282303420e-01.
+19:43:39.422 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.297095141794e-01.
+19:43:41.172 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 20 layers and cost: 1.464466677482e-01.
+19:43:41.994 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 1.506151366718e-01.
+19:43:42.613 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 3.876278913172e-01.
+19:43:42.823 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 9.387255713700e-02.
+19:43:43.800 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.263423008548e-02.
+19:43:43.866 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 1.339749961110e-01.
+19:43:43.875 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 1.339747393664e-01.
+19:43:43.885 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 5.263421281588e-02.
+19:43:44.385 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 1.921473121145e-02.
+19:43:44.464 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.876279061669e-01.
+19:43:44.436 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 1.464466670912e-01.
+19:43:44.512 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 3.876278724141e-01.
+19:43:44.612 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.263419437072e-02.
+19:43:46.119 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 4.044142070311e-01.
+19:43:46.179 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7203192167103603.
+19:43:46.278 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.876278931378e-01.
+19:43:46.328 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 1.921473174110e-02.
+19:43:46.923 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.096182529464e-01.
+19:43:47.230 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 1.628475036691e-01.
+19:43:47.332 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.407418444714e-02.
+19:43:47.406 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.064801971778e-01.
+19:43:47.848 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000013899249e-01.
+19:43:49.925 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 1.921473075441e-02.
+19:43:50.387 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.567206975929e-01.
+19:43:50.449 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:43:50.476 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.064801414203e-01.
+19:43:50.777 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.000013896319e-01.
+19:43:51.080 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 5.263417402248e-02.
+19:43:51.425 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.277840416699e-01.
+19:43:52.092 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 5.000009093952e-01.
+19:43:52.373 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000037223858e-01.
+19:43:53.405 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 14 layers and cost: 5.469392155537e-01.
+19:43:55.346 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 7.612049891961e-02.
+19:43:55.398 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7203219589861497.
+19:43:55.617 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.359555131901e-01.
+19:43:55.690 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.263425680460e-02.
+19:43:57.211 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 1.921474839430e-02.
+19:43:57.537 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 1.921473097414e-02.
+19:43:57.568 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000015518666e-01.
+19:43:58.039 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 27 layers and cost: 1.464466614885e-01.
+19:43:58.423 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.964474368402e-01.
+19:44:00.349 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.467189139213e-01.
+19:44:00.361 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.169878247218e-01.
+19:44:01.730 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 14 layers and cost: 1.921473629936e-02.
+19:44:03.065 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.169876933995e-01.
+19:44:07.373 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:44:07.419 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.170408712967e-01.
+19:44:07.474 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5671055277303743.
+19:44:07.614 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 3.876278683668e-01.
+19:44:08.486 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.169876887947e-01.
+19:44:08.614 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.6981190335814283.
+19:44:08.762 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.000019018783e-01.
+19:44:08.765 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.000013133657e-01.
+19:44:08.786 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:44:09.125 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.533322477727e-01.
+19:44:09.128 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.814344627418e-01.
+19:44:09.126 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000144454678e-01.
+19:44:09.141 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 2.928942356847e-01.
+19:44:09.180 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.7203335743654405.
+19:44:09.182 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.000012891255e-01.
+19:44:09.716 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 6.360152559215e-01.
+19:44:09.881 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5671079123436416.
+19:44:09.880 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:44:10.911 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 5.263417466726e-02.
+19:44:12.550 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000119098541e-01.
+19:44:12.556 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000069590860e-01.
+19:44:13.315 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.000034555196e-01.
+19:44:13.588 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 4.568295495548e-01.
+19:44:13.999 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.993968368436e-01.
+19:44:14.007 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.467190026915e-01.
+19:44:14.209 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 5.000006445095e-01.
+19:44:16.589 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 4.568417217431e-01.
+19:44:17.372 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 2.318225856405e-01.
+19:44:17.434 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 3.467188018571e-01.
+19:44:19.689 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 5.000063400413e-01.
+19:44:20.894 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 15 layers and cost: 5.000004607413e-01.
+19:44:22.121 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 4.982242415891e-01.
+19:44:22.198 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 7.612046824150e-02.
+19:44:22.326 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 2.318260206477e-01.
+19:44:23.406 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 4.568218646522e-01.
+19:44:23.416 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.467194177566e-01.
+19:44:23.463 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:44:23.728 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 1.968634977941e-01.
+19:44:23.737 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 7.612050571637e-02.
+19:44:24.214 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 2.903047524636e-01.
+19:44:24.752 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 3.407423954496e-02.
+19:44:24.970 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 5.000001835735e-01.
+19:44:27.472 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:44:27.699 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 51 layers and cost: 9.387255572843e-02.
+19:44:28.166 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 2.318261391164e-01.
+19:44:28.173 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 2.318247579501e-01.
+19:44:28.179 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 7.612048498532e-02.
+19:44:30.715 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.170388584605e-01.
+19:44:30.771 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.5670209406582188.
+19:44:31.076 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 5.263417279375e-02.
+19:44:33.287 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 3.407418490349e-02.
+19:44:33.429 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.000112090678e-01.
+19:44:35.409 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000065456223e-01.
+19:44:35.688 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 2.928939147248e-01.
+19:44:35.697 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 1.464467767443e-01.
+19:44:35.705 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 7.612053448141e-02.
+19:44:41.383 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 7.612049599291e-02.
+19:44:41.692 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.993947406380e-01.
+19:44:44.321 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 3.064801159400e-01.
+19:44:44.383 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.000068416313e-01.
+19:44:46.289 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.592713949147e-01.
+19:44:46.439 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.407418150374e-02.
+19:44:49.468 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:44:49.575 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 5.000056397455e-01.
+19:44:51.970 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 1.506152469078e-01.
+19:44:52.654 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 5.263426902545e-02.
+19:44:53.228 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 3.407417811436e-02.
+19:44:54.091 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 1.506151908003e-01.
+19:44:54.100 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 9.387268321831e-02.
+19:44:54.217 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 26 layers and cost: 5.263417387579e-02.
+19:44:54.284 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 3.407417737379e-02.
+19:44:54.965 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.993962235391e-01.
+19:44:55.893 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 9.387260345054e-02.
+19:44:57.101 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.380674944308e-01.
+19:44:57.428 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 7.612054840541e-02.
+19:44:57.625 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.993951499389e-01.
+19:44:57.639 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 3.592728733182e-01.
+19:44:59.680 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:44:59.829 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 3.407417734246e-02.
+19:45:00.184 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 3.592726970074e-01.
+19:45:02.300 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.592721150987e-01.
+19:45:02.355 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:45:02.877 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 9.387259235542e-02.
+19:45:07.365 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 1.506152117766e-01.
+19:45:07.374 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 1.506152083482e-01.
+19:45:08.820 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 9.387261832987e-02.
+19:45:10.252 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 3.876278906235e-01.
+19:45:11.267 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 9.387258234677e-02.
+19:45:12.274 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 3.407417719784e-02.
+19:45:15.578 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 5.380612877492e-01.
+19:45:15.870 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 1.921473633990e-02.
+19:45:16.586 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 9.387258121239e-02.
+19:45:16.795 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:45:17.205 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:45:18.953 - DEBUG    | bqskit.passes.synthesis.qsearch: Search started, initial layer has cost: 0.661885160701935.
+19:45:19.176 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 1 layer and cost: 5.700204202408e-01.
+19:45:19.296 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.454022737931e-01.
+19:45:19.656 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.454017178688e-01.
+19:45:20.001 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 7.612049830889e-02.
+19:45:23.621 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 5.454017051052e-01.
+19:45:25.046 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 7.612048768267e-02.
+19:45:26.584 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.407417692171e-02.
+19:45:27.486 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 5.454015015863e-01.
+19:45:28.265 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 14 layers and cost: 7.612048749362e-02.
+19:45:39.719 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 17 layers and cost: 9.387255511652e-02.
+19:45:40.798 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 5.096106072755e-01.
+19:45:45.933 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.571668626893e-01.
+19:45:45.936 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 9.387262661893e-02.
+19:45:47.901 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 9.387255603521e-02.
+19:45:49.104 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 2 layers and cost: 5.814337873510e-01.
+19:45:49.955 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 3 layers and cost: 4.080442984439e-01.
+19:45:51.112 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.964473840123e-01.
+19:45:51.116 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 4 layers and cost: 3.592750063846e-01.
+19:45:51.259 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 3.467316555861e-01.
+19:45:51.423 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 1.628474855651e-01.
+19:45:51.601 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 1.339746729525e-01.
+19:45:51.608 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 9.387260885540e-02.
+19:45:51.819 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 7.612050397225e-02.
+19:45:54.839 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 15 layers and cost: 7.612048332847e-02.
+19:45:59.571 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 45 layers and cost: 5.263417324292e-02.
+19:46:00.634 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.263417557647e-02.
+19:46:00.671 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 1.921473431777e-02.
+19:46:02.261 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 1.921472135524e-02.
+19:46:04.091 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.876278697414e-01.
+19:46:04.251 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 1.921472119639e-02.
+19:46:07.284 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:46:08.689 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 1.921471960609e-02.
+19:46:13.221 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 3.407417688199e-02.
+19:46:14.567 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 5.006669030664e-01.
+19:46:14.572 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 5.000118816042e-01.
+19:46:19.492 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 50 layers and cost: 5.263417310114e-02.
+19:46:19.730 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 5.000117188292e-01.
+19:46:20.181 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 5.000088642802e-01.
+19:46:24.872 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:46:37.078 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 15 layers and cost: 5.000029156065e-01.
+19:46:54.078 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 5.263417305512e-02.
+19:46:56.105 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 19 layers and cost: 9.387255486303e-02.
+19:47:04.091 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 5.263417038072e-02.
+19:47:05.761 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 24 layers and cost: 9.387255598243e-02.
+19:47:10.296 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.876277774674e-01.
+19:47:18.428 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 14 layers and cost: 5.000004358886e-01.
+19:47:21.184 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.263417792872e-02.
+19:47:22.177 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 18 layers and cost: 3.064801041344e-01.
+19:47:23.153 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 6 layers and cost: 5.263417382203e-02.
+19:47:50.967 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 23 layers and cost: 9.387255481519e-02.
+19:47:53.849 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 19 layers and cost: 3.064801029789e-01.
+19:48:05.483 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 5.000007480295e-01.
+19:48:29.473 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 7 layers and cost: 1.921473544161e-02.
+19:48:33.682 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 1.921472710406e-02.
+19:48:33.743 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 8 layers and cost: 3.407418579022e-02.
+19:48:34.085 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 3.407418068108e-02.
+19:48:35.298 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 10 layers and cost: 3.407417677284e-02.
+19:48:36.036 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 1.921473334729e-02.
+19:48:38.683 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 1.921472024574e-02.
+19:48:42.699 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 19 layers and cost: 9.387255490345e-02.
+19:48:44.746 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 14 layers and cost: 1.921473039652e-02.
+19:48:49.806 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:48:57.201 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 9 layers and cost: 1.921471974433e-02.
+19:49:26.995 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:49:35.214 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 7.612047843338e-02.
+19:49:49.819 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.876278580867e-01.
+19:50:23.704 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 34 layers and cost: 1.921471960373e-02.
+19:50:57.341 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 5 layers and cost: 5.000002527554e-01.
+19:51:54.527 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 3.876277464171e-01.
+19:52:17.385 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 17 layers and cost: 7.612047811314e-02.
+19:52:19.398 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 11 layers and cost: 3.876278579605e-01.
+19:53:25.869 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 20 layers and cost: 3.064801021191e-01.
+19:54:12.760 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 13 layers and cost: 5.000017970169e-01.
+19:55:19.312 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 18 layers and cost: 7.612047558154e-02.
+19:56:28.750 - DEBUG    | bqskit.passes.synthesis.qsearch: Successful synthesis.
+19:56:38.572 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 5.000002142460e-01.
+19:56:59.483 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 12 layers and cost: 3.876277511159e-01.
+19:57:34.977 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 19 layers and cost: 9.387255469328e-02.
+19:57:52.787 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 5.000001986923e-01.
+20:00:15.045 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 17 layers and cost: 5.263417238427e-02.
+20:02:18.514 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 26 layers and cost: 5.000001504784e-01.
+20:02:33.701 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 19 layers and cost: 7.612047510664e-02.
+20:02:43.920 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 18 layers and cost: 5.263417219026e-02.
+20:05:49.061 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 3.064801011007e-01.
+20:08:25.162 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 26 layers and cost: 9.387255464613e-02.
+20:10:30.195 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 34 layers and cost: 9.387255474189e-02.
+20:11:54.850 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 18 layers and cost: 5.263417155788e-02.
+20:12:42.881 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 24 layers and cost: 3.064801020945e-01.
+20:14:37.277 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 31 layers and cost: 9.387255455219e-02.
+20:19:42.202 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 20 layers and cost: 7.612047303169e-02.
+20:19:49.246 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 23 layers and cost: 9.387255470156e-02.
+20:20:37.706 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 18 layers and cost: 5.000002336605e-01.
+20:22:18.020 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 21 layers and cost: 9.387255455092e-02.
+20:24:26.802 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 14 layers and cost: 3.876277019412e-01.
+20:27:01.787 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 19 layers and cost: 5.263417091410e-02.
+20:28:41.601 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 15 layers and cost: 3.876277398640e-01.
+20:30:59.074 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 30 layers and cost: 5.000002203914e-01.
+20:39:51.181 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 23 layers and cost: 5.000001606532e-01.
+20:45:19.736 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 30 layers and cost: 9.387255468714e-02.
+20:54:33.053 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 15 layers and cost: 3.876277355511e-01.
+20:55:27.724 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 15 layers and cost: 3.876277326711e-01.
+20:56:27.946 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 25 layers and cost: 9.387255460293e-02.
+21:18:45.303 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 32 layers and cost: 5.000001446458e-01.
+21:23:58.436 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 3.876277318054e-01.
+21:29:20.887 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 19 layers and cost: 5.000001487046e-01.
+21:33:00.492 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 5.000001333956e-01.
+21:45:50.723 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 21 layers and cost: 5.000002038471e-01.
+21:50:20.078 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 7.612047269681e-02.
+21:53:44.638 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 24 layers and cost: 5.000001343297e-01.
+21:55:02.618 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 16 layers and cost: 3.876277173919e-01.
+21:55:33.725 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 5.000001236055e-01.
+21:56:36.832 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 28 layers and cost: 9.387255458302e-02.
+21:57:43.586 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 20 layers and cost: 5.263417025937e-02.
+21:59:40.552 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 5.000001362586e-01.
+22:01:37.041 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 25 layers and cost: 9.387255456509e-02.
+22:05:51.754 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 7.612047036506e-02.
+22:10:52.104 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 22 layers and cost: 5.000001932619e-01.
+22:47:59.222 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 23 layers and cost: 7.612046939823e-02.
+22:59:04.529 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 17 layers and cost: 3.876277078974e-01.
+23:02:41.360 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 21 layers and cost: 5.263416981499e-02.
+23:24:37.731 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 30 layers and cost: 9.387255454371e-02.
+23:33:11.651 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 17 layers and cost: 3.876276578398e-01.
+00:11:46.199 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 29 layers and cost: 9.387255450403e-02.
+00:35:11.581 - DEBUG    | bqskit.passes.synthesis.qsearch: New best circuit found with 26 layers and cost: 5.000001081213e-01.
