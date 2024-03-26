@@ -30,7 +30,7 @@ def multi_qudit_op_count(circuit: Circuit) -> float:
     return float(x)
 
 
-def from_cg_to_zone(cg: set):
+def from_cg_to_zone(cg: CouplingGraph):
     # {int}: left
     # {float}: right
     if cg == CouplingGraph({(0, 2), (1, 2)}):

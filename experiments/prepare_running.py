@@ -7,6 +7,9 @@ from pytket.phir.qtm_machine import QtmMachine, QTM_MACHINES_MAP
 from bqskit.ir.gates import RZZGate, RZGate, U1qPi2Gate, U1qPiGate, PermutationGate
 from bqskit.shuttling import ShuttlingLayerGenerator, HeuristicSearch, ShuttlingEmbedAllPermutationsPass, \
     GateZoneSelectionPass
+from bqskit.shuttling.mapping.layout.pam import PAMLayoutPass
+from bqskit.shuttling.mapping.routing.pam import PAMRoutingPass
+
 from bqskit.shuttling.util import get_duration_from_circ, check_executable_circuit
 
 from bqskit import enable_logging
@@ -59,6 +62,7 @@ qsearch_pass = QSearchSynthesisPass(layer_generator=ShuttlingLayerGenerator(),
 # machine_model = MachineModel(machine.size, CouplingGraph([(0, 1), (1, 2)]),
 #                              {RZGate(), U1qPi2Gate, U1qPiGate, RZZGate()})
 block_size = 3
+num_layout_passes = 3
 workflow = [
     SetModelPass(machine_model),
     # UpdateDataPass("__ShuttlingLayerGenerator_gatezone", {1.2}),
@@ -67,5 +71,10 @@ workflow = [
     QuickPartitioner(block_size),
     ForEachBlockPass(
         ShuttlingEmbedAllPermutationsPass(inner_synthesis=qsearch_pass)
-    )
+    ),
+    ApplyPlacement(),
+    PAMLayoutPass(num_layout_passes),
+    PAMRoutingPass(0.1),
+    # post_pam_seq,
+    ApplyPlacement(),
 ]
