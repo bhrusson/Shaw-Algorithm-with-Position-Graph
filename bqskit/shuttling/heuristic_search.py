@@ -6,7 +6,7 @@ from bqskit.ir.opt.cost import HilbertSchmidtCostGenerator
 from bqskit.passes.search.heuristic import HeuristicFunction
 from bqskit.qis import UnitaryMatrix, StateVector, StateSystem
 from pytket.phir.qtm_machine import QtmMachine
-from bqskit.ir.gates import RZGate, SwapGate
+from bqskit.ir.gates import SwapGate
 from bqskit.shuttling.util import get_gate_time, get_duration_from_circ
 from bqskit.utils.typing import is_real_number
 
@@ -70,14 +70,14 @@ class HeuristicSearch(HeuristicFunction):
             circuit: Circuit,
             target: UnitaryMatrix | StateVector | StateSystem,
     ) -> float:
-        # cost = get_duration_from_circ(circuit, self.qtm_machine)
-        cost = 0
-        for op in circuit.gate_set:
-            if op == SwapGate():
-                cost += circuit.count(op)*0.9
-            elif op.num_qudits == 2:
-                cost += circuit.count(op)*0.04
-            elif op.num_qudits == 1:
-                cost += circuit.count(op)*0.03
+        cost = get_duration_from_circ(circuit, self.qtm_machine)
+        # cost = 0
+        # for op in circuit.gate_set:
+        #     if op == SwapGate():
+        #         cost += circuit.count(op)*0.9
+        #     elif op.num_qudits == 2:
+        #         cost += circuit.count(op)*0.04
+        #     elif op.num_qudits == 1:
+        #         cost += circuit.count(op)*0.03
         heuristic = self.cost_gen.calc_cost(circuit, target)
         return self.heuristic_factor * heuristic + self.cost_factor * cost

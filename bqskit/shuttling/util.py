@@ -1,6 +1,7 @@
 from bqskit.ir import Circuit, Gate
-from bqskit.ir.gates import SwapGate
+from bqskit.ir.gates import SwapGate, RZGate
 from pytket.phir.qtm_machine import QTM_MACHINES_MAP, QtmMachine
+from bqskit.shuttling.ShuttlingShift import ShuttlingShiftGate
 
 
 def get_gate_time(gate: Gate, qtm_machine: QtmMachine) -> float:
@@ -46,6 +47,24 @@ def get_duration_from_circ(circuit: Circuit, qtm_machine: QtmMachine) -> float:
                 layer_duration = gate_duration
         total_duration += layer_duration
     return total_duration
+
+
+def get_duration_from_circ_after_scheduling(circuit: Circuit, qtm_machine: QtmMachine) -> [float, int]:
+    circ_depth = circuit.num_cycles
+    total_duration = 0.0
+    count_shift_gate = 0
+    for ix in range(circ_depth):
+        layer = circuit[ix]
+        op = layer[0]
+        if op.gate == ShuttlingShiftGate(circuit.num_qudits):
+            count_shift_gate += 1
+            gate_duration = 0
+        elif op.gate == RZGate():
+            gate_duration = 0
+        else:
+            gate_duration = get_gate_time(op.gate, qtm_machine)
+        total_duration += gate_duration
+    return total_duration, count_shift_gate
 
 
 def check_executable_circuit(circuit: Circuit, tq_zone: list[int]) -> bool:

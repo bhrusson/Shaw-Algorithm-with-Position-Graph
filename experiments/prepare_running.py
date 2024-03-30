@@ -2,16 +2,15 @@ from bqskit.compiler import Compiler, MachineModel
 from bqskit.ir import Circuit
 from bqskit.ir.opt import ScipyMinimizer, HilbertSchmidtCostGenerator
 from bqskit.passes import *
-from bqskit.qis import UnitaryMatrix, CouplingGraph
+from bqskit.qis import CouplingGraph
 from pytket.phir.qtm_machine import QtmMachine, QTM_MACHINES_MAP
-from bqskit.ir.gates import RZZGate, RZGate, U1qPi2Gate, U1qPiGate, PermutationGate
+from bqskit.ir.gates import RZZGate, RZGate, U1qPi2Gate, U1qPiGate
 from bqskit.shuttling import ShuttlingLayerGenerator, HeuristicSearch, ShuttlingEmbedAllPermutationsPass, \
-    GateZoneSelectionPass
+    GateZoneSelectionPass, OddEvenSchedulingPass
 from bqskit.shuttling.mapping.layout.pam import PAMLayoutPass
 from bqskit.shuttling.mapping.routing.pam import PAMRoutingPass
-
-from bqskit.shuttling.util import get_duration_from_circ, check_executable_circuit
-
+from bqskit.shuttling.util import get_duration_from_circ_after_scheduling, check_executable_circuit, get_duration_from_circ
+from bqskit.passes.io.checkpoint import SaveCheckpointPass, LoadCheckpointPass
 from bqskit import enable_logging
 from experiments.circuit_generator import circuit_generate
 
@@ -23,8 +22,12 @@ machine_model = MachineModel(machine.size, CouplingGraph.linear(machine.size),
                              {RZGate(),
                               U1qPi2Gate, U1qPiGate, RZZGate()})
 
-target = circuit_generate("Toffoli", 3, 3, True)
-circuit = Circuit.from_unitary(target)
+# target = circuit_generate("Toffoli", 3, 3, True)
+num_qudits = 9
+circuit_type = "adder9"
+target_circuit = Circuit(num_qudits).from_file(f"experiments/results/experiment_circuits/input_circuits/{circuit_type}"
+                                               ".qasm")
+# circuit = Circuit.from_unitary(target_circuit)
 
 sq_synthesis = QSearchSynthesisPass(
     layer_generator=SingleQuditLayerGenerator(None, allow_repeats=True),
@@ -43,14 +46,10 @@ def estimated_runtime(circ: Circuit) -> float:
 
 
 qsearch_pass = QSearchSynthesisPass(layer_generator=ShuttlingLayerGenerator(),
-                                    heuristic_function=HeuristicSearch(heuristic_factor=10, qtm_machine=qtm_machine))
-
-# qleap_pass = LEAPSynthesisPass(layer_generator=ShuttlingLayerGenerator(),
-#                                heuristic_function=HeuristicSearch(heuristic_factor=10, qtm_machine=qtm_machine))
-
+                                    heuristic_function=HeuristicSearch(heuristic_factor=5, qtm_machine=qtm_machine))
 # workflow = [
 #     SetModelPass(machine_model),
-#     PermutationAwareSynthesisPass(inner_synthesis=qsearch_pass, scoring_fn=estimated_runtime),
+#     PermutationAwareSynthesisPass(inner_synthesis=qsearch_pass, scoring_fn=estimated_ruåntime),
 #     GroupSingleQuditGatePass(),
 #     ForEachBlockPass(
 #         sq_synthesis
@@ -65,16 +64,23 @@ block_size = 3
 num_layout_passes = 3
 workflow = [
     SetModelPass(machine_model),
-    # UpdateDataPass("__ShuttlingLayerGenerator_gatezone", {1.2}),
     SubtopologySelectionPass(block_size),
     GateZoneSelectionPass(block_size),
     QuickPartitioner(block_size),
     ForEachBlockPass(
-        ShuttlingEmbedAllPermutationsPass(inner_synthesis=qsearch_pass)
+        ShuttlingEmbedAllPermutationsPass(inner_synthesis=qsearch_pass,
+                                          qtm_machine=QtmMachine.H1_1)
     ),
     ApplyPlacement(),
     PAMLayoutPass(num_layout_passes),
     PAMRoutingPass(0.1),
-    # post_pam_seq,
     ApplyPlacement(),
+    UnfoldPass(),
+    GroupSingleQuditGatePass(),
+    ForEachBlockPass(
+        sq_synthesis
+    ),
+    UnfoldPass(),
+    # LoadCheckpointPass(checkpoint_filename="test_checkpoint.pkl"),
+    OddEvenSchedulingPass(),
 ]

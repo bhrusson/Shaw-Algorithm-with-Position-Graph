@@ -11,8 +11,10 @@ from typing import Tuple
 from typing import TypedDict
 
 import numpy as np
+from bqskit.ir import Operation
 
 from bqskit.ir.circuit import Circuit
+from bqskit.ir.gates import CircuitGate
 from bqskit.ir.gates.barrier import BarrierPlaceholder
 from bqskit.ir.gates.constant.swap import SwapGate
 from bqskit.ir.point import CircuitPoint
@@ -312,14 +314,18 @@ class ShuttlingPermutationAwareMappingAlgorithm(GeneralizedSabreAlgorithm):
             physical_location = [pi[qudits[p]] for p in ilperm]
             local_graph = cg.get_subgraph(physical_location)
             # TODO: Finish putting the gate_zone data into this
-            for zone in from_cg_to_zone(local_graph):
-                zone = tuple(zone)
-                if zone in perm_data:
-                    if local_graph in perm_data[zone]:
-                        for perms, circ in perm_data[zone][local_graph].items():
-                            if lperm == perms[0]:
-                                gperm2 = global_perms[local_perms.index(perms[1])]
-                                pre_circ_post_triples.append((gperm1, circ, gperm2))
+            # TODO: Modify to get all the zone from physical location
+            num_evens = sum(1 if p % 2 == 0 else 0 for p in physical_location)
+            possible_zone = from_cg_to_zone(local_graph)
+            zone = [p for p in possible_zone if len(p) == num_evens][0]
+            zone = tuple(zone)
+            print("Zone: ", zone)
+            if zone in perm_data:
+                if local_graph in perm_data[zone]:
+                    for perms, circ in perm_data[zone][local_graph].items():
+                        if lperm == perms[0]:
+                            gperm2 = global_perms[local_perms.index(perms[1])]
+                            pre_circ_post_triples.append((gperm1, circ, gperm2))
 
         if len(pre_circ_post_triples) == 0:
             raise RuntimeError(
@@ -366,7 +372,7 @@ class ShuttlingPermutationAwareMappingAlgorithm(GeneralizedSabreAlgorithm):
                 best_triple = pre_circ_post_triples[i]
         return best_triple
 
-# TODO: Change the _score_perm to take into account the time to execute the circuit
+    # TODO: Change the _score_perm to take into account the time to execute the circuit
     def _score_perm(
             self,
             circuit: Circuit,

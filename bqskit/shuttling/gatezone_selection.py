@@ -56,7 +56,7 @@ class GateZoneSelectionPass(BasePass):
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
         """Perform the pass's operation, see :class:`BasePass` for more."""
-        print("Block size: ", self.block_size)
+        # print("Block size: ", self.block_size)
         possible_gate_zones = {}
         for i in range(1, ((self.block_size + 1) // 2) + 1):
             all_possible_gate_zones = all_possible_gate_zones_of_size(i, self.block_size)

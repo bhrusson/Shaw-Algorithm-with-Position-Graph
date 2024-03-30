@@ -32,7 +32,13 @@ class ShuttlingLayerGenerator(LayerGenerator):
         else:
             tq_zone_value = list(gate_zones)[0]
             tq_zones = {int(tq_zone_value)}
-            sq_zones = {int(tq_zone_value), int(np.round((tq_zone_value - int(tq_zone_value))*10))}
+            # sq_zones = {int(tq_zone_value), int(np.round((tq_zone_value - int(tq_zone_value))*10))}
+            if num_qudits == 3:
+                sq_zones = {cg.get_neighbors_of(tq_zone_value)[0], cg.get_neighbors_of(tq_zone_value)[1]}
+            elif num_qudits == 2:
+                sq_zones = {cg.get_neighbors_of(tq_zone_value)[0]}
+            else:
+                raise ValueError("Invalid number of qudits")
             # _logger.debug(f"sq_zones: {sq_zones}")
         # _logger.debug(f'Retrive gate zone successfully. Single qubit zone: {sq_zones}; Two qubit zones: {tq_zones}.')
         return sq_zones, tq_zones
@@ -102,7 +108,6 @@ class ShuttlingLayerGenerator(LayerGenerator):
                 successor = circuit.copy()
                 successor.append_gate(RZZGate(), [tq_zone_val, i])
                 successor.append_gate(U3Gate(), [tq_zone_val])
-                #if i in sq_zones:
                 successor.append_gate(U3Gate(), [i])
                 successors.append(successor)
 
