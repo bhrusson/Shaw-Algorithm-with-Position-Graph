@@ -14,10 +14,9 @@ class OddEvenSchedulingPass(BasePass):
         Initializes the OddEvenSchedulingPass
         """
 
-    async def run(self, circuit: Circuit, data: PassData) -> Circuit:
+    async def run(self, circuit: Circuit, data: PassData) -> None:
         new_circuit = Circuit(circuit.num_qudits)
         cycle_index = 0
-        need_shift_flg = False
         while len(list(circuit.front)) != 0:
             # print("Front: ", circuit.front)
             ops = circuit.get_operations(list(circuit.front))
@@ -97,30 +96,21 @@ class OddEvenSchedulingPass(BasePass):
 
             if rzz_layer[0] != []:
                 new_circuit._append_cycle()
-                if not need_shift_flg:
-                    for rzz_unshift_op in rzz_layer[0]:
-                        new_circuit.insert(cycle_index, rzz_unshift_op)
-                else:
-                    new_circuit.append_gate(ShuttlingShiftGate(num_qudits=circuit.num_qudits),
-                                            location=range(circuit.num_qudits))
-                    cycle_index += 1
-                    for rzz_unshift_op in rzz_layer[0]:
-                        new_circuit.insert(cycle_index, rzz_unshift_op)
-                    need_shift_flg = False
+                for rzz_unshift_op in rzz_layer[0]:
+                    new_circuit.insert(cycle_index, rzz_unshift_op)
                 cycle_index += 1
 
             if rzz_layer[1] != []:
                 new_circuit._append_cycle()
-                if need_shift_flg:
-                    for rzz_shift_op in rzz_layer[1]:
-                        new_circuit.insert(cycle_index, rzz_shift_op)
-                else:
-                    new_circuit.append_gate(ShuttlingShiftGate(num_qudits=circuit.num_qudits),
-                                            location=range(circuit.num_qudits))
-                    cycle_index += 1
-                    for rzz_shift_op in rzz_layer[1]:
-                        new_circuit.insert(cycle_index, rzz_shift_op)
-                    need_shift_flg = True
+                new_circuit.append_gate(ShuttlingShiftGate(num_qudits=circuit.num_qudits),
+                                        location=range(circuit.num_qudits))
+                cycle_index += 1
+                for rzz_shift_op in rzz_layer[1]:
+                    new_circuit.insert(cycle_index, rzz_shift_op)
+                cycle_index += 1
+
+                new_circuit.append_gate(ShuttlingShiftGate(num_qudits=circuit.num_qudits),
+                                        location=range(circuit.num_qudits))
                 cycle_index += 1
 
             if swap_layer[0] != []:
@@ -134,10 +124,11 @@ class OddEvenSchedulingPass(BasePass):
                 for swap_shift_op in swap_layer[1]:
                     new_circuit.insert(cycle_index, swap_shift_op)
                 cycle_index += 1
-        num_depth = new_circuit.num_cycles
-        print("Number of cycles: ", num_depth)
-        for i in range(num_depth):
-            print("Layer ", i)
-            print(new_circuit[i])
-        circuit = new_circuit
-        return circuit
+        ## Testing the output circuit
+        # num_depth = new_circuit.num_cycles
+        # print("Number of cycles: ", num_depth)
+        # for i in range(num_depth):
+        #     print("Layer ", i)
+        #     print(new_circuit[i])
+        circuit.become(new_circuit)
+        return None

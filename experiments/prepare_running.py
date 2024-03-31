@@ -81,6 +81,5 @@ workflow = [
         sq_synthesis
     ),
     UnfoldPass(),
-    # LoadCheckpointPass(checkpoint_filename="test_checkpoint.pkl"),
     OddEvenSchedulingPass(),
 ]
