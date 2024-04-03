@@ -56,7 +56,7 @@ def get_duration_from_circ_after_scheduling(circuit: Circuit, qtm_machine: QtmMa
     for ix in range(circ_depth):
         layer = circuit[ix]
         op = layer[0]
-        if op.gate == ShuttlingShiftGate(circuit.num_qudits):
+        if op.gate == ShuttlingShiftGate(20):
             count_shift_gate += 1
             gate_duration = 0
         elif op.gate == RZGate():

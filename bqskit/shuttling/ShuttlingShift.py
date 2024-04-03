@@ -13,8 +13,8 @@ class ShuttlingShiftGate(Gate):
 
     def __init__(self, num_qudits: int, radixes: Sequence[int] = []) -> None:
         """Construct a ShuttlingShiftGate."""
-        self._name = 'ShuttlingShift'
-        self._qasm_name = 'ShuttlingShift'
+        self._name = 'ShuttlingShiftGate'
+        self._qasm_name = 'ShuttlingShiftGate'
         self._num_qudits = num_qudits
         self._radixes = tuple(radixes) if radixes else tuple([2] * num_qudits)
         self._num_params = 0
