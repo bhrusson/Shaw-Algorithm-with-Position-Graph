@@ -112,18 +112,18 @@ class ShuttlingLayerGenerator(LayerGenerator):
                 successors.append(successor)
 
         # Shuttling generation
-        for edge in cg:
-            if edge[0] in sq_zones and edge[1] in sq_zones:
-                continue
-            if not circuit.is_point_idle((-1, edge[0])):
-                op = circuit[-1, edge[0]]
-                if op.location == edge and op.gate == SwapGate():
-                    continue
-            successor = circuit.copy()
-            successor.append_gate(SwapGate(), location=edge)
-            if edge[0] in sq_zones:
-                successor.append_gate(U3Gate(), [edge[0]])
-            if edge[1] in sq_zones:
-                successor.append_gate(U3Gate(), [edge[1]])
-            successors.append(successor)
+        # for edge in cg:
+        #     if edge[0] in sq_zones and edge[1] in sq_zones:
+        #         continue
+        #     if not circuit.is_point_idle((-1, edge[0])):
+        #         op = circuit[-1, edge[0]]
+        #         if op.location == edge and op.gate == SwapGate():
+        #             continue
+        #     successor = circuit.copy()
+        #     successor.append_gate(SwapGate(), location=edge)
+        #     if edge[0] in sq_zones:
+        #         successor.append_gate(U3Gate(), [edge[0]])
+        #     if edge[1] in sq_zones:
+        #         successor.append_gate(U3Gate(), [edge[1]])
+        #     successors.append(successor)
         return successors

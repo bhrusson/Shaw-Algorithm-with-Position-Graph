@@ -81,5 +81,5 @@ workflow = [
         sq_synthesis
     ),
     UnfoldPass(),
-    OddEvenSchedulingPass(),
+    # OddEvenSchedulingPass(),
 ]

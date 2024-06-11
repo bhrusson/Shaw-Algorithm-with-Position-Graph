@@ -3,35 +3,22 @@ import numpy as np
 from bqskit.ir import Operation
 from bqskit.ir.gates import RZGate, U1qGate, RZZGate, SwapGate, U1qPi2Gate, U1qPiGate
 from pytket.phir.qtm_machine import QtmMachine
-from bqskit.shuttling.util import get_gate_time
+from bqskit.shuttling import HeuristicSearch
+
+from bqskit.shuttling.util import get_duration_from_circ_after_scheduling, get_duration_from_circ
 from bqskit.shuttling.ShuttlingShift import ShuttlingShiftGate
+
 qtm_machine = QtmMachine.H1_1
 
 num_qudits = 9
 circuit_type = "adder9"
 print(circuit_type)
 target_circuit = Circuit(num_qudits).from_file(f"experiments/results/experiment_circuits/output_circuits/{circuit_type}"
-                                               ".qasm")
+                                               "_without_scheduling.qasm")
 
-
-def get_duration_from_circ(circuit: Circuit, qtm_machine: QtmMachine) -> [float, int]:
-    circ_depth = circuit.num_cycles
-    total_duration = 0.0
-    count_shift_gate = 0
-    for ix in range(circ_depth):
-        layer = circuit[ix]
-        op = layer[0]
-        if op.gate == ShuttlingShiftGate(20):
-            count_shift_gate += 1
-            gate_duration = 0
-        elif op.gate == RZGate():
-            gate_duration = 0
-        else:
-            gate_duration = get_gate_time(op.gate, qtm_machine)
-        total_duration += gate_duration
-    return total_duration, count_shift_gate
-
-
+####### Testing Odd-Even Scheduling
+#
+#
 def scheduling_circuit(circuit: Circuit):
     new_circuit = Circuit(circuit.num_qudits + 1)
     cycle_index = 0
@@ -65,7 +52,7 @@ def scheduling_circuit(circuit: Circuit):
                             u1qpi_layer[0].append(new_op)
                         else:
                             u1qpi_layer[1].append(new_op)
-                elif op.params[0] == np.pi/2:
+                elif op.params[0] == np.pi / 2:
                     if not need_shift_flg:
                         if op.location[0] % 2 == 0:
                             u1qpi2_layer[0].append(op)
@@ -89,22 +76,12 @@ def scheduling_circuit(circuit: Circuit):
                     rzz_layer[1].append(op)
 
             elif op.gate == SwapGate():
-                if not need_shift_flg:
-                    if op.location[0] % 2 == 0 and op.location[0] < op.location[1]:
-                        swap_layer[0].append(op)
-                    elif op.location[1] % 2 == 0 and op.location[1] < op.location[0]:
-                        swap_layer[0].append(op)
-                    else:
-                        swap_layer[1].append(op)
-                if need_shift_flg:
-                    new_op = Operation(gate=op.gate, location=[op.location[0] + 1, op.location[1] + 1],
-                                       params=op.params)
-                    if new_op.location[0] % 2 == 0 and new_op.location[0] < new_op.location[1]:
-                        swap_layer[0].append(new_op)
-                    elif new_op.location[1] % 2 == 0 and new_op.location[1] < new_op.location[0]:
-                        swap_layer[0].append(new_op)
-                    else:
-                        swap_layer[1].append(new_op)
+                if op.location[0] % 2 == 0 and op.location[0] < op.location[1]:
+                    swap_layer[0].append(op)
+                elif op.location[1] % 2 == 0 and op.location[1] < op.location[0]:
+                    swap_layer[0].append(op)
+                else:
+                    swap_layer[1].append(op)
             else:
                 raise ValueError(f"Invalid gate type after synthesis, gate {op.gate} is not supported")
 
@@ -147,8 +124,8 @@ def scheduling_circuit(circuit: Circuit):
                 for rzz_unshift_op in rzz_layer[0]:
                     new_circuit.insert(cycle_index, rzz_unshift_op)
             else:
-                new_circuit.append_gate(ShuttlingShiftGate(num_qudits=circuit.num_qudits),
-                                        location=range(circuit.num_qudits))
+                new_circuit.append_gate(ShuttlingShiftGate(num_qudits=new_circuit.num_qudits),
+                                        location=range(new_circuit.num_qudits))
                 cycle_index += 1
                 for rzz_unshift_op in rzz_layer[0]:
                     new_circuit.insert(cycle_index, rzz_unshift_op)
@@ -165,38 +142,61 @@ def scheduling_circuit(circuit: Circuit):
                                               params=rzz_shift_op.params)
                     new_circuit.insert(cycle_index, new_rzz_shift)
             else:
-                new_circuit.append_gate(ShuttlingShiftGate(num_qudits=circuit.num_qudits),
-                                        location=range(circuit.num_qudits))
+                new_circuit.append_gate(ShuttlingShiftGate(num_qudits=new_circuit.num_qudits),
+                                        location=range(new_circuit.num_qudits))
                 cycle_index += 1
                 for rzz_shift_op in rzz_layer[1]:
                     new_rzz_shift = Operation(gate=rzz_shift_op.gate,
-                                                location=[rzz_shift_op.location[0] + 1,
-                                                          rzz_shift_op.location[1] + 1],
-                                                params=rzz_shift_op.params)
+                                              location=[rzz_shift_op.location[0] + 1,
+                                                        rzz_shift_op.location[1] + 1],
+                                              params=rzz_shift_op.params)
                     new_circuit.insert(cycle_index, new_rzz_shift)
                 need_shift_flg = True
             cycle_index += 1
 
         if swap_layer[0] != []:
             new_circuit._append_cycle()
-            for swap_unshift_op in swap_layer[0]:
-                new_circuit.insert(cycle_index, swap_unshift_op)
+            if not need_shift_flg:
+                for swap_unshift_op in swap_layer[0]:
+                    new_circuit.insert(cycle_index, swap_unshift_op)
+            else:
+                new_circuit.append_gate(ShuttlingShiftGate(num_qudits=new_circuit.num_qudits),
+                                        location=range(new_circuit.num_qudits))
+                cycle_index += 1
+                for swap_unshift_op in swap_layer[0]:
+                    new_circuit.insert(cycle_index, swap_unshift_op)
+                need_shift_flg = False
             cycle_index += 1
 
         if swap_layer[1] != []:
             new_circuit._append_cycle()
-            for swap_shift_op in swap_layer[1]:
-                new_circuit.insert(cycle_index, swap_shift_op)
+            if need_shift_flg:
+                for swap_shift_op in swap_layer[1]:
+                    new_swap_shift = Operation(gate=swap_shift_op.gate,
+                                               location=[swap_shift_op.location[0] + 1,
+                                                         swap_shift_op.location[1] + 1])
+                    new_circuit.insert(cycle_index, new_swap_shift)
+            else:
+                new_circuit.append_gate(ShuttlingShiftGate(num_qudits=new_circuit.num_qudits),
+                                        location=range(new_circuit.num_qudits))
+                cycle_index += 1
+                for swap_shift_op in swap_layer[1]:
+                    new_swap_shift = Operation(gate=swap_shift_op.gate,
+                                               location=[swap_shift_op.location[0] + 1,
+                                                         swap_shift_op.location[1] + 1])
+                    new_circuit.insert(cycle_index, new_swap_shift)
+                need_shift_flg = True
             cycle_index += 1
     return new_circuit
 
+## Scheduling then folding
+# duration_1st = get_duration_from_circ(target_circuit, qtm_machine.H1_1)
+# print(f"First Duration before scheduling:{duration_1st}")
+#
+# new_target_circuit = scheduling_circuit(target_circuit)
+# new_target_circuit.save(f"experiments/results/experiment_circuits/test_circuits/after_scheduling_{circuit_type}"
+#                         ".qasm")
+#
+# duration_1st, num_shifts_1st = get_duration_from_circ_after_scheduling(new_target_circuit, qtm_machine.H1_1)
+# print(f"First Duration after scheduling:{duration_1st} with {num_shifts_1st} shift gates")
 
-new_circuit = scheduling_circuit(target_circuit)
-num_depth = new_circuit.num_cycles
-print("Number of cycles: ", num_depth)
-for i in range(num_depth):
-    print("Layer ", i)
-    print(new_circuit[i])
-
-duration, num_shifts = get_duration_from_circ(new_circuit, qtm_machine.H1_1)
-print(f"Duration:{duration} with {num_shifts} shift gates")
