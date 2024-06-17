@@ -1,13 +1,14 @@
-import numpy as np
 from bqskit import Circuit
-from bqskit.ir.gates import RZGate, RZZGate, SwapGate, U1qPi2Gate, U1qPiGate, U3Gate
+from bqskit.ir.gates import RZZGate, SwapGate, U3Gate
 from pytket.phir.qtm_machine import QtmMachine
 from bqskit.shuttling import HeuristicSearch
+from bqskit.compiler import Compiler
 from bqskit.ir import Operation
-from bqskit.shuttling.iterator import CircuitOddEvenIterator
-from bqskit.shuttling.util import get_duration_from_circ_after_scheduling, get_duration_from_circ
-from bqskit.shuttling.ShuttlingShift import ShuttlingShiftGate
-from test_scheduling import scheduling_circuit
+from bqskit.passes import *
+from bqskit.shuttling import ShuttlingShiftGenerator
+from bqskit import enable_logging
+
+enable_logging(True)
 
 qtm_machine = QtmMachine.H1_1
 
@@ -191,14 +192,18 @@ def alternate_circuit_structure(input_circuit: Circuit, parity_flag: bool) -> Ci
             if operation.num_qudits == 1:
                 tmp_circuit.append_gate(gate=U3Gate(), location=operation.location[0])
             elif operation.num_qudits == 2:
-                if (operation.location == (1, 2) or operation.location == (2, 1)) and parity_flag is True:
+                if (operation.location == (1, 2) or operation.location == (2, 1)) and parity_flag is False:
                     for i in range(input_circuit.num_qudits):
                         tmp_circuit.append_gate(gate=U3Gate(), location=i)
                     new_op = Operation(gate=operation.gate, location=(0, 1))
                     tmp_circuit.append(new_op)
+                    if tmp_circuit.num_qudits == 4:
+                        new_op = Operation(gate=operation.gate, location=(2, 3))
+                        tmp_circuit.append(new_op)
                     for i in range(input_circuit.num_qudits):
                         tmp_circuit.append_gate(gate=U3Gate(), location=i)
-                elif (operation.location == (0, 1) or operation.location == (1, 0)) and parity_flag is False:
+                elif (operation.location == (0, 1) or operation.location == (1, 0)
+                      or operation.location == (2, 3) or operation.location == (3, 2)) and parity_flag is True:
                     for i in range(input_circuit.num_qudits):
                         tmp_circuit.append_gate(gate=U3Gate(), location=i)
                     new_op = Operation(gate=operation.gate, location=(1, 2))
@@ -243,21 +248,34 @@ def folding_ver2(circuit: Circuit):
     reversed_problem_points = trouble_points[::-1]
     reversed_states = trouble_states[::-1]
     for p, q in zip(reversed_problem_points, reversed_states):
+        print("Point: ", p)
+        print("Machine State:", q)
         circuit_region = initial_circuit.surround(point=p, num_qudits=4, fail_quickly=True)
         print("Circuit region: ", circuit_region)
         folded_point = initial_circuit.fold(circuit_region)
         op = initial_circuit.get_operation(folded_point)
         target_unitary = op.get_unitary()
         old_block_circuit = op.gate._circuit
-        tmp_circuit = alternate_circuit_structure(old_block_circuit, q)
-        instantiated_circuit = tmp_circuit.instantiate(target=target_unitary, multistarts=5)
-        distance = instantiated_circuit.get_unitary().get_distance_from(target_unitary, 2)
+        ### Instantiation
+        # tmp_circuit = alternate_circuit_structure(old_block_circuit, q)
+        # instantiated_circuit = tmp_circuit.instantiate(target=target_unitary, multistarts=5)
+        # distance = instantiated_circuit.get_unitary().get_distance_from(target_unitary, 2)
+        ### Qsearch
+        print("Running Qsearch......")
+        qsearch_shift_pass = QSearchSynthesisPass(layer_generator=ShuttlingShiftGenerator(q),
+                                                  max_layer=6,
+                                                  heuristic_function=HeuristicSearch(heuristic_factor=2,
+                                                                                     qtm_machine=qtm_machine))
+        sub_workflow = [qsearch_shift_pass]
+        with Compiler() as compiler:
+            search_circuit = compiler.compile(old_block_circuit, sub_workflow)
+        distance = search_circuit.get_unitary().get_distance_from(target_unitary, 2)
         print("Distance between instantiation and target unitary", distance)
         if distance < 1e-8:
-            initial_circuit.replace_with_circuit(folded_point, instantiated_circuit)
+            initial_circuit.replace_with_circuit(folded_point, search_circuit)
             print("Successfully replace the problem point with instantiation")
         initial_circuit.unfold_all()
-    print(initial_circuit.to('qasm'))
+    # print(initial_circuit.to('qasm'))
     return initial_circuit
 
 
@@ -267,7 +285,7 @@ initial_circuit = Circuit(num_qudits=9).from_file('experiments/results/experimen
                                                   'output_circuits/adder9_without_scheduling.qasm')
 # problem_points = find_problematic_points_ver2(initial_circuit, lookahead=5)
 instantiated_circ = folding_ver2(initial_circuit)
-print(instantiated_circ.to('qasm'))
+# print(instantiated_circ.to('qasm'))
 # required_shifts, shift_w_lst, shift_location_lst, state_shift = dry_scheduling(initial_circuit)
 # print("Required shifts:", required_shifts)
 # print("Shift weights:", shift_w_lst)

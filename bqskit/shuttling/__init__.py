@@ -4,3 +4,4 @@ from .embed import ShuttlingEmbedAllPermutationsPass
 from .gatezone_selection import GateZoneSelectionPass
 from .ShuttlingShift import ShuttlingShiftGate
 from .OddEvenScheduling import OddEvenSchedulingPass
+from .shuttling_shift_qsearch import ShuttlingShiftGenerator
