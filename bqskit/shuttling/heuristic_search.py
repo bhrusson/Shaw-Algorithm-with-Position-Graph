@@ -21,7 +21,7 @@ class HeuristicSearch(HeuristicFunction):
             heuristic_factor: float = 10.0,
             cost_factor: float = 1.0,
             cost_gen: CostFunctionGenerator = HilbertSchmidtCostGenerator(),
-            qtm_machine: QtmMachine = QtmMachine.H1_1,
+            qtm_machine: QtmMachine = QtmMachine.H1,
     ) -> None:
         """
         Construct a AStarHeuristic Function.

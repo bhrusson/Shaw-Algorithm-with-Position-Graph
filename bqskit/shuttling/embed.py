@@ -31,7 +31,7 @@ def multi_qudit_op_count(circuit: Circuit) -> float:
 
 
 def circuit_duration(circuit: Circuit) -> float:
-    qtm_machine = QtmMachine.H1_1
+    qtm_machine = QtmMachine.H1
     circ_depth = circuit.num_cycles
     total_duration = 0.0
     for i in range(circ_depth):
@@ -69,7 +69,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
             vary_gatezone: bool = True,
             inner_synthesis: SynthesisPass = LEAPSynthesisPass(),
             scoring_fn: Callable[[Circuit], float] = circuit_duration,
-            qtm_machine: QtmMachine = QtmMachine.H1_1,
+            qtm_machine: QtmMachine = QtmMachine.H1,
     ) -> None:
         """
         Construct a EmbedAllPermutationsPass.
