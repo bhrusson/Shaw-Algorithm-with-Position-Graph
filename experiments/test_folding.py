@@ -28,13 +28,15 @@ class MachineSchedulingState(Enum):
 
 def matches_state(op: Operation, state: MachineSchedulingState) -> bool:
     """Check if the operation matches the state."""
+    if op.num_qudits == 1:
+        return True
+
     min_operation = np.min(op.location)
-    if state == MachineSchedulingState.EVEN and min_operation % 2 == 0:
-        return True
-    elif state == MachineSchedulingState.ODD and min_operation % 2 == 1:
-        return True
-    else:
-        return False
+    return (
+        state == MachineSchedulingState.EVEN and min_operation % 2 == 0
+        or
+        state == MachineSchedulingState.ODD and min_operation % 2 == 1
+    )
 
 
 # Zone is overloaded with GateZone, come up with another name (TODO)
@@ -43,19 +45,10 @@ ShiftZone = list[CircuitPoint]
 
 # I want to see tests!
 
-def gate_is_executable(location: CircuitPoint, executed_gates: list[CircuitPoint], circuit: Circuit) -> bool:
+def has_processed_dependency(location: CircuitPoint, processed_gates: set[CircuitPoint], circuit: Circuit) -> bool:
     """Check if the current operation is executable at the moment"""
-    prev_gates = circuit.prev(location)
-    if len(prev_gates) == 0:
-        return True
 
-    for gate in prev_gates:
-        if gate in executed_gates:
-            continue
-        else:
-            return False
-    return True
-
+    return all(gate in processed_gates for gate in circuit.prev(location))
 
 def zone_circuit(circuit: Circuit) -> list[ShiftZone]:
     """
@@ -66,7 +59,7 @@ def zone_circuit(circuit: Circuit) -> list[ShiftZone]:
     machine_state = MachineSchedulingState.EVEN
     zones = []
     frontier = circuit.front
-    all_executed_points = []
+    to_be_processed = dict()
     while len(frontier) != 0:
         print("Current machine state: ", machine_state)
         zone = []
@@ -76,22 +69,24 @@ def zone_circuit(circuit: Circuit) -> list[ShiftZone]:
             executed_points = []
             investigating_further = False
             next_layers_gate = set()
+
             for location in frontier:
                 op = circuit.get_operation(location)
-                if op.gate == RZZGate():
-                    if matches_state(op, machine_state):
-                        zone.append(location)
-                        executed_points.append(location)
-                else:
+                if matches_state(op, machine_state):
                     zone.append(location)
                     executed_points.append(location)
-                all_executed_points.extend(executed_points)
+
                 if len(circuit.next(location)) != 0:
                     for new_location in circuit.next(location):
-                        if gate_is_executable(new_location, all_executed_points, circuit):
+                        if new_location in to_be_processed:
+                            to_be_processed[new_location] += 1
+                        else:
+                            to_be_processed[new_location] = 1
+                        if to_be_processed[new_location] == len(circuit.prev(new_location)):
                             investigating_further = True
                             print(f"Gate {circuit.get_operation(new_location)} is added inside iteration")
                             next_layers_gate.add(new_location)
+
             # For debugging purpose
             print("Current executable points: ", executed_points)
             for point in executed_points:
@@ -410,6 +405,7 @@ def main():
 #     # print("Shift weights:", shift_weights)
 #     # print("Shift locations:", shift_locations)
 #     # print("State before shifts:", states_before_shift)
+    test_zone_circuit()
 
 
 if __name__ == "__main__":
