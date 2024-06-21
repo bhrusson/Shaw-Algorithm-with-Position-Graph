@@ -48,10 +48,15 @@
 # output_circuit.save(f"experiments/results/experiment_circuits/test_circuits/swap.qasm")
 # print(f"Distance {output_circuit.get_unitary().get_distance_from(SwapGate().get_unitary())}")
 
-from bqskit.ir.gates import ControlledGate, U1Gate
-g = ControlledGate(U1Gate())
-from bqskit import Circuit
-
-c = Circuit(2)
-c.append_gate(g, (0, 1))
-print(c.to('qasm'))
+# from bqskit.ir.gates import ControlledGate, U1Gate
+# g = ControlledGate(U1Gate())
+# from bqskit import Circuit
+#
+# c = Circuit(2)
+# c.append_gate(g, (0, 1))
+# print(c.to('qasm'))
+a = {1, 2, 3}
+for i in a.copy():
+    if i == 2:
+        a.add(4)
+    print(i)

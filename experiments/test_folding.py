@@ -1,16 +1,16 @@
 from __future__ import annotations
 from enum import Enum
 
+import numpy as np
 from bqskit import Circuit
-from bqskit.ir.gates import RZZGate, SwapGate, U3Gate
+from bqskit.ir.gates import *
 from bqskit.ir.point import CircuitPoint
-from pytket.phir.qtm_machine import QtmMachine
 from bqskit.shuttling import HeuristicSearch
 from bqskit.compiler import Compiler
 from bqskit.ir import Operation
 from bqskit.passes import *
 from bqskit.shuttling import ShuttlingShiftGenerator
-from bqskit import enable_logging
+from pytket.phir import qtm_machine
 
 
 class MachineSchedulingState(Enum):
@@ -18,22 +18,44 @@ class MachineSchedulingState(Enum):
     EVEN = 0
     ODD = 1
 
-    def flip(self) -> None:
+    def flip(self) -> MachineSchedulingState:
         """Flip the state."""
         if self is MachineSchedulingState.EVEN:
-            self = MachineSchedulingState.ODD
+            return MachineSchedulingState.ODD
         else:
-            self = MachineSchedulingState.EVEN
+            return MachineSchedulingState.EVEN
 
 
 def matches_state(op: Operation, state: MachineSchedulingState) -> bool:
     """Check if the operation matches the state."""
-    
+    min_operation = np.min(op.location)
+    if state == MachineSchedulingState.EVEN and min_operation % 2 == 0:
+        return True
+    elif state == MachineSchedulingState.ODD and min_operation % 2 == 1:
+        return True
+    else:
+        return False
+
 
 # Zone is overloaded with GateZone, come up with another name (TODO)
 ShiftZone = list[CircuitPoint]
 
+
 # I want to see tests!
+
+def gate_is_executable(location: CircuitPoint, executed_gates: list[CircuitPoint], circuit: Circuit) -> bool:
+    """Check if the current operation is executable at the moment"""
+    prev_gates = circuit.prev(location)
+    if len(prev_gates) == 0:
+        return True
+
+    for gate in prev_gates:
+        if gate in executed_gates:
+            continue
+        else:
+            return False
+    return True
+
 
 def zone_circuit(circuit: Circuit) -> list[ShiftZone]:
     """
@@ -44,18 +66,46 @@ def zone_circuit(circuit: Circuit) -> list[ShiftZone]:
     machine_state = MachineSchedulingState.EVEN
     zones = []
     frontier = circuit.front
-
-    while frontier is not None:
+    all_executed_points = []
+    while len(frontier) != 0:
+        print("Current machine state: ", machine_state)
         zone = []
-        # for gate in frontier: (manage changes under iteration)
-            # if gate matches with state:
-                # zone.append(gate.point)
-                # frontier.remove(gate) (make a to_remove list; delay the remove)
-                # frontier.extend(gate.next) (this is trickier, because we want to iterate over these for the current zone)
-                
-        zones.append(zone)
-        machine_state.flip()
+        investigating_further = True
+        # Select the executable points wrt the current machine states
+        while investigating_further:
+            executed_points = []
+            investigating_further = False
+            next_layers_gate = set()
+            for location in frontier:
+                op = circuit.get_operation(location)
+                if op.gate == RZZGate():
+                    if matches_state(op, machine_state):
+                        zone.append(location)
+                        executed_points.append(location)
+                else:
+                    zone.append(location)
+                    executed_points.append(location)
+                all_executed_points.extend(executed_points)
+                if len(circuit.next(location)) != 0:
+                    for new_location in circuit.next(location):
+                        if gate_is_executable(new_location, all_executed_points, circuit):
+                            investigating_further = True
+                            print(f"Gate {circuit.get_operation(new_location)} is added inside iteration")
+                            next_layers_gate.add(new_location)
+            # For debugging purpose
+            print("Current executable points: ", executed_points)
+            for point in executed_points:
+                print(circuit.get_operation(point))
 
+            # Modifying the frontier
+            for location in executed_points:
+                frontier.remove(location)
+                for new_location in next_layers_gate:
+                    frontier.add(new_location)
+
+        print("Frontier at the next zone: ", frontier)
+        zones.append(zone)
+        machine_state = machine_state.flip()
     return zones
 
 
@@ -63,13 +113,19 @@ def test_zone_circuit():
     # You should test everything all the time!
     # leave them in the code well labeled.
 
-    # circuit = Circuit(5)
-    # circuit.append(...) 5 gates
-    # assert zone_circuit(circuit) == [[0, 1, 2], [3, 4]]
+    circuit = Circuit(5)
+    circuit.append_gate(HGate(), 0)
+    circuit.append_gate(HGate(), 1)
+    circuit.append_gate(RZZGate(), [0, 1])
+    circuit.append_gate(RZZGate(), [2, 3])
+    circuit.append_gate(RZZGate(), [3, 4])
+    circuit.append_gate(HGate(), 0)
+    circuit.append_gate(HGate(), 1)
+    circuit.append_gate(RZZGate(), [1, 2])
+    assert zone_circuit(circuit) == [[(0, 1), (0, 2), (0, 0), (1, 0), (2, 1), (2, 0)], [(1, 3), (3, 1)]]
 
     # When you are going production ready, this is not enough
     # For paperware, this is plenty
-
 
 
 def find_problematic_points(circuit: Circuit):
@@ -88,14 +144,11 @@ def find_problematic_points(circuit: Circuit):
                     continue
     return problematic_points
 
-# L1 L2
-# 01 67
-# 34
 
 def return_reorder_gate_by_layers(
-    circuit: Circuit,
-    layer_idx: int,
-    prev_layer_parity: MachineSchedulingState
+        circuit: Circuit,
+        layer_idx: int,
+        prev_layer_parity: MachineSchedulingState
 ) -> list[Operation]:
     """Choose gates for iteration that match the state."""
     layer = circuit[layer_idx]
@@ -135,6 +188,7 @@ def return_reorder_gate_by_layers(
     else:
         reordered_layer = layer
     return reordered_layer
+
 
 def dry_scheduling(circuit: Circuit):
     """
@@ -290,14 +344,6 @@ def update_weight_lst(weight_lst: list[int], idx: int) -> list[int]:
     return weight_lst
 
 
-# def find_problematic_points_ver3(shift_weights, shift_locations, wd_sz):
-#     problematic_weight_lst_location = []
-#     for i in range(len(shift_weights)):
-#         if i != 0 and i != len(shift_weights) - 1:
-#             if i == 1:
-#
-#     return problematic_weight_lst_location
-
 def folding_ver2(circuit: Circuit):
     num_shifts, shift_weights, shift_locations, states_before_shift = dry_scheduling(circuit)
     """ Automatic identify and re-instantiate trouble points"""
@@ -329,7 +375,7 @@ def folding_ver2(circuit: Circuit):
             max_layer=6,
             heuristic_function=HeuristicSearch(
                 heuristic_factor=2,
-                qtm_machine=qtm_machine
+                qtm_machine=qtm_machine.H1
             ),
         )
         sub_workflow = [qsearch_shift_pass]
@@ -344,32 +390,34 @@ def folding_ver2(circuit: Circuit):
     # print(initial_circuit.to('qasm'))
     return circuit
 
+
 def main():
     # Configuration Setup
     # enable_logging(True)
     # qtm_machine = QtmMachine.H1
 
-    # Load circuit
-    circuit_name = "adder9"
-    print(f"Scheduling {circuit_name}.")
-    circuit = Circuit.from_file(
-        "experiments/results/experiment_circuits/output_circuits/"
-        f"{circuit_name}_without_scheduling.qasm"
-    )
+    # # Load circuit
+#     # circuit_name = "adder9"
+#     # print(f"Scheduling {circuit_name}.")
+#     # circuit = Circuit.from_file(
+#     #     "experiments/results/experiment_circuits/output_circuits/"
+#     #     f"{circuit_name}_without_scheduling.qasm"
+#     # )
+#     #
+#     # # Find shift zones
+#     # num_shifts, shift_weights, shift_locations, states_before_shift = dry_scheduling(circuit)
+#     # print("Required shifts:", num_shifts)
+#     # print("Shift weights:", shift_weights)
+#     # print("Shift locations:", shift_locations)
+#     # print("State before shifts:", states_before_shift)
 
-    # Find shift zones
-    num_shifts, shift_weights, shift_locations, states_before_shift = dry_scheduling(circuit)
-    print("Required shifts:", num_shifts)
-    print("Shift weights:", shift_weights)
-    print("Shift locations:", shift_locations)
-    print("State before shifts:", states_before_shift)
 
 if __name__ == "__main__":
     main()
 ### Folding then scheduling:
 
 # problem_points = find_problematic_points_ver2(initial_circuit, lookahead=5)
-#instantiated_circ = folding_ver2(target_circuit)
+# instantiated_circ = folding_ver2(target_circuit)
 # print(instantiated_circ.to('qasm'))
 # required_shifts, shift_w_lst, shift_location_lst, state_shift = dry_scheduling(initial_circuit)
 # print("Required shifts:", required_shifts)
