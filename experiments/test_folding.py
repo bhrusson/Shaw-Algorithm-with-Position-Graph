@@ -5,6 +5,7 @@ import numpy as np
 from bqskit import Circuit
 from bqskit.ir.gates import *
 from bqskit.ir.point import CircuitPoint
+from bqskit.ir.location import CircuitLocation
 from bqskit.shuttling import HeuristicSearch
 from bqskit.compiler import Compiler
 from bqskit.ir import Operation
@@ -113,7 +114,7 @@ def zone_circuit(circuit: Circuit) -> (list[ShiftZone], list[int], list[MachineS
 def test_zone_circuit():
     # You should test everything all the time!
     # leave them in the code well labeled.
-
+    # !
     circuit = Circuit(5)
     circuit.append_gate(HGate(), 0)
     circuit.append_gate(HGate(), 1)
@@ -125,6 +126,52 @@ def test_zone_circuit():
     circuit.append_gate(RZZGate(), [1, 2])
     assert zone_circuit(circuit) == [[(0, 1), (0, 2), (0, 0), (1, 0), (2, 1), (2, 0)], [(1, 3), (3, 1)]]
 
+from bqskit import enable_logging
+enable_logging(True)
+def test_surround_filter():
+    circuit = Circuit(6)
+    # whole wall of even
+    circuit.append_gate(RZZGate(), [0, 1])
+    circuit.append_gate(RZZGate(), [2, 3])
+    circuit.append_gate(RZZGate(), [4, 5])
+
+    # one odd gate; problematic point in test
+    circuit.append_gate(RZZGate(), [3, 4])
+
+    # whole wall of even
+    circuit.append_gate(RZZGate(), [0, 1])
+    circuit.append_gate(RZZGate(), [2, 3])
+    circuit.append_gate(RZZGate(), [4, 5])
+
+    region = circuit.surround((1, 3), 4, None, False, lambda node: len(node[2]) < 4 or node[2][0] % 2 == 0)
+    print(region.location)
+    assert region.location == CircuitLocation([2, 3, 4, 5])
+
+
+def test_surround_filter_hard():
+    circuit = Circuit(7)
+    # whole wall of even
+    circuit.append_gate(RZZGate(), [0, 1])
+    circuit.append_gate(RZZGate(), [2, 3])
+    circuit.append_gate(RZZGate(), [4, 5])
+
+    # one odd gate; problematic point in test
+    circuit.append_gate(RZZGate(), [3, 4])
+
+    # whole wall of even
+    circuit.append_gate(RZZGate(), [0, 1])
+    circuit.append_gate(RZZGate(), [2, 3])
+    circuit.append_gate(RZZGate(), [4, 5])
+    
+    # more odd gates to really test filter
+    circuit.append_gate(RZZGate(), [5, 6])
+    circuit.append_gate(RZZGate(), [5, 6])
+    circuit.append_gate(RZZGate(), [5, 6])
+    circuit.append_gate(RZZGate(), [5, 6])
+    circuit.append_gate(RZZGate(), [5, 6])
+
+    region = circuit.surround((1, 3), 4, None, False, lambda node: len(node[2]) < 4 or node[2][0] % 2 == 0)
+    assert region.location == CircuitLocation([2, 3, 4, 5])
 
 def find_problematic_points(circuit: Circuit):
     """ Find problematic points where shift gate is needed based on parity only"""
@@ -424,7 +471,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test_surround_filter()
+    test_surround_filter_hard()
 ### Folding then scheduling:
 
 # problem_points = find_problematic_points_ver2(initial_circuit, lookahead=5)
