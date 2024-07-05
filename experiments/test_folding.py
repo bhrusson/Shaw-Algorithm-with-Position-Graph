@@ -126,8 +126,12 @@ def test_zone_circuit():
     circuit.append_gate(RZZGate(), [1, 2])
     assert zone_circuit(circuit) == [[(0, 1), (0, 2), (0, 0), (1, 0), (2, 1), (2, 0)], [(1, 3), (3, 1)]]
 
+
 from bqskit import enable_logging
+
 enable_logging(True)
+
+
 def test_surround_filter():
     circuit = Circuit(6)
     # whole wall of even
@@ -143,7 +147,7 @@ def test_surround_filter():
     circuit.append_gate(RZZGate(), [2, 3])
     circuit.append_gate(RZZGate(), [4, 5])
 
-    region = circuit.surround((1, 3), 4, None, False, lambda node: len(node[2]) < 4 or node[2][0] % 2 == 0)
+    region = circuit.surround((1, 3), 4, None, False, lambda node: (node[2][0] > 1 and node[2][-1] < 6) or (node[2][0] % 2 == 0))
     print(region.location)
     assert region.location == CircuitLocation([2, 3, 4, 5])
 
@@ -162,7 +166,7 @@ def test_surround_filter_hard():
     circuit.append_gate(RZZGate(), [0, 1])
     circuit.append_gate(RZZGate(), [2, 3])
     circuit.append_gate(RZZGate(), [4, 5])
-    
+
     # more odd gates to really test filter
     circuit.append_gate(RZZGate(), [5, 6])
     circuit.append_gate(RZZGate(), [5, 6])
@@ -170,68 +174,53 @@ def test_surround_filter_hard():
     circuit.append_gate(RZZGate(), [5, 6])
     circuit.append_gate(RZZGate(), [5, 6])
 
-    region = circuit.surround((1, 3), 4, None, False, lambda node: len(node[2]) < 4 or node[2][0] % 2 == 0)
+    region = circuit.surround((1, 3), 4, None, False, lambda node: (node[2][0] > 1 and node[2][-1] < 6) or (node[2][0] % 2 == 0))
+    print(region.location)
     assert region.location == CircuitLocation([2, 3, 4, 5])
 
-def find_problematic_points(circuit: Circuit):
-    """ Find problematic points where shift gate is needed based on parity only"""
-    problematic_points = []
-    circ_depth = circuit.num_cycles
-    for i in range(circ_depth):
-        layer = circuit[i]
-        for op in layer:
-            if op.gate == RZZGate() or op.gate == SwapGate():
-                if op.location[0] % 2 == 0 and op.location[0] > op.location[1]:
-                    problematic_points.append((i, op.location[1]))
-                elif op.location[1] % 2 == 0 and op.location[1] > op.location[0]:
-                    problematic_points.append((i, op.location[0]))
-                else:
-                    continue
-    return problematic_points
 
-
-def return_reorder_gate_by_layers(
-        circuit: Circuit,
-        layer_idx: int,
-        prev_layer_parity: MachineSchedulingState) -> list[Operation]:
-    """Choose gates for iteration that match the state."""
-    layer = circuit[layer_idx]
-    even_rzz = []
-    odd_rzz = []
-    reordered_layer = []
-    for op in layer:
-        if op.gate == RZZGate():
-            if op.location[0] > op.location[1]:
-                if int(op.location[1] % 2) == 1:
-                    odd_rzz.append(op)
-                else:
-                    even_rzz.append(op)
-            elif op.location[0] < op.location[1]:
-                if int(op.location[0] % 2) == 1:
-                    odd_rzz.append(op)
-                else:
-                    even_rzz.append(op)
-            else:
-                raise ValueError(f"Weird operation location {op.location}")
-        else:
-            reordered_layer.append(op)
-    if even_rzz == [] and odd_rzz != []:
-        # prev_layer_parity = bool(1)
-        reordered_layer = layer
-    elif odd_rzz == [] and even_rzz != []:
-        # prev_layer_parity = bool(0)
-        reordered_layer = layer
-    elif odd_rzz != [] and even_rzz != []:
-        # print("Current machine state: ", prev_layer_parity)
-        if prev_layer_parity:
-            reordered_layer.extend(odd_rzz)
-            reordered_layer.extend(even_rzz)
-        else:
-            reordered_layer.extend(even_rzz)
-            reordered_layer.extend(odd_rzz)
-    else:
-        reordered_layer = layer
-    return reordered_layer
+# def return_reorder_gate_by_layers(
+#         circuit: Circuit,
+#         layer_idx: int,
+#         prev_layer_parity: MachineSchedulingState) -> list[Operation]:
+#     """Choose gates for iteration that match the state."""
+#     layer = circuit[layer_idx]
+#     even_rzz = []
+#     odd_rzz = []
+#     reordered_layer = []
+#     for op in layer:
+#         if op.gate == RZZGate():
+#             if op.location[0] > op.location[1]:
+#                 if int(op.location[1] % 2) == 1:
+#                     odd_rzz.append(op)
+#                 else:
+#                     even_rzz.append(op)
+#             elif op.location[0] < op.location[1]:
+#                 if int(op.location[0] % 2) == 1:
+#                     odd_rzz.append(op)
+#                 else:
+#                     even_rzz.append(op)
+#             else:
+#                 raise ValueError(f"Weird operation location {op.location}")
+#         else:
+#             reordered_layer.append(op)
+#     if even_rzz == [] and odd_rzz != []:
+#         # prev_layer_parity = bool(1)
+#         reordered_layer = layer
+#     elif odd_rzz == [] and even_rzz != []:
+#         # prev_layer_parity = bool(0)
+#         reordered_layer = layer
+#     elif odd_rzz != [] and even_rzz != []:
+#         # print("Current machine state: ", prev_layer_parity)
+#         if prev_layer_parity:
+#             reordered_layer.extend(odd_rzz)
+#             reordered_layer.extend(even_rzz)
+#         else:
+#             reordered_layer.extend(even_rzz)
+#             reordered_layer.extend(odd_rzz)
+#     else:
+#         reordered_layer = layer
+#     return reordered_layer
 
 
 def dry_scheduling_ver2(circuit: Circuit):
@@ -250,117 +239,116 @@ def dry_scheduling_ver2(circuit: Circuit):
     return zones, zones_weight, machine_states, potential_shift_locations
 
 
-def dry_scheduling(circuit: Circuit):
-    """
-    Assign weights to the circuit's zones delimited by shifts.
+# def dry_scheduling(circuit: Circuit):
+#     """
+#     Assign weights to the circuit's zones delimited by shifts.
+#
+#     Used to determine the problematic points.
+#     """
+#     # Setup
+#     machine_state = MachineSchedulingState.EVEN
+#     shift_counts = 0
+#     shifts_weight = []
+#     shifts_location = []
+#     state_before_shifts = []
+#     circ_depth = circuit.num_cycles
+#     # Dry-scheduling
+#     for idx in range(circ_depth):
+#         reordered_layer = return_reorder_gate_by_layers(circuit, idx, machine_state)
+#         for op in reordered_layer:  # TODO: re-order the gate such that it requires the least amount of shift gates
+#             if op.gate == RZZGate() or op.gate == SwapGate():
+#                 # Adding all possible Rzz gates
+#                 if op.location[0] > op.location[1]:
+#                     # Adding weighted shift
+#                     if op.location[1] % 2 == 0:
+#                         if machine_state is True:
+#                             shift_counts += 1
+#                             state_before_shifts.append(machine_state)
+#                             machine_state = not machine_state
+#                             shifts_weight.append(1)
+#                             shifts_location.append((idx, op.location[1]))
+#                         elif machine_state is False:
+#                             if not shifts_weight:
+#                                 continue
+#                             else:
+#                                 shifts_weight[-1] = shifts_weight[-1] + 1
+#                     elif op.location[1] % 2 == 1:
+#                         if machine_state is False:
+#                             shift_counts += 1
+#                             state_before_shifts.append(machine_state)
+#                             machine_state = not machine_state
+#                             shifts_weight.append(1)
+#                             shifts_location.append((idx, op.location[1]))
+#                         elif machine_state is True:
+#                             if not shifts_weight:
+#                                 continue
+#                             else:
+#                                 shifts_weight[-1] = shifts_weight[-1] + 1
+#                     else:
+#                         raise ValueError(f"Invalid operation location {op.location[1]} on circuit.")
+#                 else:
+#                     if op.location[0] % 2 == 0:
+#                         if machine_state is True:
+#                             shift_counts += 1
+#                             state_before_shifts.append(machine_state)
+#                             machine_state = not machine_state
+#                             shifts_weight.append(1)
+#                             shifts_location.append((idx, op.location[0]))
+#                         elif machine_state is False:
+#                             if not shifts_weight:
+#                                 continue
+#                             else:
+#                                 shifts_weight[-1] = shifts_weight[-1] + 1
+#                     elif op.location[0] % 2 == 1:
+#                         if machine_state is False:
+#                             shift_counts += 1
+#                             state_before_shifts.append(machine_state)
+#                             machine_state = not machine_state
+#                             shifts_weight.append(1)
+#                             shifts_location.append((idx, op.location[0]))
+#                         elif machine_state is True:
+#                             if not shifts_weight:
+#                                 continue
+#                             else:
+#                                 shifts_weight[-1] = shifts_weight[-1] + 1
+#                     else:
+#                         raise ValueError(f"Invalid operation location {op.location[0]} on circuit.")
+#     return shift_counts, shifts_weight, shifts_location, state_before_shifts
 
-    Used to determine the problematic points.
-    """
-    # Setup
-    machine_state = MachineSchedulingState.EVEN
-    shift_counts = 0
-    shifts_weight = []
-    shifts_location = []
-    state_before_shifts = []
-    circ_depth = circuit.num_cycles
-    # Dry-scheduling
-    for idx in range(circ_depth):
-        reordered_layer = return_reorder_gate_by_layers(circuit, idx, machine_state)
-        for op in reordered_layer:  # TODO: re-order the gate such that it requires the least amount of shift gates
-            if op.gate == RZZGate() or op.gate == SwapGate():
-                # Adding all possible Rzz gates
-                if op.location[0] > op.location[1]:
-                    # Adding weighted shift
-                    if op.location[1] % 2 == 0:
-                        if machine_state is True:
-                            shift_counts += 1
-                            state_before_shifts.append(machine_state)
-                            machine_state = not machine_state
-                            shifts_weight.append(1)
-                            shifts_location.append((idx, op.location[1]))
-                        elif machine_state is False:
-                            if not shifts_weight:
-                                continue
-                            else:
-                                shifts_weight[-1] = shifts_weight[-1] + 1
-                    elif op.location[1] % 2 == 1:
-                        if machine_state is False:
-                            shift_counts += 1
-                            state_before_shifts.append(machine_state)
-                            machine_state = not machine_state
-                            shifts_weight.append(1)
-                            shifts_location.append((idx, op.location[1]))
-                        elif machine_state is True:
-                            if not shifts_weight:
-                                continue
-                            else:
-                                shifts_weight[-1] = shifts_weight[-1] + 1
-                    else:
-                        raise ValueError(f"Invalid operation location {op.location[1]} on circuit.")
-                else:
-                    if op.location[0] % 2 == 0:
-                        if machine_state is True:
-                            shift_counts += 1
-                            state_before_shifts.append(machine_state)
-                            machine_state = not machine_state
-                            shifts_weight.append(1)
-                            shifts_location.append((idx, op.location[0]))
-                        elif machine_state is False:
-                            if not shifts_weight:
-                                continue
-                            else:
-                                shifts_weight[-1] = shifts_weight[-1] + 1
-                    elif op.location[0] % 2 == 1:
-                        if machine_state is False:
-                            shift_counts += 1
-                            state_before_shifts.append(machine_state)
-                            machine_state = not machine_state
-                            shifts_weight.append(1)
-                            shifts_location.append((idx, op.location[0]))
-                        elif machine_state is True:
-                            if not shifts_weight:
-                                continue
-                            else:
-                                shifts_weight[-1] = shifts_weight[-1] + 1
-                    else:
-                        raise ValueError(f"Invalid operation location {op.location[0]} on circuit.")
-    return shift_counts, shifts_weight, shifts_location, state_before_shifts
 
-
-def find_problematic_points_ver2(circuit: Circuit, lookahead: int):
-    """ Find problematic points using lookahead window where instantiation is needed based on dry scheduling"""
-    odd_even_points = []
-    problematic_points = []
-    circ_depth = circuit.num_cycles
-    for idx in range(circ_depth):
-        layer = circuit[idx]
-        for op in layer:
-            if op.gate == RZZGate() or op.gate == SwapGate():
-                if op.location[0] > op.location[1]:
-                    odd_even_points.append((idx, op.location[1]))
-                else:
-                    odd_even_points.append((idx, op.location[0]))
-    # Window-sliding
-    for point_idx in range(len(odd_even_points)):
-        if point_idx + lookahead < len(odd_even_points):
-            odd_count = len([odd_even_points[idx][1] for idx in range(point_idx, point_idx + lookahead)
-                             if odd_even_points[idx][1] % 2 == 1])
-            even_count = lookahead - odd_count
-        else:
-            odd_count = len([odd_even_points[idx][1] for idx in range(point_idx, len(odd_even_points))
-                             if odd_even_points[idx][1] % 2 == 1])
-            even_count = len(odd_even_points) - point_idx - odd_count
-        if even_count > odd_count and odd_even_points[point_idx][1] % 2 == 1:
-            problematic_points.append((odd_even_points[point_idx], 1))
-        elif odd_count > even_count and odd_even_points[point_idx][1] % 2 == 0:
-            problematic_points.append((odd_even_points[point_idx], 0))
-        else:
-            continue
-    return problematic_points
+# def find_problematic_points_ver2(circuit: Circuit, lookahead: int):
+#     """ Find problematic points using lookahead window where instantiation is needed based on dry scheduling"""
+#     odd_even_points = []
+#     problematic_points = []
+#     circ_depth = circuit.num_cycles
+#     for idx in range(circ_depth):
+#         layer = circuit[idx]
+#         for op in layer:
+#             if op.gate == RZZGate() or op.gate == SwapGate():
+#                 if op.location[0] > op.location[1]:
+#                     odd_even_points.append((idx, op.location[1]))
+#                 else:
+#                     odd_even_points.append((idx, op.location[0]))
+#     # Window-sliding
+#     for point_idx in range(len(odd_even_points)):
+#         if point_idx + lookahead < len(odd_even_points):
+#             odd_count = len([odd_even_points[idx][1] for idx in range(point_idx, point_idx + lookahead)
+#                              if odd_even_points[idx][1] % 2 == 1])
+#             even_count = lookahead - odd_count
+#         else:
+#             odd_count = len([odd_even_points[idx][1] for idx in range(point_idx, len(odd_even_points))
+#                              if odd_even_points[idx][1] % 2 == 1])
+#             even_count = len(odd_even_points) - point_idx - odd_count
+#         if even_count > odd_count and odd_even_points[point_idx][1] % 2 == 1:
+#             problematic_points.append((odd_even_points[point_idx], 1))
+#         elif odd_count > even_count and odd_even_points[point_idx][1] % 2 == 0:
+#             problematic_points.append((odd_even_points[point_idx], 0))
+#         else:
+#             continue
+#     return problematic_points
 
 
 def alternate_circuit_structure(input_circuit: Circuit, state: MachineSchedulingState) -> Circuit:
-    # TODO: need change to MachineState
     """ Alternate the given circuit to create a temple circuit without the need of shift gate"""
     tmp_circuit = Circuit(num_qudits=input_circuit.num_qudits)
     circ_depth = input_circuit.num_cycles
@@ -382,7 +370,7 @@ def alternate_circuit_structure(input_circuit: Circuit, state: MachineScheduling
                     for i in range(input_circuit.num_qudits):
                         tmp_circuit.append_gate(gate=U3Gate(), location=i)
                 elif ((operation.location == (0, 1) or operation.location == (1, 0)
-                      or operation.location == (2, 3) or operation.location == (3, 2))
+                       or operation.location == (2, 3) or operation.location == (3, 2))
                       and state is MachineSchedulingState.ODD):
                     for i in range(input_circuit.num_qudits):
                         tmp_circuit.append_gate(gate=U3Gate(), location=i)
@@ -407,10 +395,6 @@ def folding_ver2(circuit: Circuit):
     """ Automatic identify and re-instantiate trouble points """
     trouble_points = []
     trouble_states = []
-    # for idx in range(len(shift_weights)):
-    #     if idx != 0 and idx != len(shift_weights) - 1 and shift_weights[idx] == 1:
-    #         trouble_points.append(shift_locations[idx])
-    #         trouble_states.append(states_before_shift[idx])
     reversed_problem_points = trouble_points[::-1]
     reversed_states = trouble_states[::-1]
     for p, q in zip(reversed_problem_points, reversed_states):
@@ -472,7 +456,7 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    test_surround_filter()
+    #test_surround_filter()
     test_surround_filter_hard()
 ### Folding then scheduling:
 

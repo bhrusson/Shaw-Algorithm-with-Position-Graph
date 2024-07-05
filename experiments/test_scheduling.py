@@ -16,6 +16,7 @@ print(circuit_type)
 target_circuit = Circuit(num_qudits).from_file(f"experiments/results/experiment_circuits/output_circuits/{circuit_type}"
                                                "_without_scheduling.qasm")
 
+
 ####### Testing Odd-Even Scheduling
 #
 #
@@ -199,4 +200,3 @@ def scheduling_circuit(circuit: Circuit):
 #
 # duration_1st, num_shifts_1st = get_duration_from_circ_after_scheduling(new_target_circuit, qtm_machine.H1_1)
 # print(f"First Duration after scheduling:{duration_1st} with {num_shifts_1st} shift gates")
-

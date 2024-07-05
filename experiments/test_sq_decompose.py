@@ -55,8 +55,3 @@
 # c = Circuit(2)
 # c.append_gate(g, (0, 1))
 # print(c.to('qasm'))
-a = {1, 2, 3}
-for i in a.copy():
-    if i == 2:
-        a.add(4)
-    print(i)

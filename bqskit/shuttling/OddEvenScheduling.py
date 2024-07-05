@@ -91,7 +91,6 @@ class OddEvenSchedulingPass(BasePass):
 
             for point in list(circuit.front):
                 circuit.pop(point)
-            # TODO: put the layer into the correct cycle
             if rz_layer != []:
                 new_circuit._append_cycle()
                 for op in rz_layer:
@@ -169,11 +168,6 @@ class OddEvenSchedulingPass(BasePass):
                 for swap_shift_op in swap_layer[1]:
                     new_circuit.insert(cycle_index, swap_shift_op)
                 cycle_index += 1
-        ## Testing the output circuit
-        # num_depth = new_circuit.num_cycles
-        # print("Number of cycles: ", num_depth)
-        # for i in range(num_depth):
-        #     print("Layer ", i)
-        #     print(new_circuit[i])
+
         circuit.become(new_circuit)
         return None

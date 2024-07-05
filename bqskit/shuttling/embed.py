@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import copy
 import itertools as it
-import numpy as np
 import logging
 from typing import Callable
 from .gatezone_selection import GateZoneSelectionPass

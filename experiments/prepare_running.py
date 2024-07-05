@@ -10,7 +10,6 @@ from bqskit.shuttling import ShuttlingLayerGenerator, HeuristicSearch, Shuttling
 from bqskit.shuttling.mapping.layout.pam import PAMLayoutPass
 from bqskit.shuttling.mapping.routing.pam import PAMRoutingPass
 from bqskit.shuttling.util import get_duration_from_circ_after_scheduling, check_executable_circuit, get_duration_from_circ
-from bqskit.passes.io.checkpoint import SaveCheckpointPass, LoadCheckpointPass
 from bqskit import enable_logging
 from experiments.circuit_generator import circuit_generate
 
