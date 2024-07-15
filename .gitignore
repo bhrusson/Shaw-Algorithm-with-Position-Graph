@@ -14,3 +14,5 @@ docs/_build
 dist
 build
 scratch/
+bqskit_dev
+.idea

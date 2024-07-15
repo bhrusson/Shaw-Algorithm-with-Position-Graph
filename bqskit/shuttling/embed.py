@@ -5,8 +5,6 @@ import copy
 import itertools as it
 import logging
 from typing import Callable
-from .gatezone_selection import GateZoneSelectionPass
-from .layergen import ShuttlingLayerGenerator
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.machine import MachineModel
 from bqskit.compiler.passdata import PassData
@@ -19,6 +17,7 @@ from bqskit.qis.permutation import PermutationMatrix
 from bqskit.runtime import get_runtime
 from pytket.phir.qtm_machine import QtmMachine
 from bqskit.shuttling.util import get_gate_time
+from bqskit.shuttling import GateZoneSelectionPass, ShuttlingLayerGenerator
 
 _logger = logging.getLogger(__name__)
 

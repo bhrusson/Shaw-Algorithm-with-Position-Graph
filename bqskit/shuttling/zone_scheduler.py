@@ -1,14 +1,11 @@
-"""This module implements the Dry Scheduling pass."""
+"""This module implements the Zone Scheduling pass."""
 from __future__ import annotations
 from enum import Enum
 
 import logging
 import numpy as np
 from bqskit import Circuit
-from bqskit.ir.gates import *
 from bqskit.ir import Operation
-from bqskit.ir.point import CircuitPoint
-from bqskit.ir.location import CircuitLocation
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 
@@ -40,7 +37,7 @@ def matches_state(op: Operation, state: MachineSchedulingState) -> bool:
 
 
 # Zone is overloaded with GateZone
-ShiftBoundedZone = list[CircuitPoint]
+# ShiftBoundedZone = list[CircuitPoint]
 _logger = logging.getLogger(__name__)
 
 
@@ -54,7 +51,7 @@ class ZoneSchedulerPass(BasePass):
                  machine_state: MachineSchedulingState = MachineSchedulingState.EVEN
                  ) -> None:
         """
-        Construct a ZoneSchedulerPass.
+        Construct the ZoneSchedulerPass.
 
         Args:
             machine_state (MachineSchedulingState): The initial state of the machine
@@ -115,6 +112,6 @@ class ZoneSchedulerPass(BasePass):
             machine_states.append(self.machine_state)
             self.machine_state = self.machine_state.flip()
         data[self.key_zones] = zones
-        data[self.key_machine_states] = machine_states
+        data[self.key_zone_states] = machine_states
         data[self.key_zone_weight] = zones_weight
         return None
