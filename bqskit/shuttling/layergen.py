@@ -1,6 +1,5 @@
 from __future__ import annotations
 import logging
-import numpy as np
 
 from bqskit import Circuit
 from bqskit.compiler import PassData

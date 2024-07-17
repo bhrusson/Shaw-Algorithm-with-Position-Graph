@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import copy
 import itertools as it
-import numpy as np
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.passes.control.foreach import ForEachBlockPass

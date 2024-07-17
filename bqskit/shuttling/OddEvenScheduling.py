@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import numpy as np
 from bqskit import Circuit
 from bqskit.ir import Operation
 from bqskit.compiler import PassData
 from bqskit.compiler.basepass import BasePass
 from bqskit.ir.gates import RZGate, U1qPiGate, U1qPi2Gate, RZZGate, SwapGate, FrozenParameterGate
-from bqskit.shuttling.ShuttlingShift import ShuttlingShiftGate
+from .ShuttlingShift import ShuttlingShiftGate
 
 
 class OddEvenSchedulingPass(BasePass):

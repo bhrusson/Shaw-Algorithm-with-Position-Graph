@@ -6,7 +6,7 @@ from bqskit.ir.opt.cost import HilbertSchmidtCostGenerator
 from bqskit.passes.search.heuristic import HeuristicFunction
 from bqskit.qis import UnitaryMatrix, StateVector, StateSystem
 from pytket.phir.qtm_machine import QtmMachine
-from bqskit.shuttling.util import get_gate_time, get_duration_from_circ
+from .util import get_duration_from_circ
 from bqskit.utils.typing import is_real_number
 
 

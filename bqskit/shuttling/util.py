@@ -1,7 +1,7 @@
 from bqskit.ir import Circuit, Gate
 from bqskit.ir.gates import SwapGate, RZGate
 from pytket.phir.qtm_machine import QTM_MACHINES_MAP, QtmMachine
-from bqskit.shuttling.ShuttlingShift import ShuttlingShiftGate
+from .ShuttlingShift import ShuttlingShiftGate
 
 
 def get_gate_time(gate: Gate, qtm_machine: QtmMachine) -> float:

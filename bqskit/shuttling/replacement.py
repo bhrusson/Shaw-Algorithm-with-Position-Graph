@@ -10,7 +10,9 @@ from bqskit.ir.gates import RZZGate, U3Gate
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from pytket.phir.qtm_machine import QtmMachine
-from bqskit.shuttling import ZoneSchedulerPass, ShuttlingShiftGenerator, HeuristicSearch, MachineSchedulingState
+from .zone_scheduler import ZoneSchedulerPass, MachineSchedulingState
+from .shuttling_shift_qsearch import ShuttlingShiftGenerator
+from .heuristic_search import HeuristicSearch
 
 _logger = logging.getLogger(__name__)
 
@@ -61,7 +63,7 @@ class ReplacementPass(BasePass):
 
     def __init__(self,
                  block_num_qudits: int = 4,
-                 replacement_type: str = 'replacement',
+                 replacement_type: str = 'instantiation',
                  qsearch_maxlayer: int = 5,
                  qsearch_heuristic_factor: int = 2
                  ) -> None:
@@ -76,9 +78,8 @@ class ReplacementPass(BasePass):
         self.replacement_type = replacement_type
         self.qsearch_maxlayer = qsearch_maxlayer
         self.qsearch_heuristic_factor = qsearch_heuristic_factor
-    async def run(self,
-                  circuit: Circuit,
-                  data: PassData) -> None:
+
+    async def run(self, circuit: Circuit, data: PassData) -> None:
 
         if (ZoneSchedulerPass.key_zones not in data or
                 ZoneSchedulerPass.key_zone_weight not in data or
@@ -89,6 +90,7 @@ class ReplacementPass(BasePass):
             )
 
         """ Problematic points are identified """
+        _logger.debug("Identifying problematics points ...")
         zones = data[ZoneSchedulerPass.key_zones]
         zone_weights = data[ZoneSchedulerPass.key_zone_weight]
         zone_states = data[ZoneSchedulerPass.key_zone_states]
@@ -97,20 +99,18 @@ class ReplacementPass(BasePass):
         for zone_idx in range(1, len(zones)):
             if zone_weights[zone_idx] == 1:  # possible problematic points (Experiments needed)
                 for point in zones[zone_idx]:
-                    if circuit[point].gate == RZZGate():
+                    if circuit.get_operation(point).gate == RZZGate():
                         potential_shift_locations.append(point)
                         potential_shift_state.append(zone_states[zone_idx])
-
+        _logger.debug(f"Potential shift points identified: {potential_shift_locations}")
+        _logger.debug(f"Potential zone states identified: {potential_shift_state}")
         """ Automatic identify and re-instantiate trouble points """
         reversed_problem_points = potential_shift_locations[::-1]
         reversed_states = potential_shift_state[::-1]
         for p, q in zip(reversed_problem_points, reversed_states):
-            if not p:
-                continue
-            _logger.debug(f"Point: {p}")
-            _logger.debug(f"Machine State: {q}")
+            _logger.debug(f"Point: {str(p)}")
+            _logger.debug(f"Machine State: {str(q)}")
             circuit_region = circuit.surround(point=p, num_qudits=self.block_num_qudits, fail_quickly=True)
-            _logger.debug(f"Circuit region: {circuit_region}")
             folded_point = circuit.fold(circuit_region)
             op = circuit.get_operation(folded_point)
             target_unitary = op.get_unitary()
@@ -137,9 +137,9 @@ class ReplacementPass(BasePass):
             else:
                 raise RuntimeError("The replacement type should only be instantiation or qsearch.")
             distance = replaced_circuit.get_unitary().get_distance_from(target_unitary, 2)
-            print("Distance between instantiation and target unitary", distance)
+            _logger.debug(f"Distance between instantiation and target unitary: {distance}")
             if distance < 1e-8:
                 circuit.replace_with_circuit(folded_point, replaced_circuit)
-                print("Successfully replace the problem point with instantiation")
+                _logger.debug("Successfully replace the problem point with instantiation")
             circuit.unfold_all()
-            return None
+        return None

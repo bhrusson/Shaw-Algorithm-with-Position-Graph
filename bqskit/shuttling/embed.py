@@ -16,11 +16,14 @@ from bqskit.qis.graph import CouplingGraph
 from bqskit.qis.permutation import PermutationMatrix
 from bqskit.runtime import get_runtime
 from pytket.phir.qtm_machine import QtmMachine
-from bqskit.shuttling.util import get_gate_time
-from bqskit.shuttling import GateZoneSelectionPass, ShuttlingLayerGenerator
+from .util import get_gate_time
+from .gatezone_selection import GateZoneSelectionPass
+from .layergen import ShuttlingLayerGenerator
 
 _logger = logging.getLogger(__name__)
 
+gatezone_selection_key = GateZoneSelectionPass.key
+shuttling_layer_key = ShuttlingLayerGenerator.key
 
 def multi_qudit_op_count(circuit: Circuit) -> float:
     """Counts the number of multi-qudit operations in a circuit."""
@@ -173,24 +176,24 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
         Assume that no tq_zone is next to each other
         '''
         if self.vary_gatezone and width != 1:
-            if GateZoneSelectionPass.key not in data:
+            if gatezone_selection_key not in data:
                 raise RuntimeError(
                     'Cannot find gatezone, try running a'
                     ' GateZoneSelectionPass first.',
                 )
             for possible_gatezone_amount in range(1, ((width + 1) // 2) + 1):
-                if possible_gatezone_amount not in data[GateZoneSelectionPass.key]:
+                if possible_gatezone_amount not in data[gatezone_selection_key]:
                     raise RuntimeError(
                         'Possible gate zone information for block size'
                         f' {width} is not available.',
                     )
-            gate_zones = data[GateZoneSelectionPass.key]
+            gate_zones = data[gatezone_selection_key]
         else:
             gate_zones = set(i for i in range(0, width, 2))
         print("Gate zones: ", gate_zones)
 
         # Manually restrict the gate zone and coupling graph to H1 machine configurations
-        if self.qtm_machine == QtmMachine.H1_1:
+        if self.qtm_machine == QtmMachine.H1:
             if width == 3:
                 graphs = [CouplingGraph({(0, 2), (1, 2)}),
                           CouplingGraph({(0, 1), (0, 2)}),
@@ -210,7 +213,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                 )
                 target_data = copy.deepcopy(data)
                 target_data.model = model
-                target_data[ShuttlingLayerGenerator.key] = zone
+                target_data[shuttling_layer_key] = zone
                 extended_gate_zones.append(zone)
                 # print(f"Connectivity: {target_data.connectivity} with zone {zone}")
                 datas.append(target_data)
@@ -261,7 +264,6 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
             else:
                 zone_perm_data[zone][graph][perm] = c
 
-            # print(f"Perm data at {i} after update: {zone_perm_data}")
 
             # Calculate number of multi-qudit gates
             num_mq_gates = 0
@@ -315,7 +317,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                 renumber_c = circuit.copy()
                 renumber_c.renumber_qudits(univ_perm)
                 new_graph = renumber_c.coupling_graph
-                new_zone = data[ShuttlingLayerGenerator.key]  # TODO: return gate_zone given a circuit after renumbering
+                new_zone = data[shuttling_layer_key]  # TODO: return gate_zone given a circuit after renumbering
                 new_score = self.scoring_fn(renumber_c)
                 for zone, zone_data in zone_perm_data.items():
                     for graph, graph_data in zone_data.items():

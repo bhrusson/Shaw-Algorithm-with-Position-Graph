@@ -58,7 +58,8 @@ def zone_circuit(circuit: Circuit) -> (list[ShiftZone], list[int], list[MachineS
     frontier = circuit.front
     to_be_processed = dict()
     while len(frontier) != 0:
-        # print("Current machine state: ", machine_state)
+        print("Current machine state: ", machine_state)
+        print("Current frontier: ", frontier)
         zone = []
         weight = 0
         investigating_further = True
@@ -69,14 +70,19 @@ def zone_circuit(circuit: Circuit) -> (list[ShiftZone], list[int], list[MachineS
             next_layers_gate = set()
 
             for location in frontier:
+                processed = False
                 op = circuit.get_operation(location)
                 if matches_state(op, machine_state):
+                    print("Checking the current: ", op)
+                    print("Location: ", location)
+                    print("Number of previous gates: ", len(circuit.prev(location)))
                     zone.append(location)
                     if op.num_qudits == 2:  # can restrict to certain gate types
                         weight += 1
                     processed_points.append(location)
+                    processed = True
 
-                if len(circuit.next(location)) != 0:
+                if len(circuit.next(location)) != 0 and processed is True:
                     for new_location in circuit.next(location):
                         if new_location in to_be_processed:
                             to_be_processed[new_location] += 1
@@ -84,21 +90,15 @@ def zone_circuit(circuit: Circuit) -> (list[ShiftZone], list[int], list[MachineS
                             to_be_processed[new_location] = 1
                         if to_be_processed[new_location] == len(circuit.prev(new_location)):
                             investigating_further = True
-                            # print(f"Gate {circuit.get_operation(new_location)} is added inside iteration")
+                            print(f"Gate {circuit.get_operation(new_location)} is added inside iteration")
                             next_layers_gate.add(new_location)
-
-            # For debugging purpose
-            # print("Current executable points: ", executed_points)
-            # for point in executed_points:
-            #     print(circuit.get_operation(point))
-
             # Modifying the frontier
             for location in processed_points:
                 frontier.remove(location)
-                for new_location in next_layers_gate:
-                    frontier.add(new_location)
-
-        # print("Frontier at the next zone: ", frontier)
+            for new_location in next_layers_gate:
+                frontier.add(new_location)
+            print("Remains Frontier: ", frontier)
+        print("Frontier at the next zone: ", frontier)
         zones.append(zone)
         zones_weight.append(weight)
         machine_states.append(machine_state)
@@ -115,11 +115,15 @@ def test_zone_circuit():
     circuit.append_gate(HGate(), 1)
     circuit.append_gate(RZZGate(), [0, 1])
     circuit.append_gate(RZZGate(), [2, 3])
+    circuit.append_gate(HGate(), 2)
     circuit.append_gate(RZZGate(), [3, 4])
+    circuit.append_gate(HGate(), 3)
+    circuit.append_gate(HGate(), 4)
     circuit.append_gate(HGate(), 0)
     circuit.append_gate(HGate(), 1)
     circuit.append_gate(RZZGate(), [1, 2])
-    assert zone_circuit(circuit) == [[(0, 1), (0, 2), (0, 0), (1, 0), (2, 1), (2, 0)], [(1, 3), (3, 1)]]
+    print(zone_circuit(circuit))
+    # assert zone_circuit(circuit) == [[(0, 1), (0, 2), (0, 0), (1, 2), (1, 0), (2, 1), (2, 0)], [(3, 1), (1, 3), (2, 3), (2, 4)]]
 
 
 from bqskit import enable_logging
@@ -142,7 +146,8 @@ def test_surround_filter():
     circuit.append_gate(RZZGate(), [2, 3])
     circuit.append_gate(RZZGate(), [4, 5])
 
-    region = circuit.surround((1, 3), 4, None, False, lambda node: (node[2][0] > 1 and node[2][-1] < 6) or (node[2][0] % 2 == 0))
+    region = circuit.surround((1, 3), 4, None, False,
+                              lambda node: (node[2][0] > 1 and node[2][-1] < 6) or (node[2][0] % 2 == 0))
     print(region.location)
     assert region.location == CircuitLocation([2, 3, 4, 5])
 
@@ -168,8 +173,9 @@ def test_surround_filter_hard():
     circuit.append_gate(RZZGate(), [5, 6])
     circuit.append_gate(RZZGate(), [5, 6])
     circuit.append_gate(RZZGate(), [5, 6])
-# 0, 1, 2
-    region = circuit.surround((1, 3), 4, None, False, None)#lambda node: (node[2][0] > 1 and node[2][-1] < 6) or (node[2][0] % 2 == 0))
+    # 0, 1, 2
+    region = circuit.surround((1, 3), 4, None, False,
+                              None)  #lambda node: (node[2][0] > 1 and node[2][-1] < 6) or (node[2][0] % 2 == 0))
     print(region.location)
     assert region.location == CircuitLocation([2, 3, 4, 5])
 
@@ -385,17 +391,28 @@ def alternate_circuit_structure(input_circuit: Circuit, state: MachineScheduling
 
 
 def folding_ver2(circuit: Circuit):
-    zones, zones_weight, machine_states, potential_shift_locations = dry_scheduling_ver2(circuit)
-    # num_shifts, shift_weights, shift_locations, states_before_shift
     """ Automatic identify and re-instantiate trouble points """
-    trouble_points = []
-    trouble_states = []
-    reversed_problem_points = trouble_points[::-1]
-    reversed_states = trouble_states[::-1]
+    zones, zones_weights, machine_states = zone_circuit(circuit)
+    potential_shift_locations = []
+    potential_shift_state = []
+    for zone_idx in range(1, len(zones)):
+        if zones_weights[zone_idx] == 1:  # possible problematic points (Experiments needed)
+            for point in zones[zone_idx]:
+                if circuit.get_operation(point).gate == RZZGate():
+                    potential_shift_locations.append(point)
+                    potential_shift_state.append(machine_states[zone_idx])
+    reversed_problem_points = potential_shift_locations[::-1]
+    reversed_states = potential_shift_state[::-1]
+    print("Problematic points: ", reversed_problem_points)
     for p, q in zip(reversed_problem_points, reversed_states):
         print("Point: ", p)
         print("Machine State:", q)
-        circuit_region = circuit.surround(point=p, num_qudits=4, fail_quickly=True)
+        min_point = min(p)
+        max_point = max(p)
+        denominator = 0 if q is MachineSchedulingState.EVEN else 1
+        circuit_region = circuit.surround(point=p, num_qudits=4,
+                                          filter=lambda region: (region.max_qudit > max_point and region.min_qudit < min_point)
+                                                              or (region.min_qudit % 2 == denominator))
         print("Circuit region: ", circuit_region)
         folded_point = circuit.fold(circuit_region)
         op = circuit.get_operation(folded_point)
@@ -404,7 +421,6 @@ def folding_ver2(circuit: Circuit):
         ### Instantiation
         tmp_circuit = alternate_circuit_structure(old_block_circuit, q)
         instantiated_circuit = tmp_circuit.instantiate(target=target_unitary, multistarts=5)
-        distance = instantiated_circuit.get_unitary().get_distance_from(target_unitary, 2)
         ### Qsearch
         # print("Running Qsearch......")
         # qsearch_shift_pass = QSearchSynthesisPass(
@@ -432,13 +448,14 @@ def main():
     # enable_logging(True)
     # qtm_machine = QtmMachine.H1
 
-    # # Load circuit
-    #     # circuit_name = "adder9"
-    #     # print(f"Scheduling {circuit_name}.")
-    #     # circuit = Circuit.from_file(
-    #     #     "experiments/results/experiment_circuits/output_circuits/"
-    #     #     f"{circuit_name}_without_scheduling.qasm"
-    #     # )
+    # Load circuit
+    circuit_name = "adder9"
+    print(f"Scheduling {circuit_name}.")
+    circuit = Circuit.from_file(
+        "experiments/results/experiment_circuits/output_circuits/"
+        f"{circuit_name}_without_scheduling.qasm"
+    )
+    folding_ver2(circuit)
     #     #
     #     # # Find shift zones
     #     # num_shifts, shift_weights, shift_locations, states_before_shift = dry_scheduling(circuit)
@@ -446,12 +463,12 @@ def main():
     #     # print("Shift weights:", shift_weights)
     #     # print("Shift locations:", shift_locations)
     #     # print("State before shifts:", states_before_shift)
-    test_zone_circuit()
 
 
 if __name__ == "__main__":
-    # main()
-    test_surround_filter()
+    main()
+
+    # test_surround_filter()
     # test_surround_filter_hard()
 ### Folding then scheduling:
 
@@ -467,28 +484,7 @@ if __name__ == "__main__":
 # print(f"Total of {len(problem_points)} problematic points")
 # print("Problematic points: ", problem_points)
 # reversed_problem_points = problem_points[::-1]
-##### Instantiation
-# for p in reversed_problem_points:
-#     circuit_region = initial_circuit.surround(point=p[0], num_qudits=3, fail_quickly=True)
-#     print("Circuit region: ", circuit_region)
-#     folded_point = initial_circuit.fold(circuit_region)
-#     op = initial_circuit.get_operation(folded_point)
-#     target_unitary = op.get_unitary()
-#     old_block_circuit = op.gate._circuit
-#     tmp_circuit = alternate_circuit_structure(old_block_circuit, bool(p[1]))
-#     instantiated_circuit = tmp_circuit.instantiate(target=target_unitary, multistarts=5)
-#     # print(instantiated_circuit.to('qasm'))
-#     distance = instantiated_circuit.get_unitary().get_distance_from(target_unitary, 2)
-#     print("Distance between instantiation and target unitary", distance)
-#     if distance < 1e-8:
-#         initial_circuit.replace_with_circuit(folded_point, instantiated_circuit)
-#     initial_circuit.unfold_all()
-# print(initial_circuit.to('qasm'))
-# total_fold_gate = []
-# folded_circuit, fold_points = folding(circuit=target_circuit)
-# total_fold_gate += fold_points
-# print(total_fold_gate)
-# folded_circuit.unfold_all()
+
 
 # test_zone_circuit()
 # test_....

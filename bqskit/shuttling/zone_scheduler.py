@@ -30,9 +30,9 @@ def matches_state(op: Operation, state: MachineSchedulingState) -> bool:
 
     min_operation = np.min(op.location)
     return (
-            state == MachineSchedulingState.EVEN and min_operation % 2 == 0
+            (state == MachineSchedulingState.EVEN and min_operation % 2 == 0)
             or
-            state == MachineSchedulingState.ODD and min_operation % 2 == 1
+            (state == MachineSchedulingState.ODD and min_operation % 2 == 1)
     )
 
 
@@ -82,14 +82,17 @@ class ZoneSchedulerPass(BasePass):
                 next_layers_gate = set()
 
                 for location in frontier:
+                    processed = False
                     op = circuit.get_operation(location)
                     if matches_state(op, self.machine_state):
+                        _logger.debug(f"{op} is added to current zone.")
                         zone.append(location)
                         if op.num_qudits == 2:  # can restrict to certain gate types
                             weight += 1
                         processed_points.append(location)
+                        processed = True
 
-                    if len(circuit.next(location)) != 0:
+                    if len(circuit.next(location)) != 0 and processed is True:
                         for new_location in circuit.next(location):
                             if new_location in to_be_processed:
                                 to_be_processed[new_location] += 1
@@ -97,20 +100,26 @@ class ZoneSchedulerPass(BasePass):
                                 to_be_processed[new_location] = 1
                             if to_be_processed[new_location] == len(circuit.prev(new_location)):
                                 investigating_further = True
-                                _logger.debug(f"Gate {circuit.get_operation(new_location)} is added inside iteration")
+                                # _logger.debug(f"Gate {circuit.get_operation(new_location)} is added inside iteration")
                                 next_layers_gate.add(new_location)
 
                 # Modifying the frontier
                 for location in processed_points:
                     frontier.remove(location)
-                    for new_location in next_layers_gate:
-                        frontier.add(new_location)
+                for new_location in next_layers_gate:
+                    frontier.add(new_location)
 
-            _logger.debug("Frontier at the next zone: ", frontier)
+            # _logger.debug(f"Frontier at the next zone: {frontier}")
             zones.append(zone)
             zones_weight.append(weight)
             machine_states.append(self.machine_state)
             self.machine_state = self.machine_state.flip()
+
+        _logger.debug(f"Number of zones: {len(zones)}")
+        gates_per_zone = []
+        for zone in zones:
+            gates_per_zone.append(len(zone))
+        _logger.debug(f"Number of gates in all zones: {np.sum(gates_per_zone)}")
         data[self.key_zones] = zones
         data[self.key_zone_states] = machine_states
         data[self.key_zone_weight] = zones_weight
