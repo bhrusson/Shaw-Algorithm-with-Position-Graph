@@ -419,8 +419,8 @@ def folding_ver2(circuit: Circuit):
         target_unitary = op.get_unitary()
         old_block_circuit = op.gate._circuit  # type: ignore
         ### Instantiation
-        tmp_circuit = alternate_circuit_structure(old_block_circuit, q)
-        instantiated_circuit = tmp_circuit.instantiate(target=target_unitary, multistarts=5)
+        # tmp_circuit = alternate_circuit_structure(old_block_circuit, q)
+        # instantiated_circuit = tmp_circuit.instantiate(target=target_unitary, multistarts=5)
         ### Qsearch
         # print("Running Qsearch......")
         # qsearch_shift_pass = QSearchSynthesisPass(

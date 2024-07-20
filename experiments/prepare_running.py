@@ -21,8 +21,8 @@ machine_model = MachineModel(machine.size, CouplingGraph.linear(machine.size),
                              {RZGate(),
                               U1qPi2Gate, U1qPiGate, RZZGate()})
 
-num_qudits = 9
-circuit_type = "adder9"
+num_qudits = 16
+circuit_type = "heisenberg-16-20"
 target_circuit = Circuit(num_qudits).from_file(f"experiments/results/experiment_circuits/input_circuits/{circuit_type}"
                                                ".qasm")
 
@@ -59,24 +59,24 @@ qsearch_pass = QSearchSynthesisPass(layer_generator=ShuttlingLayerGenerator(),
 block_size = 3
 num_layout_passes = 3
 workflow = [
-    #     SetModelPass(machine_model),
-    #     SubtopologySelectionPass(block_size),
-    #     GateZoneSelectionPass(block_size),
-    #     QuickPartitioner(block_size),
-    #     ForEachBlockPass(
-    #         ShuttlingEmbedAllPermutationsPass(inner_synthesis=qsearch_pass,
-    #                                           qtm_machine=QtmMachine.H1)
-    #     ),
-    #     ApplyPlacement(),
-    #     PAMLayoutPass(num_layout_passes),
-    #     PAMRoutingPass(0.1),
-    #     ApplyPlacement(),
-    #     UnfoldPass(),
-    ZoneSchedulerPass(),
-    ReplacementPass(),
-    # GroupSingleQuditGatePass(),
-    # ForEachBlockPass(
-    #     sq_synthesis
-    # ),
-    # UnfoldPass()
+        SetModelPass(machine_model),
+        SubtopologySelectionPass(block_size),
+        GateZoneSelectionPass(block_size),
+        QuickPartitioner(block_size),
+        ForEachBlockPass(
+            ShuttlingEmbedAllPermutationsPass(inner_synthesis=qsearch_pass,
+                                              qtm_machine=QtmMachine.H1)
+        ),
+        ApplyPlacement(),
+        PAMLayoutPass(num_layout_passes),
+        PAMRoutingPass(0.1),
+        ApplyPlacement(),
+        UnfoldPass(),
+        ZoneSchedulerPass(),
+        ReplacementPass(),
+        GroupSingleQuditGatePass(),
+        ForEachBlockPass(
+            sq_synthesis
+        ),
+        UnfoldPass()
 ]

@@ -63,7 +63,7 @@ class ReplacementPass(BasePass):
 
     def __init__(self,
                  block_num_qudits: int = 4,
-                 replacement_type: str = 'instantiation',
+                 replacement_type: str = 'qsearch',
                  qsearch_maxlayer: int = 5,
                  qsearch_heuristic_factor: int = 2
                  ) -> None:
