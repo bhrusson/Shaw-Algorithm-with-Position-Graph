@@ -8,7 +8,7 @@ from bqskit.shuttling import HeuristicSearch
 from bqskit.shuttling.util import get_duration_from_circ_after_scheduling, get_duration_from_circ
 from bqskit.shuttling.ShuttlingShift import ShuttlingShiftGate
 
-qtm_machine = QtmMachine.H1_1
+qtm_machine = QtmMachine.H1
 
 num_qudits = 9
 circuit_type = "adder9"

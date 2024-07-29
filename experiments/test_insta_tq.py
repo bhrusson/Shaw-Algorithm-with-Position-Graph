@@ -3,7 +3,6 @@ from bqskit.ir import Circuit
 from bqskit.ir.gates import *
 
 param = [np.pi/3]
-
 circuit = Circuit(4)
 circuit.append_gate(RZZGate(), (1, 2))
 target_unitary = circuit.get_unitary()

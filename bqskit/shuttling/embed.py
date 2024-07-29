@@ -25,6 +25,7 @@ _logger = logging.getLogger(__name__)
 gatezone_selection_key = GateZoneSelectionPass.key
 shuttling_layer_key = ShuttlingLayerGenerator.key
 
+
 def multi_qudit_op_count(circuit: Circuit) -> float:
     """Counts the number of multi-qudit operations in a circuit."""
     x = sum(c for g, c in circuit.gate_counts.items() if g.num_qudits >= 2)
@@ -56,7 +57,7 @@ def from_cg_to_zone(cg: CouplingGraph):
     elif cg == CouplingGraph({(0, 1)}):
         return [{0}]
     else:
-        raise ValueError("Invalid cg")
+        raise ValueError(f"Invalid cg, cg = {cg}")
 
 
 class ShuttlingEmbedAllPermutationsPass(BasePass):
@@ -190,7 +191,6 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
             gate_zones = data[gatezone_selection_key]
         else:
             gate_zones = set(i for i in range(0, width, 2))
-        print("Gate zones: ", gate_zones)
 
         # Manually restrict the gate zone and coupling graph to H1 machine configurations
         if self.qtm_machine == QtmMachine.H1:
@@ -200,11 +200,21 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                           CouplingGraph({(0, 1), (1, 2)})]
             elif width == 2:
                 graphs = [CouplingGraph({(0, 1)})]
+            elif width == 1:
+                graphs = None
+            else:
+                raise ValueError(f"Current width {width} is not defined for this scheme")
+
+        if graphs is None:
+            """
+            For the case of single qubit circuit, ignore the permutation
+            """
+            data['permutation_data'] = circuit
+            return None
 
         extended_gate_zones = []
         # Distribute subgraph connectivity and gate zone to data
         datas = []
-        print("Total coupling graphs: ", graphs)
         for graph in graphs:
             for zone in from_cg_to_zone(graph):
                 model = MachineModel(
@@ -215,18 +225,14 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                 target_data.model = model
                 target_data[shuttling_layer_key] = zone
                 extended_gate_zones.append(zone)
-                # print(f"Connectivity: {target_data.connectivity} with zone {zone}")
                 datas.append(target_data)
 
-        print("Extended gate zone :", extended_gate_zones)
         # Create parallel arrays for map
         extended_targets = []
         extended_datas = []
         for t, d in it.product(targets, datas):
             extended_targets.append(t)
             extended_datas.append(d)
-        # print("Amount of target: ", len(extended_targets))
-        # print("Amount of data: ", len(extended_datas))
 
         # Synthesize all permuted targets
         circuits: list[Circuit] = await get_runtime().map(
@@ -244,12 +250,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
             graph_interval = int(len(extended_gate_zones) / len(graphs))
             graph = graphs[(i // graph_interval) % len(graphs)]
             perm = permsbyperms[i // (len(graphs) * graph_interval)]
-            print("Current zone:", zone)
-            print("Current graph: ", graph)
-            print("Permutation: ", perm)
-            print("Circuit connectivity:", c.coupling_graph)
-            print("Circuit QASM:", c.to('qasm'))
-            zone = tuple(zone)
+            zone = tuple(sorted(zone))
             if zone not in zone_perm_data:
                 zone_perm_data[zone] = {}
             if graph not in zone_perm_data[zone]:
@@ -264,7 +265,6 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
             else:
                 zone_perm_data[zone][graph][perm] = c
 
-
             # Calculate number of multi-qudit gates
             num_mq_gates = 0
             for gate, count in c.gate_counts.items():
@@ -272,7 +272,6 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                     num_mq_gates += count
 
             # Generate the extra circuits through universal permutations
-            print("Universal permutation")
             all_perms = list(it.permutations(range(width)))
             for univ_perm in all_perms[1:]:
                 renumber_c = c.copy()
@@ -280,7 +279,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                 new_pi = tuple(univ_perm[i] for i in perm[0])
                 new_pf = tuple(univ_perm[i] for i in perm[1])
                 new_graph = renumber_c.coupling_graph
-                new_zone = list()  # TODO: return gate_zone after rotate by universal permutations
+                new_zone = list()
                 if len(zone) > 1:
                     for z in zone:
                         new_zone.append(new_pi[z])
@@ -291,7 +290,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                     # z2 = int(np.round((z - int(z)) * 10))
                     # new_zone.append(float(new_pi[z1] + 0.1 * new_pi[z2]))
 
-                new_zone = tuple(new_zone)
+                new_zone = tuple(sorted(new_zone))
                 # print("New zone: ", new_zone)
                 if new_zone not in zone_perm_data:
                     zone_perm_data[new_zone] = {}
@@ -317,7 +316,7 @@ class ShuttlingEmbedAllPermutationsPass(BasePass):
                 renumber_c = circuit.copy()
                 renumber_c.renumber_qudits(univ_perm)
                 new_graph = renumber_c.coupling_graph
-                new_zone = data[shuttling_layer_key]  # TODO: return gate_zone given a circuit after renumbering
+                new_zone = gate_zones
                 new_score = self.scoring_fn(renumber_c)
                 for zone, zone_data in zone_perm_data.items():
                     for graph, graph_data in zone_data.items():

@@ -310,17 +310,25 @@ class ShuttlingPermutationAwareMappingAlgorithm(GeneralizedSabreAlgorithm):
         # Gather valid pre, circ, post triples
         pre_circ_post_triples = []
         perm_iter = zip(local_perms, inv_local_perms, inv_global_perms)
+        if type(perm_data) is dict:
+         _logger.debug(f"Permutation data keys: {perm_data.keys()}")
         for lperm, ilperm, gperm1 in perm_iter:
             physical_location = [pi[qudits[p]] for p in ilperm]
             local_graph = cg.get_subgraph(physical_location)
             # TODO: Finish putting the gate_zone data into this
             # TODO: Modify to get all the zone from physical location
-            num_evens = sum(1 if p % 2 == 0 else 0 for p in physical_location)
+            if local_graph == CouplingGraph(set()):
+                _logger.debug(f"the permutation of single qubit: {gperm1}")
+                circ = perm_data
+                _logger.debug(f"the size of circuit: {circ.num_qudits}")
+                pre_circ_post_triples.append((gperm1, circ, gperm1))
+                break
             possible_zone = from_cg_to_zone(local_graph)
-            zone = [p for p in possible_zone if len(p) == num_evens][0]
+            _logger.debug(f"Possible zone: {possible_zone}")
+            zone = [p for p in possible_zone][0]
             zone = tuple(zone)
-            print("Zone: ", zone)
-            if zone in perm_data:
+            _logger.debug(f"Zone: {zone}")
+            if zone in perm_data.keys():
                 if local_graph in perm_data[zone]:
                     for perms, circ in perm_data[zone][local_graph].items():
                         if lperm == perms[0]:
@@ -368,7 +376,6 @@ class ShuttlingPermutationAwareMappingAlgorithm(GeneralizedSabreAlgorithm):
             score = mq_gate_counts[i] * self.gate_count_weight / len(F) + score
             if score < best_score:
                 best_score = score
-                best_perm = gperm
                 best_triple = pre_circ_post_triples[i]
         return best_triple
 

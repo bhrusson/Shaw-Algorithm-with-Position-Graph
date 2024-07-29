@@ -1,35 +1,33 @@
 import json
 import numpy as np
-import pytket.qasm
-from numpy import pi
 from pytket.phir.api import pytket_to_phir
-from pytket import Circuit
+from pytket.phir.qtm_machine import QTM_MACHINES_MAP
+from pytket.phir.sharding.sharder import Sharder
+from pytket.phir.place_and_route import place_and_route
+from pytket.phir.phirgen_parallel import genphir_parallel
+from pytket.phir.phirgen import genphir
+from bqskit import Circuit
 from bqskit.ext import bqskit_to_pytket
 from pytket.phir.qtm_machine import QtmMachine
-from circuit_generator import circuit_generate
 
+num_qudits = 8
+circuit_type = "PhaseEstimator"
+cir = Circuit.from_file(f"experiments/results/experiment_circuits"
+                        f"/input_circuits/{circuit_type}_{num_qudits}.qasm")
+pytket_circuit = bqskit_to_pytket(cir)
+phir_json = pytket_to_phir(circuit=pytket_circuit, qtm_machine=QtmMachine.H1)
 
-# circuit = circuit_generate("Toffoli", 3)
+# machine = QTM_MACHINES_MAP.get(QtmMachine.H1)
+# shards = Sharder(pytket_circuit).shard()
+# placed = place_and_route(shards, machine)
+# phir_json = genphir_parallel(placed, machine)
 
-# pytket_circuit = Circuit(3)
-# pytket_circuit.H(0)
-# pytket_circuit.CU1(pi/2, 1, 0)
-# pytket_circuit.CU1(pi/4, 2, 0)
-# pytket_circuit.H(1)
-# pytket_circuit.CU1(pi/2, 2, 1)
-# pytket_circuit.H(2)
-# pytket_circuit.SWAP(0, 2)
-# pytket_circuit = bqskit_to_pytket(circuit)
-circuit_type = "adder9"
-pytket_circuit = pytket.qasm.circuit_from_qasm(f"experiments/results/experiment_circuits/input_circuits/{circuit_type}"
-                                               ".qasm")
-json_phir = pytket_to_phir(circuit=pytket_circuit, qtm_machine=QtmMachine.H1_1)
-phir = json.loads(json_phir)
-# print(phir)
+phir = json.loads(phir_json)
 total_duration = 0
 qop_lst = []
 slash_lst = []
 for i in phir['ops']:
+    print(i)
     if 'qop' in i.keys():
         qop_lst.append(i['qop'])
     elif '//' in i.keys():
@@ -39,7 +37,6 @@ for i in phir['ops']:
             qop_lst.append(j['qop'])
     elif 'mop' in i.keys():
         total_duration += i['duration'][0]
-print("Operation list: ", qop_lst)
-print("Counting: ", np.unique(qop_lst, return_counts=True))
-print("Slash list: ", slash_lst)
+# print("Operation list: ", qop_lst)
+# print("Counting: ", np.unique(qop_lst, return_counts=True))
 print("Total duration: ", total_duration)
