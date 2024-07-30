@@ -10,10 +10,10 @@ from bqskit import Circuit
 from bqskit.ext import bqskit_to_pytket
 from pytket.phir.qtm_machine import QtmMachine
 
-num_qudits = 8
-circuit_type = "PhaseEstimator"
+num_qudits = 4
+circuit_type = "hubbard_4_0"
 cir = Circuit.from_file(f"experiments/results/experiment_circuits"
-                        f"/input_circuits/{circuit_type}_{num_qudits}.qasm")
+                        f"/input_circuits/{circuit_type}.qasm")
 pytket_circuit = bqskit_to_pytket(cir)
 phir_json = pytket_to_phir(circuit=pytket_circuit, qtm_machine=QtmMachine.H1)
 

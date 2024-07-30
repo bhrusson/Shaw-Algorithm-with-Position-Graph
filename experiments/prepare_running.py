@@ -9,10 +9,11 @@ from bqskit.shuttling import ShuttlingLayerGenerator, HeuristicSearch, Shuttling
     GateZoneSelectionPass, OddEvenSchedulingPass, ReplacementPass, ZoneSchedulerPass
 from bqskit.shuttling.mapping.layout.pam import PAMLayoutPass
 from bqskit.shuttling.mapping.routing.pam import PAMRoutingPass
-from bqskit.shuttling.util import check_executable_circuit, get_duration_from_circ
+from bqskit.shuttling.util import get_duration_from_circ
 from bqskit import enable_logging
 
 enable_logging(True)
+
 
 qtm_machine = QtmMachine.H1
 machine = QTM_MACHINES_MAP.get(qtm_machine)
@@ -20,12 +21,6 @@ machine_model = MachineModel(machine.size, CouplingGraph.linear(machine.size),
                              {RZGate(),
                               U1qPi2Gate, U1qPiGate, RZZGate()})
 
-num_qudits = 8
-circuit_type = "PhaseEstimator"
-cir = Circuit.from_file(f"experiments/results/experiment_circuits"
-                        f"/input_circuits/{circuit_type}_{num_qudits}.qasm")
-
-target_unitary = cir
 sq_synthesis = QSearchSynthesisPass(
     layer_generator=SingleQuditLayerGenerator(None, allow_repeats=True),
     heuristic_function=DijkstraHeuristic(),
@@ -35,12 +30,6 @@ sq_synthesis = QSearchSynthesisPass(
         'cost_fn_gen': HilbertSchmidtCostGenerator(),
     },
 )
-
-
-def estimated_runtime(circ: Circuit) -> float:
-    """Return estimated runtime of the circuit with the given machine."""
-    return get_duration_from_circ(circ, qtm_machine)
-
 
 qsearch_pass = QSearchSynthesisPass(layer_generator=ShuttlingLayerGenerator(),
                                     heuristic_function=HeuristicSearch(heuristic_factor=10, qtm_machine=qtm_machine))
@@ -68,5 +57,4 @@ workflow = [
         sq_synthesis
     ),
     UnfoldPass()
-    #OddEvenSchedulingPass()
 ]
