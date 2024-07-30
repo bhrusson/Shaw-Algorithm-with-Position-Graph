@@ -3,9 +3,9 @@ from timeit import default_timer as timer
 import sys
 import pickle
 
-input_filename = sys.argv[0]
-qasm_result_filename = sys.argv[1]
-result_filename = sys.argv[2]
+input_filename = sys.argv[1]
+qasm_result_filename = sys.argv[2]
+result_filename = sys.argv[3]
 print("Input filename: ", str(input_filename))
 print("QASM output filename: ", str(qasm_result_filename))
 print("Output filename: ", str(result_filename))
