@@ -29,9 +29,11 @@ output_circuit.save(qasm_result_filename)
 Save pickle result file
 """
 duration = get_duration_from_circ(output_circuit, qtm_machine.H1)
-result = [duration, compile_time,
+result = [
+          duration, compile_time,
           output_circuit.gate_counts,
           data['initial_mapping'],
-          data['final_mapping']]
+          data['final_mapping']
+          ]
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)
