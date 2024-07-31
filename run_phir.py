@@ -5,8 +5,25 @@ import numpy as np
 from bqskit import Circuit
 from bqskit.ext import bqskit_to_pytket
 from pytket.phir.api import pytket_to_phir
-from pytket.phir.qtm_machine import QtmMachine
+from pytket.phir.machine import Machine, MachineTimings
+from pytket.phir.qtm_machine import QtmMachine, QTM_MACHINES_MAP, QTM_DEFAULT_GATESET
 
+
+def construct_qtm_machine(num_qudits: int):
+    tq_options = set()
+    for tq in range(0, num_qudits, 2):
+        tq_options.add(tq)
+    QTM_MACHINES_MAP[QtmMachine.H1] = Machine(
+        size=num_qudits,
+        gateset=QTM_DEFAULT_GATESET,
+        tq_options=tq_options,
+        timings=MachineTimings(
+            tq_time=0.04,
+            sq_time=0.03,
+            qb_swap_time=0.9,
+            meas_prep_time=0.05,
+        ),
+    )
 
 input_filename = sys.argv[1]
 json_filename = sys.argv[2]
@@ -19,6 +36,10 @@ Run the pytket-phir estimation
 """
 cir = Circuit.from_file(input_filename)
 pytket_circuit = bqskit_to_pytket(cir)
+if cir.num_qudits % 2 == 0:
+    construct_qtm_machine(cir.num_qudits)
+else:
+    construct_qtm_machine(cir.num_qudits + 1)
 phir_json = pytket_to_phir(circuit=pytket_circuit, qtm_machine=QtmMachine.H1)
 phir = json.loads(phir_json)
 total_duration = 0
