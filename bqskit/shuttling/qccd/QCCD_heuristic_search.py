@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+from bqskit import MachineModel
 from bqskit.ir.circuit import Circuit
 from bqskit.ir.opt.cost import CostFunctionGenerator
 from bqskit.ir.opt.cost import HilbertSchmidtCostGenerator
 from bqskit.passes.search.heuristic import HeuristicFunction
 from bqskit.qis import UnitaryMatrix, StateVector, StateSystem
-from pytket.phir.qtm_machine import QtmMachine
-from .util import get_duration_from_circ
+from bqskit.shuttling.qccd.evaluate_circuit import evaluate_small_circuit
 from bqskit.utils.typing import is_real_number
 
 
-class HeuristicSearch(HeuristicFunction):
+class QCCDHeuristicFunction(HeuristicFunction):
     """
     Heuristic function
     """
@@ -19,8 +19,9 @@ class HeuristicSearch(HeuristicFunction):
             self,
             heuristic_factor: float = 10.0,
             cost_factor: float = 1.0,
+            machine_model: MachineModel = None,
+            ion_assignment: dict = None,
             cost_gen: CostFunctionGenerator = HilbertSchmidtCostGenerator(),
-            qtm_machine: QtmMachine = QtmMachine.H1,
     ) -> None:
         """
         Construct a AStarHeuristic Function.
@@ -52,30 +53,19 @@ class HeuristicSearch(HeuristicFunction):
                 % type(cost_gen),
             )
 
-        if not isinstance(qtm_machine, QtmMachine):
-            raise TypeError(
-                'Expected QtmMachine type , got %s.'
-                % type(qtm_machine),
-            )
-
         self.heuristic_factor = heuristic_factor
         self.cost_factor = cost_factor
         self.cost_gen = cost_gen
-        self.qtm_machine = qtm_machine
+        self.QCCD_model = machine_model
+        self.ion_assignement = ion_assignment
 
     def get_value(
             self,
             circuit: Circuit,
             target: UnitaryMatrix | StateVector | StateSystem,
     ) -> float:
-        cost = get_duration_from_circ(circuit, self.qtm_machine)
-        # cost = 0
-        # for op in circuit.gate_set:
-        #     if op == SwapGate():
-        #         cost += circuit.count(op)*0.9
-        #     elif op.num_qudits == 2:
-        #         cost += circuit.count(op)*0.04
-        #     elif op.num_qudits == 1:
-        #         cost += circuit.count(op)*0.03
+        cost = evaluate_small_circuit(circuit=circuit,
+                                      QCCD_model=self.QCCD_model,
+                                      starting_ion_assignment=self.ion_assignement)
         heuristic = self.cost_gen.calc_cost(circuit, target)
         return self.heuristic_factor * heuristic + self.cost_factor * cost

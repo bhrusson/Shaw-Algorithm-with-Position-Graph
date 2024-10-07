@@ -53,13 +53,14 @@ def get_duration_from_circ_after_scheduling(circuit: Circuit, qtm_machine: QtmMa
     circ_depth = circuit.num_cycles
     total_duration = 0.0
     count_shift_gate = 0
+    machine = QTM_MACHINES_MAP.get(qtm_machine)
     for ix in range(circ_depth):
         layer = circuit[ix]
+        if not layer:
+            continue
         op = layer[0]
-        if op.gate == ShuttlingShiftGate(circuit.num_qudits):
+        if op.gate == ShuttlingShiftGate(machine.size):
             count_shift_gate += 1
-            gate_duration = 0
-        elif op.gate == RZGate():
             gate_duration = 0
         else:
             gate_duration = get_gate_time(op.gate, qtm_machine)

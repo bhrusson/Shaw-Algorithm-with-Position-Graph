@@ -1,27 +1,39 @@
 import json
 import numpy as np
 from pytket.phir.api import pytket_to_phir
-from pytket.phir.qtm_machine import QTM_MACHINES_MAP
+from pytket.phir.qtm_machine import QTM_MACHINES_MAP, QTM_DEFAULT_GATESET
+from pytket.phir.machine import Machine, MachineTimings
 from pytket.phir.sharding.sharder import Sharder
 from pytket.phir.place_and_route import place_and_route
 from pytket.phir.phirgen_parallel import genphir_parallel
-from pytket.phir.phirgen import genphir
 from bqskit import Circuit
 from bqskit.ext import bqskit_to_pytket
 from pytket.phir.qtm_machine import QtmMachine
 
-num_qudits = 4
-circuit_type = "hubbard_4_0"
+def construct_qtm_machine(num_qudits: int):
+    tq_options = set()
+    for tq in range(0, num_qudits, 2):
+        tq_options.add(tq)
+    QTM_MACHINES_MAP[QtmMachine.H1] = Machine(
+        size=num_qudits,
+        gateset=QTM_DEFAULT_GATESET,
+        tq_options=tq_options,
+        timings=MachineTimings(
+            tq_time=0.04,
+            sq_time=0.03,
+            qb_swap_time=0.9,
+            meas_prep_time=0.05,
+        ),
+    )
+
+num_qudits = 3
+circuit_type = "toffoli"
 cir = Circuit.from_file(f"experiments/results/experiment_circuits"
                         f"/input_circuits/{circuit_type}.qasm")
 pytket_circuit = bqskit_to_pytket(cir)
+
+construct_qtm_machine(4)
 phir_json = pytket_to_phir(circuit=pytket_circuit, qtm_machine=QtmMachine.H1)
-
-# machine = QTM_MACHINES_MAP.get(QtmMachine.H1)
-# shards = Sharder(pytket_circuit).shard()
-# placed = place_and_route(shards, machine)
-# phir_json = genphir_parallel(placed, machine)
-
 phir = json.loads(phir_json)
 total_duration = 0
 qop_lst = []
@@ -37,6 +49,6 @@ for i in phir['ops']:
             qop_lst.append(j['qop'])
     elif 'mop' in i.keys():
         total_duration += i['duration'][0]
-# print("Operation list: ", qop_lst)
-# print("Counting: ", np.unique(qop_lst, return_counts=True))
+print("Operation list: ", qop_lst)
+print("Counting: ", np.unique(qop_lst, return_counts=True))
 print("Total duration: ", total_duration)

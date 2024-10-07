@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import numpy as np
 from bqskit import Circuit
 from bqskit.ir import Operation
 from bqskit.compiler import PassData
 from bqskit.compiler.basepass import BasePass
-from bqskit.ir.gates import RZGate, U1qPiGate, U1qPi2Gate, RZZGate, SwapGate, FrozenParameterGate
+from bqskit.ir.gates import RZGate, U1qGate, RZZGate, SwapGate
 from .ShuttlingShift import ShuttlingShiftGate
 
 
@@ -34,7 +35,7 @@ class OddEvenSchedulingPass(BasePass):
                         new_op = Operation(gate=op.gate, location=[op.location[0] + 1], params=op.params)
                         rz_layer.append(new_op)
 
-                elif op.gate == U1qPiGate:
+                elif op.gate == U1qGate() and op.params[0] == np.pi:
                     if not need_shift_flg:
                         if op.location[0] % 2 == 0:
                             u1qpi_layer[0].append(op)
@@ -47,7 +48,7 @@ class OddEvenSchedulingPass(BasePass):
                         else:
                             u1qpi_layer[1].append(new_op)
 
-                elif op.gate == U1qPi2Gate:
+                elif op.gate == U1qGate() and op.params[0] == np.pi/2:
                     if not need_shift_flg:
                         if op.location[0] % 2 == 0:
                             u1qpi2_layer[0].append(op)
@@ -86,7 +87,7 @@ class OddEvenSchedulingPass(BasePass):
                         else:
                             swap_layer[1].append(new_op)
                 else:
-                    raise ValueError(f"Invalid gate type after synthesis, gate {op.gate} is not supported")
+                    raise ValueError(f"Invalid gate type after synthesis, gate {op.gate} with param {op.params} is not supported")
 
             for point in list(circuit.front):
                 circuit.pop(point)

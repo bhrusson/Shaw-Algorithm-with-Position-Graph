@@ -26,5 +26,6 @@ class SwapAdaption(BasePass):
             if op.gate == SwapGate():
                 circuit.replace_with_circuit(point, SWAP_circuit)
             num_swap = circuit.count(SwapGate())
+        circuit.unfold_all()
         assert circuit.count(SwapGate()) == 0
         return None

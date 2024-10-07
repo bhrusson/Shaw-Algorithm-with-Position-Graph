@@ -8,3 +8,4 @@ from .shuttling_shift_qsearch import ShuttlingShiftGenerator
 from .zone_scheduler import ZoneSchedulerPass, MachineSchedulingState
 from .heuristic_search import HeuristicSearch
 from .replacement import ReplacementPass
+from .swap_adaption import SwapAdaption

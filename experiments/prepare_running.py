@@ -6,10 +6,9 @@ from bqskit.qis import CouplingGraph
 from pytket.phir.qtm_machine import QtmMachine, QTM_MACHINES_MAP
 from bqskit.ir.gates import RZZGate, RZGate, U1qPi2Gate, U1qPiGate
 from bqskit.shuttling import ShuttlingLayerGenerator, HeuristicSearch, ShuttlingEmbedAllPermutationsPass, \
-    GateZoneSelectionPass, OddEvenSchedulingPass, ReplacementPass, ZoneSchedulerPass
+    GateZoneSelectionPass, OddEvenSchedulingPass, ReplacementPass, ZoneSchedulerPass, SwapAdaption
 from bqskit.shuttling.mapping.layout.pam import PAMLayoutPass
 from bqskit.shuttling.mapping.routing.pam import PAMRoutingPass
-from bqskit.shuttling.util import get_duration_from_circ
 from bqskit import enable_logging
 
 enable_logging(True)
@@ -49,6 +48,8 @@ workflow = [
     PAMLayoutPass(num_layout_passes),
     PAMRoutingPass(0.1),
     ApplyPlacement(),
+    UnfoldPass(),
+    SwapAdaption(),
     UnfoldPass(),
     ZoneSchedulerPass(),
     ReplacementPass(),

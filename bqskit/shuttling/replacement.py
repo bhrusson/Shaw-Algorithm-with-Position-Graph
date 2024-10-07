@@ -110,7 +110,13 @@ class ReplacementPass(BasePass):
         for p, q in zip(reversed_problem_points, reversed_states):
             _logger.debug(f"Point: {str(p)}")
             _logger.debug(f"Machine State: {str(q)}")
-            circuit_region = circuit.surround(point=p, num_qudits=self.block_num_qudits, fail_quickly=True)
+            circuit_region = circuit.surround(point=p,
+                                              num_qudits=self.block_num_qudits,
+                                              fail_quickly=True
+                                              )
+            _logger.debug(f"Region: {circuit_region}")
+            if circuit_region.num_qudits < 4:
+                continue
             folded_point = circuit.fold(circuit_region)
             op = circuit.get_operation(folded_point)
             target_unitary = op.get_unitary()
@@ -141,5 +147,7 @@ class ReplacementPass(BasePass):
             if distance < 1e-8:
                 circuit.replace_with_circuit(folded_point, replaced_circuit)
                 _logger.debug("Successfully replace the problem point with instantiation")
+            else:
+                circuit.unfold(folded_point)
             circuit.unfold_all()
         return None

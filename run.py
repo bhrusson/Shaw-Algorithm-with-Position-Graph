@@ -1,5 +1,6 @@
 from experiments.prepare_running import *
 from timeit import default_timer as timer
+from bqskit.shuttling.util import get_duration_from_circ
 import sys
 import pickle
 
