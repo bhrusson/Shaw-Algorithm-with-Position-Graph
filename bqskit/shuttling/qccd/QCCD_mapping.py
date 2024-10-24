@@ -151,26 +151,29 @@ class QCCDMappingAlgorithm():
         #                      " There is either repetition in the assignment or the ions are not initially inside traps.")
         D = self.qccd_machine.all_pair_travelling_time()
         F = circuit.front
+        decay = [1.0 for _ in range(self.qccd_machine.position_graph.num_qudits)]
         repeated_path = False
         tmp_F = []
-        decay = [1.0 for i in range(circuit.num_qudits)]
         iter_count = 0
-        latest_move = ()
+        initial_extended_set_size = self.extended_set_size
         prev_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
         leading_moves: list[tuple[int, int]] = []
         _logger.debug(f'Starting forward sabre pass with ion assignment pi: {pi}.')
         print(f"Starting forward sabre pass with ion assignment pi: {pi}.")
         if not all(r == circuit.radixes[0] for r in circuit.radixes):
             raise RuntimeError('Cannot currently map to hybrid-level systems.')
-
+        total_moving_time = 0.0
+        total_moves = {'segment': 0,
+                       'split_merge': 0,
+                       'inner_swap': 0,
+                       'junction_X': 0,
+                       'junction_Y': 0}
         # Main Loop
-        while len(F) > 0:
+        executed_flag = False
+        while len(F) > 0 and iter_count < 20:
             print("Front: ", [circuit[n] for n in F])
             # Retrieve executable gates giving the current mapping `pi`
-            # if (len(leading_moves) > 4 and
-            #         leading_moves[-1] == leading_moves[-3] == leading_moves[-5] and
-            #         leading_moves[-2] == leading_moves[-4] == leading_moves[-6]):
-            if len(leading_moves) > 3 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
+            if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 print("There is repetition..... !!!!!")
                 repeated_path = True
             print("Current ion mapping: ", pi)
@@ -178,6 +181,7 @@ class QCCDMappingAlgorithm():
             # Execute the gates and update F
             if len(execute_list) > 0:
                 executed_flag = True
+                self.extended_set_size = initial_extended_set_size
                 # leading_moves = []
                 if tmp_F != []:
                     F += tmp_F
@@ -187,6 +191,10 @@ class QCCDMappingAlgorithm():
                     F.remove(n)
                     prev_executed_counts.pop(n)
                     _logger.debug(f'Executing gate at point {n}.')
+                    if len(n) == 1:
+                        total_moving_time += self.qccd_machine.timing_data['sq_timings']
+                    elif len(n) == 2:
+                        total_moving_time += self.qccd_machine.timing_data['tq_timings']
                     print(f'Executing gate at point {n}.')
                     for successor in circuit.next(n):
                         if successor not in prev_executed_counts:
@@ -234,29 +242,43 @@ class QCCDMappingAlgorithm():
             executed_flag = False
             # Pick and apply a swap
             if repeated_path:
-                tmp_F = list(F)[1:]
-                F = [list(F)[0]]
-                repeated_path = False
-                print(f"Front is modified to {F}.")
+                if len(F) == 1:
+                    self.extended_set_size = 0
+                else:
+                    tmp_F = list(F)[1:]
+                    F = [list(F)[0]]
+                    repeated_path = False
+                    print(f"Front is modified to {F}.")
             E = self._calc_extended_set(circuit, F)
             print(f"Extended set: {[circuit[n] for n in E]}")
-            best_move = self._get_best_move(circuit, F, E, D, pi, latest_move, decay)
+            best_move = self._get_best_move(circuit, F, E, D, pi, decay)
             print(f"Best move: {best_move}")
             self._apply_move(best_move, pi, decay)
             leading_moves.append(best_move)
-            latest_move = best_move
 
             # Update loop counter and reset decay if necessary
             iter_count += 1
             if iter_count % self.decay_reset_interval == 0:
                 for i in range(circuit.num_qudits):
                     decay[i] = 1.0
-        print(f"All movement contain {iter_count} steps...")
-        total_moving_time = 0.0
+        print(f"All movement... Success:{True if iter_count == 0 else False}")
         for move in leading_moves:
             print(f"Move: {move} ({self.qccd_machine.segment_assignment[move]} which cost {D[move[0]][move[1]]}s)")
+            if D[move[0]][move[1]] == self.qccd_machine.timing_data['segment']:
+                total_moves['segment'] += 1
+            elif D[move[0]][move[1]] == self.qccd_machine.timing_data['inner_swap']:
+                total_moves['inner_swap'] += 1
+            elif D[move[0]][move[1]] == self.qccd_machine.timing_data['split']:
+                total_moves['split_merge'] += 1
+            elif D[move[0]][move[1]] == self.qccd_machine.timing_data['junction_Y']:
+                total_moves['junction_Y'] += 1
+            elif D[move[0]][move[1]] == self.qccd_machine.timing_data['junction_X']:
+                total_moves['junction_X'] += 1
+            else:
+                raise ValueError(f"The move {move} is not recognizable....")
             total_moving_time += D[move[0]][move[1]]
         print("Total moving time:", total_moving_time)
+        print("Total moves: ", total_moves)
 
     # def backward_pass(
     #     self,
@@ -350,7 +372,6 @@ class QCCDMappingAlgorithm():
     #         if iter_count % self.decay_reset_interval == 0:
     #             for i in range(circuit.num_qudits):
     #                 decay[i] = 1.0
-
     def _calc_extended_set(
             self,
             circuit: Circuit,
@@ -372,7 +393,6 @@ class QCCDMappingAlgorithm():
             E: set[CircuitPoint],
             D: list[list[float]],
             pi: dict,
-            latest_move: tuple[int, int],
             decay: list[float],
     ) -> tuple[int, int]:
         """Return the best move given the current algorithm state and ion assignment."""
@@ -382,13 +402,11 @@ class QCCDMappingAlgorithm():
 
         # Gather all considerable moves
         move_candidate_list = self._obtain_moves(circuit, pi)
-        # if latest_move != ():
-        #     move_candidate_list.remove(latest_move)
         print("All candidate move: ", move_candidate_list)
         list_of_best_score = []
         # Score them, tracking the best one
         for move in move_candidate_list:
-            score = self._score_move(circuit, F, D, pi, move, E)
+            score = self._score_move(circuit, F, D, pi, move, decay, E)
             if score < best_score:
                 best_score = score
                 best_move = move
@@ -451,7 +469,8 @@ class QCCDMappingAlgorithm():
             D: list[list[float]],
             pi: dict,
             move: tuple[int, int],
-            E: set[CircuitPoint],
+            decay: list[float],
+            E: set[CircuitPoint]
     ) -> float:
         """Score the candidate realizable physical moves given the current algorithm state and ion assignment."""
         # Apply potential move
@@ -483,6 +502,8 @@ class QCCDMappingAlgorithm():
             extend /= len(E)
             extend *= self.extended_set_weight
 
+        # Calculate decay factor
+        decay_factor = max(decay[move[0]], decay[move[1]])
         # Undo potential move
         if l1 is None:
             pi[l2] = move[1]  # Re-move ion to the adjacent available space
@@ -493,7 +514,7 @@ class QCCDMappingAlgorithm():
         # print(f"Calculating score move {move} w.r.t pi: {pi} yields the front value of {front}"
         #       f" and extend value of {extend}")
         # print("-------------------------------------------------------------------------------")
-        return front + extend
+        return decay_factor*(front + extend)
 
     def _get_distance_from_position_to_trap(self,
                                             position: int,
@@ -567,7 +588,7 @@ class QCCDMappingAlgorithm():
             self,
             logical_qudits: Sequence[int],
             pi: dict,
-            D: list[list[int]],
+            D: list[list[float]],
     ) -> float:
         """Calculate the expected number of moves to connect logical qudits."""
         # Single qudit case
@@ -640,7 +661,6 @@ class QCCDMappingAlgorithm():
         l2 = list(pi.keys())[list(pi.values()).index(move[1])] if move[1] in list(pi.values()) else None
         if l1 is None and l2 is None:
             raise RuntimeError(f'The move {move} is not a valid move as there is no ion in these assignment.')
-
         if l1 is None:
             pi[l2] = move[0]  # Move ion to the adjacent available space
         elif l2 is None:
@@ -648,8 +668,8 @@ class QCCDMappingAlgorithm():
         else:
             pi[l1], pi[l2] = move[1], move[0]  # Inner trap swap
 
-        # decay[swap[0]] += self.decay_delta
-        # decay[swap[1]] += self.decay_delta
+        decay[move[0]] += self.decay_delta
+        decay[move[1]] += self.decay_delta
 
     # def _uphill_swaps(
     #     self,
@@ -707,22 +727,23 @@ if __name__ == '__main__':
                    'junction_X': 120e-6}
     machine_model = QCCDMachineModel(physical_graph=physical_model,
                                      timing_data=timing_data)
-    ion_assignment = {0: 0, 1: 1, 2: 2,
-                      3: 6, 4: 10}
-    #circuit = Circuit.from_file("data/input_qasms/Grover_5.qasm")
     # ion_assignment = {0: 0, 1: 1, 2: 2,
-    #                   3: 3, 4: 4, 5: 5,
-    #                   6: 6, 7: 8, 8: 9}
+    #                   3: 6, 4: 10}
+    # circuit = Circuit.from_file("data/input_qasms/Grover_5.qasm")
+    # ion_assignment = {0: 6, 1: 2, 2: 0,
+    #                   3: 1, 4: 5, 5: 3,
+    #                   6: 7, 7: 8, 8: 4}
     # circuit = Circuit.from_file("data/input_qasms/adder9.qasm")
-    # ion_assignment = {0: 0, 1: 1, 2: 2,
-    #                   3: 6, 4: 10, 5: 11,
-    #                   6: 7, 7: 9}
-    # circuit = Circuit.from_file("data/input_qasms/Grover_8.qasm")
+    ion_assignment = {0: 0, 1: 1, 2: 2,
+                      3: 6, 4: 10, 5: 11,
+                      6: 7, 7: 9}
+    circuit = Circuit.from_file("data/input_qasms/Grover_8.qasm")
     # circuit = Circuit(5)
     # circuit.append_gate(CNOTGate(), (0, 1))
     # circuit.append_gate(CNOTGate(), (1, 2))
 
     mapping_algo = QCCDMappingAlgorithm(qccd_machine=machine_model,
+                                        decay_delta=0.0,
                                         extended_set_size=5,
-                                        extended_set_weight=0.01)
+                                        extended_set_weight=0.5)
     mapping_algo.forward_pass(circuit, ion_assignment)
