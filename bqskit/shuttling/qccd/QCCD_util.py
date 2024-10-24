@@ -7,7 +7,7 @@ def create_testing_physical_machine() -> QCCD_physical_machine:
     num_traps = 4
     num_junctions = 2
     max_traps_size = [3] * num_traps
-    executable = [True, False, True, False]
+    executable = [True, True, True, True]
     measurable = [False, True, False, True]
     physical_machine = QCCD_physical_machine(num_traps=num_traps,
                                              num_junctions=num_junctions,
@@ -15,8 +15,8 @@ def create_testing_physical_machine() -> QCCD_physical_machine:
                                              executable_traps=executable,
                                              measurable_traps=measurable)
     print("Creating a QCCD machine ...")
-    physical_machine.print_physical_machine()
-    print("Adding segments ...")
+    # physical_machine.print_physical_machine()
+    # print("Adding segments ...")
     physical_machine.add_segment(left=physical_machine.trap_list[0],
                                  right=physical_machine.junction_list[0])
     physical_machine.add_segment(left=physical_machine.trap_list[1],

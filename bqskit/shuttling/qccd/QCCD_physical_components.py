@@ -21,7 +21,7 @@ class Segment(NamedTuple):
     right: Trap | Junction | Segment
 
 
-#physical_graph = {
+# physical_graph = {
 #     'traps': [Trap(trap_id='0', max_num_ions=3, initial_num_ions=3),
 #               Trap(trap_id='1', max_num_ions=3, initial_num_ions=3),
 #               Trap(trap_id='2', max_num_ions=3, initial_num_ions=3),
@@ -111,6 +111,7 @@ class QCCD_physical_machine:
                                executable=executable_traps[idx],
                                measureable=measurable_traps[idx])
                           for idx in range(num_traps)]
+        self.executable_trap_list = [trap for trap in self.trap_list if trap.executable]
 
         if junctions_id is not None:
             assert num_junctions == len(junctions_id), ("Len of list of junction id is not equal to the number of "
