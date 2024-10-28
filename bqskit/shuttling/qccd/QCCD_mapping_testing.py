@@ -3,6 +3,7 @@ from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
 from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
 from bqskit import Circuit
 from bqskit.ir.gates import CNOTGate
+from bqskit.ir.gates import CCXGate
 
 physical_model = create_testing_physical_machine()
 timing_data = {'sq_timings': 30e-6,
@@ -15,10 +16,11 @@ timing_data = {'sq_timings': 30e-6,
                'junction_X': 120e-6}
 machine_model = QCCDMachineModel(physical_graph=physical_model,
                                  timing_data=timing_data)
-ion_assignment = {0: 0, 1: 1, 2: 12, 3: 14}
-circuit = Circuit(4)
-circuit.append_gate(CNOTGate(), (2, 3))
+ion_assignment = {0: 4, 1: 0, 2: 1, 3: 6, 4: 9, 5: 5, 6: 12, 7: 3}
+circuit = Circuit(8)
+circuit.append_gate(CCXGate(), (0, 5, 6))
 mapping_algo = QCCDMappingAlgorithm(qccd_machine=machine_model,
+                                    decay_delta=0.00,
                                     extended_set_size=5,
-                                    extended_set_weight=0.01)
+                                    extended_set_weight=0.5)
 mapping_algo.forward_pass(circuit, ion_assignment)

@@ -26,7 +26,9 @@ class QCCDMachineModel(MachineModel):
     def __init__(self,
                  physical_graph: QCCD_physical_machine,
                  timing_data: dict,
-                 gate_set: GateSetLike | None = None) -> None:
+                 multi_qudit_gate_type: str,
+                 gate_set: GateSetLike | None = None
+                 ) -> None:
         """
         MachineModel Constructor.
 
@@ -67,6 +69,7 @@ class QCCDMachineModel(MachineModel):
         self.gate_set = gate_set
         self.physical_graph = physical_graph
         self.timing_data = timing_data
+        self.gate_type = multi_qudit_gate_type
         (self.position_graph,
          self.physical_to_position,
          self.position_to_physical,
@@ -84,18 +87,38 @@ class QCCDMachineModel(MachineModel):
                 self.timing_mat[q2][q1] = self.timing_data["inner_swap"]
             elif (self.position_to_physical[q1] == "trap" or
                   self.position_to_physical[q2] == "trap"):
-                self.timing_mat[q1][q2] = self.timing_data["merge"]
-                self.timing_mat[q2][q1] = self.timing_data["merge"]  # assumption merge and split having the same time
+                self.timing_mat[q1][q2] = self.timing_data["merge"] + self.timing_data["segment"]
+                self.timing_mat[q2][q1] = self.timing_data["merge"] + self.timing_data["segment"]  # assumption merge
+                # and split having the same time
             else:
                 if self.segment_assignment[(q1, q2)] == "segment":
                     self.timing_mat[q1][q2] = self.timing_data["segment"]
                     self.timing_mat[q2][q1] = self.timing_data["segment"]
                 elif self.segment_assignment[(q1, q2)] == "junction_X":
-                    self.timing_mat[q1][q2] = self.timing_data["junction_X"]
-                    self.timing_mat[q2][q1] = self.timing_data["junction_X"]
+                    self.timing_mat[q1][q2] = self.timing_data["junction_X"] + self.timing_data["segment"]
+                    self.timing_mat[q2][q1] = self.timing_data["junction_X"] + self.timing_data["segment"]
                 elif self.segment_assignment[(q1, q2)] == "junction_Y":
-                    self.timing_mat[q1][q2] = self.timing_data["junction_Y"]
-                    self.timing_mat[q2][q1] = self.timing_data["junction_Y"]
+                    self.timing_mat[q1][q2] = self.timing_data["junction_Y"] + self.timing_data["segment"]
+                    self.timing_mat[q2][q1] = self.timing_data["junction_Y"] + self.timing_data["segment"]
+
+    def two_qudit_gate_time(self,
+                            p1: int,
+                            p2: int
+                            ) -> float:
+        if p1 == p2:
+            raise ValueError("P1 and P2 of the two-qudit gate can not be the same.")
+        if self.get_trap_id(p1) != self.get_trap_id(p2):
+            raise ValueError("P1 and P2 can not be on different trap.")
+        ion_distance = abs(p1 - p2)
+        if self.gate_type == "Duan":
+            return (-22 + 100 * ion_distance) * 1e-6
+        elif self.gate_type == "Trout":
+            return (10 + 38 * ion_distance) * 1e-6
+        elif self.gate_type == "PM":
+            return (160 + 5 * ion_distance) * 1e-6
+        elif self.gate_type == "FM":
+            trap_capacity = self.physical_graph.get_trap(self.get_trap_id(p1)).max_num_ions
+            return max(100, 13.33 * trap_capacity - 54) * 1e-6
 
     def generate_position_graph(self) -> (CouplingGraph,
                                           dict,
@@ -179,7 +202,6 @@ class QCCDMachineModel(MachineModel):
                     f"The number of degree at junction {junction.id} is {len(junction_neighbor[junction.id])} "
                     f"which is not an appropriate number")
             possible_combinations = combinations(junction_neighbor[junction.id], 2)
-            # print(f"All combination wrt to {junction.id}: ", list(possible_combinations))
             for possible_combination in list(possible_combinations):
                 coupling_graph.append(possible_combination)
                 if len(junction_neighbor[junction.id]) == 3:
@@ -254,11 +276,14 @@ class QCCDMachineModel(MachineModel):
 
     def gate_is_executable(self,
                            current_gate: Operation,
+                           pi: list,
                            ion_assignment: dict) -> bool:
         """
             Check if the gate is executable given current ion assignment and physical machine
+            pi: logical to physical
+            ion_assignment: physical to position
         """
-        trap_id_lst = [self.get_trap_id(ion_assignment[qudit]) for qudit in current_gate.location]
+        trap_id_lst = [self.get_trap_id(ion_assignment[pi[qudit]]) for qudit in current_gate.location]
         # print("Trap id list: ", trap_id_lst)
         if None in trap_id_lst:
             return False
@@ -312,7 +337,7 @@ class QCCDMachineModel(MachineModel):
         shortest_path_pos1 = self.position_graph.get_shortest_path_tree(position1)
         path = shortest_path_pos1[position2]
         runtime = 0.0
-        ion_status = 'trap'
+        ion_status = self.position_to_physical[position1]
         for idx_point in range(len(path) - 1):
             coupling = tuple(sorted((path[idx_point], path[idx_point + 1])))
             if self.segment_assignment[coupling] == 'segment':
@@ -349,6 +374,7 @@ if __name__ == '__main__':
                    'junction_Y': 100e-6,
                    'junction_X': 120e-6}
     machine_model = QCCDMachineModel(physical_graph=physical_model,
+                                     multi_qudit_gate_type='FM',
                                      timing_data=timing_data)
     print("Position graph...")
     print(machine_model.position_graph)
@@ -362,6 +388,7 @@ if __name__ == '__main__':
     print(machine_model.trap_end_points)
     print("Total number of positions...")
     print(machine_model.total_num_positions)
-    print("All pair travelling time...")
-    print(machine_model.all_pair_travelling_time())
-
+    print("Timing matrix...")
+    print(machine_model.timing_mat)
+    # print("All pair travelling time...")
+    # print(machine_model.all_pair_travelling_time())
