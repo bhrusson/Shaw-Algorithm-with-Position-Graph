@@ -8,6 +8,7 @@ from typing import cast
 from typing import TYPE_CHECKING
 from itertools import combinations
 from bqskit.ir import Operation
+from bqskit.ir.gates.parameterized.rz import RZGate
 from bqskit.ir.gates.parameterized.u1q import U1qPi2Gate, U1qPiGate
 from bqskit.ir.gates.parameterized.rzz import RZZGate
 from bqskit.compiler import MachineModel
@@ -59,7 +60,7 @@ class QCCDMachineModel(MachineModel):
         """
 
         if gate_set is None:
-            gate_set = GateSet({U1qPi2Gate, U1qPiGate, RZZGate()})
+            gate_set = GateSet({U1qPi2Gate, U1qPiGate, RZZGate(), RZGate()})
         else:
             gate_set = GateSet(gate_set)
 
@@ -76,6 +77,13 @@ class QCCDMachineModel(MachineModel):
          self.segment_assignment,
          self.trap_end_points,
          self.total_num_positions) = self.generate_position_graph()
+        self.coupling_graph = self.position_graph
+        self.num_qudits = self.position_graph.num_qudits
+        self.radixes = tuple([2] * self.num_qudits)
+        self.timing_mat = []
+        self.calculate_timing_matrix()
+
+    def calculate_timing_matrix(self) -> None:
         self.timing_mat = [
             [np.inf for _ in range(self.position_graph.num_qudits)]
             for _ in range(self.position_graph.num_qudits)
@@ -103,13 +111,16 @@ class QCCDMachineModel(MachineModel):
 
     def two_qudit_gate_time(self,
                             p1: int,
-                            p2: int
+                            p2: int,
+                            ion_distance: int = None,
                             ) -> float:
         if p1 == p2:
             raise ValueError("P1 and P2 of the two-qudit gate can not be the same.")
         if self.get_trap_id(p1) != self.get_trap_id(p2):
-            raise ValueError("P1 and P2 can not be on different trap.")
-        ion_distance = abs(p1 - p2)
+            raise ValueError(f"P1 and P2 can not be on different trap. P1 = {p1} is in {self.get_trap_id(p1)} "
+                             f"while P2 = {p2} is in {self.get_trap_id(p2)}.")
+        if ion_distance is None:
+            ion_distance = abs(p1 - p2)
         if self.gate_type == "Duan":
             return (-22 + 100 * ion_distance) * 1e-6
         elif self.gate_type == "Trout":
@@ -183,11 +194,18 @@ class QCCDMachineModel(MachineModel):
                     trap_end_point[segment.left.id].append(left)
                 else:
                     trap_end_point[segment.left.id] = [left]
-            # ?
+            # Trap connect to trap
             else:
                 left = max(position_assignment[segment.left.id])
                 right = min(position_assignment[segment.right.id])
-                print("What is this ????", left, right)
+                if segment.right.id in trap_end_point.keys():
+                    trap_end_point[segment.right.id].append(right)
+                else:
+                    trap_end_point[segment.right.id] = [right]
+                if segment.left.id in trap_end_point.keys():
+                    trap_end_point[segment.left.id].append(left)
+                else:
+                    trap_end_point[segment.left.id] = [left]
                 coupling_graph.append((left, current_position_idx))
                 coupling_graph.append((current_position_idx, right))
                 coupling_assignment[(left, current_position_idx)] = 'segment'
@@ -210,6 +228,56 @@ class QCCDMachineModel(MachineModel):
                     coupling_assignment[possible_combination] = 'junction_X'
         return (CouplingGraph(coupling_graph), position_assignment, physical_assignment,
                 coupling_assignment, trap_end_point, total_amount_positions)
+
+    def update_wrt_perm(self,
+                        initial_placement: list[int],
+                        permutation: list[int]) -> None:
+        placement = initial_placement
+        pi_c = {q: placement[permutation[i]] for i, q in enumerate(sorted(permutation))}
+        for q in permutation:
+            placement[q] = pi_c[q]
+        print("Placement: ", placement)
+        # Update position graph
+        new_position_graph_edges = []
+        for coupling in self.position_graph:
+            print("Coupling:", coupling)
+            new_position_graph_edges.append((placement.index(coupling[0]),
+                                             placement.index(coupling[1])))
+        self.position_graph = CouplingGraph(new_position_graph_edges, self.position_graph.num_qudits)
+        self.coupling_graph = self.position_graph
+
+        # Update physical_to_position,
+        new_physical_to_position = {}
+        for key in self.physical_to_position.keys():
+            key_value = self.physical_to_position[key]
+            new_key_value = [placement.index(value) for value in key_value]
+            new_physical_to_position[key] = new_key_value
+        self.physical_to_position = new_physical_to_position
+
+        # Update position_to_physical
+        new_position_to_physical = {}
+        for key in self.position_to_physical.keys():
+            new_key = placement.index(key)
+            new_position_to_physical[new_key] = self.position_to_physical[key]
+        self.position_to_physical = new_position_to_physical
+
+        # Update segment assginment
+        new_segment_assignment = {}
+        for key in self.segment_assignment.keys():
+            key = list(key)
+            new_key = [placement.index(key_val) for key_val in key]
+            new_segment_assignment[tuple(new_key)] = self.segment_assignment[tuple(key)]
+        self.segment_assignment = new_segment_assignment
+
+        # Update trap_end_points
+        trap_end_point = {}
+        for key in self.trap_end_points.keys():
+            new_value = [placement.index(value) for value in self.trap_end_points[key]]
+            trap_end_point[key] = new_value
+        self.trap_end_points = trap_end_point
+
+        # Recalculate timing mat
+        self.calculate_timing_matrix()
 
     def get_trap_id(self,
                     position: int) -> str | None:
@@ -363,8 +431,12 @@ class QCCDMachineModel(MachineModel):
 
 if __name__ == '__main__':
     from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
-
-    physical_model = create_testing_physical_machine()
+    type = 'linear'
+    trap_capacity = 2
+    num_traps = 3
+    physical_model = create_testing_physical_machine(type=type,
+                                                     trap_capacity=trap_capacity,
+                                                     num_traps=num_traps)
     timing_data = {'sq_timings': 30e-6,
                    'tq_timings': 40e-6,
                    'segment': 5e-6,
@@ -388,7 +460,24 @@ if __name__ == '__main__':
     print(machine_model.trap_end_points)
     print("Total number of positions...")
     print(machine_model.total_num_positions)
-    print("Timing matrix...")
-    print(machine_model.timing_mat)
+    # new_placement = [3, 4, 0, 2, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    # print("There is a new placement :", new_placement)
+    # machine_model.update_wrt_perm(initial_placement=list(range(machine_model.total_num_positions)),
+    #                               permutation=new_placement)
+    # print("After updating the placement ....")
+    # print("Position graph...")
+    # print(machine_model.position_graph)
+    # print("Physical to position mapping...")
+    # print(machine_model.physical_to_position)
+    # print("Position to physical mapping...")
+    # print(machine_model.position_to_physical)
+    # print("Coupling assignment mapping...")
+    # print(machine_model.segment_assignment)
+    # print("All trap end points...")
+    # print(machine_model.trap_end_points)
+    # print("Total number of positions...")
+    # print(machine_model.total_num_positions)
+    # print("Timing matrix...")
+    # print(machine_model.timing_mat)
     # print("All pair travelling time...")
     # print(machine_model.all_pair_travelling_time())

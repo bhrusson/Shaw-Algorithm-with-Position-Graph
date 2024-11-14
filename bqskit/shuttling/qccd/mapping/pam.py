@@ -1,6 +1,7 @@
 """This module implements the PAMRoutingPass class."""
 from __future__ import annotations
 
+import copy
 import itertools as it
 import logging
 from typing import Dict
@@ -23,7 +24,6 @@ from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
 from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
 
 _logger = logging.getLogger(__name__)
-
 
 PAMBlockPermData = Dict[Tuple[Tuple[int, ...], Tuple[int, ...]], Circuit]
 PAMBlockTAPermData = Dict[CouplingGraph, PAMBlockPermData]
@@ -67,14 +67,15 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
     """
 
     def __init__(
-        self,
-        gate_count_weight: float = 0.1,
-        decay_delta: float = 0.001,
-        decay_reset_interval: int = 5,
-        decay_reset_on_gate: bool = True,
-        extended_set_size: int = 20,
-        extended_set_weight: float = 0.5,
-        qccd_machine: QCCDMachineModel = None
+            self,
+            gate_count_weight: float = .1,
+            decay_delta: float = 0.001,
+            decay_reset_interval: int = 5,
+            decay_reset_on_gate: bool = True,
+            extended_set_size: int = 10,
+            extended_set_weight: float = 0.5,
+            qccd_machine: QCCDMachineModel = None,
+            cogestion_segment_rate: float = 0.6
     ) -> None:
         """
         Construct a PermutationAwareMappingAlgorithm.
@@ -112,42 +113,43 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             decay_reset_on_gate,
             extended_set_size,
             extended_set_weight,
-            qccd_machine
+            qccd_machine,
+            cogestion_segment_rate
         )
 
     @overload  # type: ignore
     def forward_pass(
-        self,
-        circuit: Circuit,
-        pi: list[int],
-        ion_assignment: dict,
-        cg: CouplingGraph,
-        perm_data: dict[CircuitPoint, PAMBlockTAPermData],
-        modify_circuit: Literal[False] = False,
+            self,
+            circuit: Circuit,
+            pi: list[int],
+            ion_assignment: dict,
+            cg: CouplingGraph,
+            perm_data: dict[CircuitPoint, PAMBlockTAPermData],
+            modify_circuit: Literal[False] = False,
     ) -> None:
         ...
 
     @overload
     def forward_pass(
-        self,
-        circuit: Circuit,
-        pi: list[int],
-        ion_assignment: dict,
-        cg: CouplingGraph,
-        perm_data: dict[CircuitPoint, PAMBlockTAPermData],
-        modify_circuit: Literal[True],
+            self,
+            circuit: Circuit,
+            pi: list[int],
+            ion_assignment: dict,
+            cg: CouplingGraph,
+            perm_data: dict[CircuitPoint, PAMBlockTAPermData],
+            modify_circuit: Literal[True],
     ) -> PAMBlockResultDict:
         ...
 
     def forward_pass(  # type: ignore
-        self,
-        circuit: Circuit,
-        pi: list[int],
-        ion_assignment: dict,
-        cg: CouplingGraph,
-        perm_data: dict[CircuitPoint, PAMBlockTAPermData],
-        modify_circuit: bool = False,
-    ) -> PAMBlockResultDict | None:
+            self,
+            circuit: Circuit,
+            pi: list[int],
+            ion_assignment: dict,
+            cg: CouplingGraph,
+            perm_data: dict[CircuitPoint, PAMBlockTAPermData],
+            modify_circuit: bool = False,
+    ) -> (PAMBlockResultDict | None, list, int):
         """
         Apply a forward pass of the PAM algorithm to `pi`.
 
@@ -185,8 +187,10 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
         _logger.debug(f'Starting forward pam pass with ion assignment: {ion_assignment}.')
 
         if modify_circuit:
+            instructions_list = []
             mapped_circuit = Circuit(circuit.num_qudits, circuit.radixes)
             out_data: PAMBlockResultDict = {}
+            runtime = 0.0
 
         # Main Loop
         while len(F) > 0:
@@ -194,9 +198,19 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 print("There is repetition..... !!!!!")
                 repeated_path = True
-            if self.iter_count > 15:
+            if self.iter_count > 12:
+                _logger.debug(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
-                leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
+                brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
+                if modify_circuit:
+                    for move in brute_force_moves:
+                        # mapped_circuit.append_gate(SwapGate(), move)
+                        instructions_list.append(
+                            [f"Move {move}", f"{ion_assignment}", f"cost: {D[move[0]][move[1]]} seconds"])
+                        mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
+                                                   list(range(circuit.num_qudits)))
+                        runtime += D[move[0]][move[1]]
+                leading_moves += brute_force_moves
             print("Current ion mapping: ", ion_assignment)
             execute_list = [n for n in F if self.qccd_machine.gate_is_executable(circuit[n], pi, ion_assignment)]
 
@@ -233,6 +247,9 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                         if modify_circuit:
                             physical_location = [pi[q] for q in op.location]
                             mapped_circuit.append_gate(op.gate, op.location)
+                            instructions_list.append([f"Execute at {physical_location}", f"{ion_assignment}"])
+                            mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
+                                                       list(range(circuit.num_qudits)))
                         continue
 
                     p1, circ, p2 = self._get_best_perm(
@@ -246,9 +263,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                         E,
                         op.location,
                     )
-
                     self._apply_perm(p1, pi, ion_assignment)
-
                     if modify_circuit:
                         physical_location = [pi[q] for q in op.location]
                         cycle = mapped_circuit.append_circuit(
@@ -256,14 +271,20 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                             physical_location,
                             True,
                         )
+                        mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
+                                                   list(range(circuit.num_qudits)))
+                        instructions_list.append([f"Execute at {physical_location}", f"{ion_assignment}"])
                         new_point = CircuitPoint(cycle, physical_location[0])
                         out_data[new_point] = {
                             'pre_perm': self._global_to_local_perm(p1),
                             'post_perm': self._global_to_local_perm(p2),
                             'original_utry': op.get_unitary(),
                         }
-
                     self._apply_perm(p2, pi, ion_assignment)
+                    if modify_circuit:
+                        _logger.debug(f"Ion assignment after applying perm: {ion_assignment}")
+                        instructions_list[-1].append(f"{ion_assignment}")
+                        # instructions_list.append(f"Ion assignment after applying perm: {ion_assignment}")
 
                 # Reset decay if necessary
                 if self.decay_reset_on_gate:
@@ -283,8 +304,18 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                 elif len(F) == 1 and self.extended_set_size == 0:
                     # Retrieve executable gates giving the current mapping `pi`
                     if self.iter_count > 2:
+                        _logger.debug("Try bruteforce due to repeated pattern...")
                         print("Try bruteforce due to repeated pattern...")
-                        leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
+                        brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
+                        if modify_circuit:
+                            for move in brute_force_moves:
+                                # mapped_circuit.append_gate(SwapGate(), move)
+                                instructions_list.append(
+                                    [f"Move {move}", f"{ion_assignment}", f"cost: {D[move[0]][move[1]]} seconds"])
+                                mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
+                                                           list(range(circuit.num_qudits)))
+                                runtime += D[move[0]][move[1]]
+                        leading_moves += brute_force_moves
                         continue
                 else:
                     tmp_F = list(F)[1:]
@@ -295,20 +326,61 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             print(f"Extended set: {[circuit[n] for n in E]}")
             best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay)
             if best_move is None:
-                leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
+                _logger.debug("Try bruteforce due to no best move is found...")
+                brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
+                if modify_circuit:
+                    for move in brute_force_moves:
+                        # mapped_circuit.append_gate(SwapGate(), move)
+                        instructions_list.append(
+                            [f"Move {move}", f"{ion_assignment}", f"cost: {D[move[0]][move[1]]} seconds"])
+                        mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
+                                                   list(range(circuit.num_qudits)))
+                        runtime += D[move[0]][move[1]]
+                leading_moves += brute_force_moves
                 continue
             print(f"Best move: {best_move}")
             self._apply_move(best_move, ion_assignment)
+            leading_moves.append(best_move)
 
             if modify_circuit:
-                mapped_circuit.append_gate(SwapGate(), best_move)
+                # mapped_circuit.append_gate(SwapGate(), best_move)
+                instructions_list.append(
+                    [f"Move {best_move} ", f"{ion_assignment}", f"cost: {D[best_move[0]][best_move[1]]} seconds"])
+                mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits), list(range(circuit.num_qudits)))
+                runtime += D[best_move[0]][best_move[1]]
 
             # Update loop counter and reset decay if necessary
             self.iter_count += 1
-
+        #_logger.debug(f"Leading moves: {leading_moves}")
         if modify_circuit:
             circuit.become(mapped_circuit)
-            return out_data
+            return out_data, instructions_list, runtime
+
+    # def _apply_move(
+    #         self,
+    #         move: tuple[int, int],
+    #         ion_assignment: dict,
+    #         modify_circuit: bool = False,
+    # ) -> None:
+    #     """Overide Apply the move to `pi`"""
+    #     _logger.debug('applying move %s' % str(move))
+    #     # Apply potential move
+    #     l1 = list(ion_assignment.keys())[list(ion_assignment.values()).index(move[0])] \
+    #         if move[0] in list(ion_assignment.values()) else None
+    #     l2 = list(ion_assignment.keys())[list(ion_assignment.values()).index(move[1])] \
+    #         if move[1] in list(ion_assignment.values()) else None
+    #     if l1 is None and l2 is None:
+    #         raise RuntimeError(f'The move {move} is not a valid move as there is no ion in these assignment.')
+    #     if l1 is None:
+    #         ion_assignment[l2] = move[0]  # Move ion to the adjacent available space
+    #     elif l2 is None:
+    #         ion_assignment[l1] = move[1]  # Move ion to the adjacent available space
+    #     else:
+    #         ion_assignment[l1], ion_assignment[l2] = move[1], move[0]  # Inner trap swap
+    #     # if modify_circuit:
+    #     #     instructions_list.append(
+    #     #         [f"Move {move} ", f"{ion_assignment}", f"cost: {D[move[0]][move[1]]} seconds"])
+    #     _logger.debug('ion assignment after move %s' % str(ion_assignment))
 
     def _global_to_local_perm(self, gperm: Sequence[int]) -> tuple[int, ...]:
         """Return the local permutation from a global permutation."""
@@ -316,51 +388,77 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
         return tuple(global_to_local_map[i] for i in gperm)
 
     def _get_best_perm(
-        self,
-        circuit: Circuit,
-        perm_data: PAMBlockTAPermData,
-        cg: CouplingGraph,
-        F: set[CircuitPoint],
-        pi: list[int],
-        ion_assignment: dict,
-        D: list[list[float]],
-        E: set[CircuitPoint],
-        qudits: Sequence[int],
+            self,
+            circuit: Circuit,
+            perm_data: PAMBlockTAPermData,
+            cg: CouplingGraph,
+            F: set[CircuitPoint],
+            pi: list[int],
+            ion_assignment: dict,
+            D: list[list[float]],
+            E: set[CircuitPoint],
+            qudits: Sequence[int],
     ) -> tuple[tuple[int, ...], Circuit, tuple[int, ...]]:
         """Return the best permutation to apply before and after a gate."""
-
+        _logger.debug(f'Ion assignment: {ion_assignment}')
+        _logger.debug(f'Initial pi: {pi}')
+        _logger.debug(f'Initial qudits: {qudits}')
+        _logger.debug(f"Qudits location after pi: {[pi[i] for i in qudits]}")
         # Local permutations determine how a gate is permuted in it own space
         local_perms = list(it.permutations(range(len(qudits))))
-
         # Global perms capture local perms' effect on the full logical space
         global_perms = [
             tuple(qudits[i] for i in lperm)
             for lperm in local_perms
         ]
-
         # Inverted Permutations
         inv_local_perms = [
             tuple(lperm.index(i) for i in range(len(qudits)))
             for lperm in local_perms
         ]
-
         # Inverted Global Permutations
         inv_global_perms = [
             tuple(qudits[i] for i in ilperm)
             for ilperm in inv_local_perms
         ]
-
+        # _logger.debug(f'Permutation data: {perm_data}')
         # Gather valid pre, circ, post triples
         pre_circ_post_triples = []
         perm_iter = zip(local_perms, inv_local_perms, inv_global_perms)
         for lperm, ilperm, gperm1 in perm_iter:
-            physical_location = [pi[qudits[p]] for p in ilperm]
+            _logger.debug(f'pi after permutation {ilperm}: {[pi[qudits[p]] for p in ilperm]}')
+            physical_location = [ion_assignment[pi[qudits[p]]] for p in ilperm]
+            _logger.debug(f'physical location: {physical_location}')
             local_graph = cg.get_subgraph(physical_location)
+            _logger.debug(f'local_graph: {local_graph}')
+            if (len(local_graph._edges) < 2) and len(physical_location) > 2:
+                trap_ids = []
+                for position in physical_location:
+                    trap_ids.append(self.qccd_machine.get_trap_id(position))
+                if None in trap_ids:
+                    trap_ids.remove(None)
+                trap_id = max(set(trap_ids), key=trap_ids.count)
+                _logger.debug(f"Trap id: {trap_ids}")
+                physical_location = list(self.qccd_machine.physical_to_position[trap_id])[:3]
+                local_graph = cg.get_subgraph(physical_location)
+            if local_graph.get_qudit_degrees() == [0] * local_graph.num_qudits:
+                _logger.debug(f"The coupling graph is empty")
+                if len(physical_location) > 2:
+                    _logger.debug(f"FullCoupling graph: {cg}, local graph: {local_graph} ")
+                    raise ValueError("Where the corner case is bigger than 2 qubits")
+                elif len(physical_location) == 2:
+                    _logger.debug(f"Trap id of first location:{self.qccd_machine.get_trap_id(physical_location[0])}")
+                    _logger.debug(f"Trap id of second location:{self.qccd_machine.get_trap_id(physical_location[1])}")
+                    # if (self.qccd_machine.get_trap_id(physical_location[0]) ==
+                    #         self.qccd_machine.get_trap_id(physical_location[1])):
+                    local_graph = CouplingGraph([(0, 1)], 2)
+            _logger.debug(f"FullCoupling graph: {cg}, local graph: {local_graph} ")
             if local_graph in perm_data:
                 for perms, circ in perm_data[local_graph].items():
                     if lperm == perms[0]:
                         gperm2 = global_perms[local_perms.index(perms[1])]
                         pre_circ_post_triples.append((gperm1, circ, gperm2))
+                        # _logger.debug(f"Pre_circ_triples: {gperm1}, {gperm2} ")
 
         if len(pre_circ_post_triples) == 0:
             raise RuntimeError(
@@ -408,31 +506,31 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
         return best_triple
 
     def _score_perm(
-        self,
-        circuit: Circuit,
-        F: set[CircuitPoint],
-        pi: list[int],
-        ion_assignment: dict,
-        D: list[list[float]],
-        perm: tuple[Sequence[int], Sequence[int]],
-        E: set[CircuitPoint],
+            self,
+            circuit: Circuit,
+            F: set[CircuitPoint],
+            pi: list[int],
+            ion_assignment: dict,
+            D: list[list[float]],
+            perm: tuple[Sequence[int], Sequence[int]],
+            E: set[CircuitPoint],
     ) -> float:
         """Calculating the routing score after applying `perm`."""
         pi_bkp = pi.copy()
         ion_assignment_bkp = ion_assignment.copy()
         pi_c = {q: pi[perm[0][i]] for i, q in enumerate(sorted(perm[0]))}
-        ion_c = {q: ion_assignment[pi_c[i]] for i, q in enumerate(sorted(perm[0]))}
         for q in perm[0]:
             pi[q] = pi_c[q]
-        for p, q in zip(sorted(pi), sorted(perm[0])):
-            ion_assignment[p] = ion_c[q]
+        ion_assignment_tmp = ion_assignment.copy()
+        for p in ion_assignment.keys():
+            ion_assignment[p] = ion_assignment_tmp[pi.index(p)]
 
         pi_c = {q: pi[perm[1][i]] for i, q in enumerate(sorted(perm[1]))}
-        ion_c = {q: ion_assignment[pi_c[i]] for i, q in enumerate(sorted(perm[1]))}
         for q in perm[1]:
             pi[q] = pi_c[q]
-        for p, q in zip(sorted(pi), sorted(perm[1])):
-            ion_assignment[p] = ion_c[q]
+        ion_assignment_tmp = ion_assignment.copy()
+        for p in ion_assignment.keys():
+            ion_assignment[p] = ion_assignment_tmp[pi.index(p)]
 
         # Front Set Term
         front = 0.0
@@ -465,5 +563,5 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             extend *= self.extended_set_weight
 
         pi[:] = pi_bkp[:]
-        ion_assignment[:] = ion_assignment_bkp[:]
+        ion_assignment.update(ion_assignment_bkp)
         return front + extend

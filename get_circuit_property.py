@@ -2,7 +2,7 @@ from bqskit import Circuit
 
 circuit_lst = ["toffoli.qasm", "fredkin.qasm", "hubbard_4_0.qasm", "Grover_5.qasm",
                "PhaseEstimator_5.qasm", "Grover_8.qasm", "PhaseEstimator_8.qasm",
-               "hubbard_2x2_0.qasm", "adder9.qasm", "hubbard_3x2_0.qasm",
+               "hubbard_2x2_0.qasm", "adder9_trapsize3.qasm", "hubbard_3x2_0.qasm",
                "cuccaro-adder-16.qasm", "heisenberg-16-20.qasm", "incrementer-16.qasm",
                "QAOA_16.qasm", "QFT_16.qasm", "QuantumVolume_16.qasm", "TFIM_n16_s100.qasm",
                "TFXY_n16_s100.qasm", "QAOA_20.qasm", "QFT_20.qasm", "QuantumVolume_20.qasm"]

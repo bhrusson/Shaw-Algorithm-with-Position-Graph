@@ -1,11 +1,12 @@
-from bqskit.ext import H1_1Model
-from bqskit import Circuit, compile
+from bqskit import Circuit, compile, MachineModel
+from bqskit.ir.gate import Gate
+from bqskit.ir.gates.parameterized import U3Gate
+from bqskit.ir.gates import CXGate
 
-num_qudits = 20
-circuit_type = "QuantumVolume"
 cir = Circuit.from_file(f"experiments/results/experiment_circuits"
-                        f"/input_circuits/{circuit_type}_{num_qudits}.qasm")
-compiled_circuit = compile(cir, model=H1_1Model, optimization_level=3)
-
+                        f"/input_circuits/Grover_8.qasm")
+gateset:set[Gate] = {U3Gate(), CXGate()}
+machine_model = MachineModel(20, None, gateset)
+compiled_circuit = compile(cir, model=machine_model, optimization_level=3)
 compiled_circuit.save(f"experiments/results/experiment_circuits/"
-                      f"output_circuits/{circuit_type}_{num_qudits}_bqskit_compiled.qasm")
+                      f"output_circuits/Grover_8_compiled.qasm")

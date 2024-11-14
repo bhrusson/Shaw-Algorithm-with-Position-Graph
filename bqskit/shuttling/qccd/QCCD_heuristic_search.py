@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from bqskit import MachineModel
+from bqskit.compiler import PassData
 from bqskit.ir.circuit import Circuit
+from bqskit.qis.graph import CouplingGraph
 from bqskit.ir.opt.cost import CostFunctionGenerator
 from bqskit.ir.opt.cost import HilbertSchmidtCostGenerator
 from bqskit.passes.search.heuristic import HeuristicFunction
 from bqskit.qis import UnitaryMatrix, StateVector, StateSystem
-from bqskit.shuttling.qccd.evaluate_circuit import evaluate_small_circuit
+from bqskit.shuttling.qccd.evaluate_circuit import evaluate_circuit
 from bqskit.utils.typing import is_real_number
 
 
@@ -19,9 +21,8 @@ class QCCDHeuristicFunction(HeuristicFunction):
             self,
             heuristic_factor: float = 10.0,
             cost_factor: float = 1.0,
-            machine_model: MachineModel = None,
-            ion_assignment: dict = None,
             cost_gen: CostFunctionGenerator = HilbertSchmidtCostGenerator(),
+            machine_model: MachineModel = None,
     ) -> None:
         """
         Construct a AStarHeuristic Function.
@@ -56,16 +57,16 @@ class QCCDHeuristicFunction(HeuristicFunction):
         self.heuristic_factor = heuristic_factor
         self.cost_factor = cost_factor
         self.cost_gen = cost_gen
-        self.QCCD_model = machine_model
-        self.ion_assignement = ion_assignment
+        self.machine_model = machine_model
 
     def get_value(
             self,
             circuit: Circuit,
-            target: UnitaryMatrix | StateVector | StateSystem,
+            target: UnitaryMatrix | StateVector | StateSystem
     ) -> float:
-        cost = evaluate_small_circuit(circuit=circuit,
-                                      QCCD_model=self.QCCD_model,
-                                      starting_ion_assignment=self.ion_assignement)
+        #coupling_graph = data.connectivity
+        cost = evaluate_circuit(circuit=circuit,
+                                machine_model=self.machine_model,
+                                coupling_graph=circuit.coupling_graph)
         heuristic = self.cost_gen.calc_cost(circuit, target)
         return self.heuristic_factor * heuristic + self.cost_factor * cost

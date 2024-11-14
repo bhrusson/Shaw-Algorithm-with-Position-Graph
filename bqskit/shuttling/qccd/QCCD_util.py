@@ -3,30 +3,136 @@ from bqskit.ir.gates import CNOTGate, XGate
 from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
 
 
-def create_testing_physical_machine() -> QCCD_physical_machine:
-    num_traps = 4
-    num_junctions = 2
-    max_traps_size = [3] * num_traps
-    executable = [True, True, True, True]
-    measurable = [False, True, False, True]
-    physical_machine = QCCD_physical_machine(num_traps=num_traps,
-                                             num_junctions=num_junctions,
-                                             max_traps_size=max_traps_size,
-                                             executable_traps=executable,
-                                             measurable_traps=measurable)
-    print("Creating a QCCD machine ...")
-    # print("Adding segments ...")
-    physical_machine.add_segment(left=physical_machine.trap_list[0],
-                                 right=physical_machine.junction_list[0])
-    physical_machine.add_segment(left=physical_machine.trap_list[1],
-                                 right=physical_machine.junction_list[0])
-    physical_machine.add_segment(left=physical_machine.junction_list[0],
-                                 right=physical_machine.junction_list[1])
-    physical_machine.add_segment(left=physical_machine.trap_list[2],
-                                 right=physical_machine.junction_list[1])
-    physical_machine.add_segment(left=physical_machine.trap_list[3],
-                                 right=physical_machine.junction_list[1])
-    physical_machine.print_physical_machine()
+def create_testing_physical_machine(
+        type: str,
+        trap_capacity: int,
+        num_traps: int = None) -> QCCD_physical_machine:
+    if type == "H":
+        num_traps = 4
+        num_junctions = 2
+        max_traps_size = [trap_capacity] * num_traps
+        executable = [True, True, True, True]
+        measurable = [False, True, False, True]
+        physical_machine = QCCD_physical_machine(num_traps=num_traps,
+                                                 num_junctions=num_junctions,
+                                                 max_traps_size=max_traps_size,
+                                                 executable_traps=executable,
+                                                 measurable_traps=measurable)
+        print("Creating a QCCD machine ...")
+        # print("Adding segments ...")
+        physical_machine.add_segment(left=physical_machine.trap_list[0],
+                                     right=physical_machine.junction_list[0])
+        physical_machine.add_segment(left=physical_machine.trap_list[1],
+                                     right=physical_machine.junction_list[0])
+        physical_machine.add_segment(left=physical_machine.junction_list[0],
+                                     right=physical_machine.junction_list[1])
+        physical_machine.add_segment(left=physical_machine.trap_list[2],
+                                     right=physical_machine.junction_list[1])
+        physical_machine.add_segment(left=physical_machine.trap_list[3],
+                                     right=physical_machine.junction_list[1])
+        physical_machine.print_physical_machine()
+    elif type == "Enchilada ":
+        num_traps = 9
+        num_junctions = 6
+        max_traps_size = [trap_capacity] * num_traps
+        executable = [True, False, True, False, True, False, True, False, True]
+        measurable = [True, False, True, False, True, False, True, False, True]
+        physical_machine = QCCD_physical_machine(num_traps=num_traps,
+                                                 num_junctions=num_junctions,
+                                                 max_traps_size=max_traps_size,
+                                                 executable_traps=executable,
+                                                 measurable_traps=measurable)
+        print("Creating a QCCD machine ...")
+        # print("Adding segments ...")
+        physical_machine.add_segment(left=physical_machine.trap_list[0],
+                                     right=physical_machine.junction_list[0])
+        physical_machine.add_segment(left=physical_machine.junction_list[0],
+                                     right=physical_machine.trap_list[1])
+        physical_machine.add_segment(left=physical_machine.junction_list[0],
+                                     right=physical_machine.junction_list[2])
+        physical_machine.add_segment(left=physical_machine.trap_list[2],
+                                     right=physical_machine.junction_list[1])
+        physical_machine.add_segment(left=physical_machine.junction_list[1],
+                                     right=physical_machine.junction_list[2])
+        physical_machine.add_segment(left=physical_machine.junction_list[1],
+                                     right=physical_machine.trap_list[3])
+        physical_machine.add_segment(left=physical_machine.junction_list[2],
+                                     right=physical_machine.trap_list[4])
+        physical_machine.add_segment(left=physical_machine.trap_list[4],
+                                     right=physical_machine.junction_list[3])
+        physical_machine.add_segment(left=physical_machine.junction_list[3],
+                                     right=physical_machine.junction_list[4])
+        physical_machine.add_segment(left=physical_machine.junction_list[4],
+                                     right=physical_machine.trap_list[5])
+        physical_machine.add_segment(left=physical_machine.junction_list[3],
+                                     right=physical_machine.junction_list[5])
+        physical_machine.add_segment(left=physical_machine.junction_list[5],
+                                     right=physical_machine.trap_list[7])
+        physical_machine.add_segment(left=physical_machine.junction_list[4],
+                                     right=physical_machine.trap_list[6])
+        physical_machine.add_segment(left=physical_machine.junction_list[5],
+                                     right=physical_machine.trap_list[8])
+        physical_machine.print_physical_machine()
+    elif type == "one_trap":
+        num_traps = 1
+        num_junctions = 0
+        max_traps_size = [trap_capacity] * num_traps
+        executable = [True]
+        measurable = [True]
+        physical_machine = QCCD_physical_machine(num_traps=num_traps,
+                                                 num_junctions=num_junctions,
+                                                 max_traps_size=max_traps_size,
+                                                 executable_traps=executable,
+                                                 measurable_traps=measurable)
+        print("Creating a QCCD machine ...")
+        # print("Adding segments ...")
+        physical_machine.print_physical_machine()
+    elif type == "linear":
+        num_junctions = 0
+        max_traps_size = [trap_capacity] * num_traps
+        executable = [True] * num_traps
+        measurable = [True] * num_traps
+        physical_machine = QCCD_physical_machine(num_traps=num_traps,
+                                                 num_junctions=num_junctions,
+                                                 max_traps_size=max_traps_size,
+                                                 executable_traps=executable,
+                                                 measurable_traps=measurable)
+        print("Creating a QCCD machine ...")
+        for i in range(num_traps-1):
+            physical_machine.add_segment(left=physical_machine.trap_list[i],
+                                         right=physical_machine.trap_list[i+1])
+    elif type == "G2x3":
+        num_traps = 6
+        num_junctions = 3
+        max_traps_size = [trap_capacity] * num_traps
+        executable = [True] * num_traps
+        measurable = [True] * num_traps
+        physical_machine = QCCD_physical_machine(num_traps=num_traps,
+                                                 num_junctions=num_junctions,
+                                                 max_traps_size=max_traps_size,
+                                                 executable_traps=executable,
+                                                 measurable_traps=measurable)
+        print("Creating a QCCD machine ...")
+        # print("Adding segments ...")
+        physical_machine.add_segment(left=physical_machine.trap_list[0],
+                                     right=physical_machine.junction_list[0])
+        physical_machine.add_segment(left=physical_machine.trap_list[5],
+                                     right=physical_machine.junction_list[0])
+        physical_machine.add_segment(left=physical_machine.trap_list[1],
+                                     right=physical_machine.junction_list[1])
+        physical_machine.add_segment(left=physical_machine.trap_list[4],
+                                     right=physical_machine.junction_list[1])
+        physical_machine.add_segment(left=physical_machine.trap_list[2],
+                                     right=physical_machine.junction_list[2])
+        physical_machine.add_segment(left=physical_machine.trap_list[3],
+                                     right=physical_machine.junction_list[2])
+        physical_machine.add_segment(left=physical_machine.junction_list[0],
+                                     right=physical_machine.junction_list[1])
+        physical_machine.add_segment(left=physical_machine.junction_list[1],
+                                     right=physical_machine.junction_list[2])
+        physical_machine.print_physical_machine()
+    else:
+        raise ValueError("The type is not specified...")
     print("Finished creating the QCCD physical machine.")
     return physical_machine
 

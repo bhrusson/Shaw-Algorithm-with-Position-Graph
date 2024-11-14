@@ -3,7 +3,7 @@ import logging
 
 from bqskit import Circuit
 from bqskit.compiler import PassData
-from bqskit.ir.gates import RZZGate, U3Gate #, U1qPi2Gate, U1qPiGate,
+from bqskit.ir.gates import CNOTGate, RZZGate, U3Gate #, U1qPi2Gate, U1qPiGate,
 from bqskit.passes import LayerGenerator
 from bqskit.qis import UnitaryMatrix, StateVector, StateSystem
 
@@ -54,20 +54,31 @@ class QCCDLayerGenerator(LayerGenerator):
 
         if circuit.num_qudits > 3:
             raise ValueError('The function only considering 3-qubit circuit or smaller')
-
         # Generate successors
         successors = []
-        successor = circuit.copy()
-        successor.append_gate(RZZGate(), [0, 1])
-        successor.append_gate(U3Gate(), [0])
-        successor.append_gate(U3Gate(), [1])
-        successors.append(successor)
+        if circuit.num_qudits == 3:
+            successor = circuit.copy()
+            successor.append_gate(RZZGate(), [0, 1])
+            successor.append_gate(U3Gate(), [1])
+            successor.append_gate(U3Gate(), [1])
+            successors.append(successor)
 
-        successor = circuit.copy()
-        successor.append_gate(RZZGate(), [1, 2])
-        successor.append_gate(U3Gate(), [1])
-        successor.append_gate(U3Gate(), [2])
-        successors.append(successor)
+            successor = circuit.copy()
+            successor.append_gate(RZZGate(), [1, 2])
+            successor.append_gate(U3Gate(), [1])
+            successor.append_gate(U3Gate(), [2])
+            successors.append(successor)
+
+            successor = circuit.copy()
+            successor.append_gate(RZZGate(), [0, 2])
+            successor.append_gate(U3Gate(), [0])
+            successor.append_gate(U3Gate(), [2])
+            successors.append(successor)
+
+        elif circuit.num_qudits == 2:
+            successor = circuit.copy()
+            successor.append_gate(RZZGate(), [0, 1])
+            successors.append(successor)
 
         successor = circuit.copy()
         for i in range(successor.num_qudits):
