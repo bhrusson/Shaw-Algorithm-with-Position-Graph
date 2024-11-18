@@ -77,6 +77,7 @@ class QCCDMachineModel(MachineModel):
          self.segment_assignment,
          self.trap_end_points,
          self.total_num_positions) = self.generate_position_graph()
+        self.max_ion_capacity = self.physical_graph.executable_trap_list[0].max_num_ions
         self.coupling_graph = self.position_graph
         self.num_qudits = self.position_graph.num_qudits
         self.radixes = tuple([2] * self.num_qudits)
@@ -431,12 +432,11 @@ class QCCDMachineModel(MachineModel):
 
 if __name__ == '__main__':
     from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
-    type = 'linear'
-    trap_capacity = 2
-    num_traps = 3
+    type = 'Enchilada'
+    trap_capacity = 4
     physical_model = create_testing_physical_machine(type=type,
-                                                     trap_capacity=trap_capacity,
-                                                     num_traps=num_traps)
+                                                     trap_capacity=trap_capacity
+                                                     )
     timing_data = {'sq_timings': 30e-6,
                    'tq_timings': 40e-6,
                    'segment': 5e-6,

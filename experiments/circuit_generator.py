@@ -114,12 +114,10 @@ def circuit_generate(circuit_type: str = "Toffoli", num_qubits: int = 3,
 
 
 if __name__ == "__main__":
-    num_qubits = 8
+    num_qubits = 200
     seed = 11
-    circuit_type = "PhaseEstimator"
+    circuit_type = "QFT"
     cir = circuit_generate(circuit_type=circuit_type,
                            num_qubits=num_qubits,
-                           depth=3,
-                           to_unitary=False,
                            seed=seed)
-    cir.save(f"experiments/results/experiment_circuits/input_circuits/{circuit_type}_{num_qubits}.qasm")
+    cir.save(f"bqskit/shuttling/qccd/benchmark_circuits/bqskit_QFT_200.qasm")

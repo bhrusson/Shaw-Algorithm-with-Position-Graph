@@ -31,10 +31,15 @@ def create_testing_physical_machine(
         physical_machine.add_segment(left=physical_machine.trap_list[3],
                                      right=physical_machine.junction_list[1])
         physical_machine.print_physical_machine()
-    elif type == "Enchilada ":
+    elif type == "Enchilada":
         num_traps = 9
         num_junctions = 6
         max_traps_size = [trap_capacity] * num_traps
+        for i in range(num_traps):
+            if i % 2 == 1:
+                max_traps_size[i] = max_traps_size[i] // 2
+            else:
+                continue
         executable = [True, False, True, False, True, False, True, False, True]
         measurable = [True, False, True, False, True, False, True, False, True]
         physical_machine = QCCD_physical_machine(num_traps=num_traps,

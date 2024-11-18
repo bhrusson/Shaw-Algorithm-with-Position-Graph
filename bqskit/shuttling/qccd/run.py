@@ -1,4 +1,5 @@
 from timeit import default_timer as timer
+import random
 from bqskit.passes import *
 from bqskit.compiler import Compiler
 from bqskit.ir.circuit import Circuit
@@ -13,17 +14,19 @@ from bqskit.shuttling.qccd import (QCCDMachineModel, QCCDSubtopologySelectionPas
                                   )
 import sys
 import pickle
-
+enable_logging(True)
 input_filename = sys.argv[1]
 trap_type = sys.argv[2]
-trap_capacity = sys.argv[3]
-gate_type = sys.argv[4]
+trap_capacity = int(sys.argv[3])
+num_layout_passes = int(sys.argv[4])
+gate_type = sys.argv[5]
 # qasm_result_filename = sys.argv[5]
 # result_filename = sys.argv[6]
 print("Input filename: ", str(input_filename))
 print("Trap type: ", str(trap_type))
 print("Trap capacity: ", str(trap_capacity))
 print("Gate type: ", str(gate_type))
+print("Num layout passes: ", str(num_layout_passes))
 # print("QASM output filename: ", str(qasm_result_filename))
 # print("Output filename: ", str(result_filename))
 
@@ -51,8 +54,12 @@ num_qudits = cir.num_qudits
     Define ion assignment
 """
 ion_assignment = {}
+all_available_trap_space = []
+for trap in machine_model.physical_graph.executable_trap_list:
+    all_available_trap_space += machine_model.physical_to_position[trap.id]
+trap_seq = random.sample(all_available_trap_space, num_qudits)
 for i in range(num_qudits):
-    ion_assignment[i] = i
+    ion_assignment[i] = trap_seq[i]
 print("Initial ion assignment: ", ion_assignment)
 
 """
@@ -62,16 +69,15 @@ executable_spaces = 0
 for trap in machine_model.physical_graph.executable_trap_list:
     executable_spaces += trap.max_num_ions
 if cir.num_qudits == executable_spaces:
-    congestion_rate = 0.5
+    congestion_rate = 0.6
 else:
-    congestion_rate = 0.9
+    congestion_rate = 1.0
 print("Congestion rate: ", congestion_rate)
 
 gate_count_weight = 0.1
 
 qsearch_pass = QSearchSynthesisPass()
 block_size = 3
-num_layout_passes = 3
 workflow = [
     UnfoldPass(),
     SetModelPass(machine_model),
@@ -85,7 +91,8 @@ workflow = [
                                  vary_topology=True)
     ),
     ApplyPlacement(),
-    QCCDPAMLayoutPass(cogestion_segment_rate=congestion_rate),
+    QCCDPAMLayoutPass(total_passes=num_layout_passes,
+                      cogestion_segment_rate=congestion_rate),
     QCCDPAMRoutingPass(gate_count_weight,
                        cogestion_segment_rate=congestion_rate),
     ApplyPlacement(),
@@ -125,7 +132,8 @@ result = [
           output_circuit.gate_counts,
           data['initial_ion_assignment_qccd'],
           data['initial_mapping'],
-          data['final_mapping']
+          data['final_mapping'],
+          machine_model
           ]
 result_filename = f"bqskit/shuttling/qccd/result/{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
 with open(result_filename, 'wb') as f:

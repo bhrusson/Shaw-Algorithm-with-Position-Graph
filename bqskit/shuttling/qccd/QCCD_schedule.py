@@ -1,6 +1,6 @@
 import copy
 import ast
-
+import numpy as np
 from bqskit import Circuit
 from bqskit.shuttling.qccd import QCCDMachineModel
 
@@ -154,8 +154,14 @@ def schedule_QCCD(
             cost_part = instruction[2].split(' ')
             cost = float(cost_part[1])
             if parallel:
-                move_1 = int(instruction_parts[1][1:-1])
-                move_2 = int(instruction_parts[2][:-1])
+                if instruction_parts[1][1:-1].isdigit():
+                    move_1 = int(instruction_parts[1][1:-1])
+                else:
+                    move_1 = eval(instruction_parts[1][1:-1])
+                if instruction_parts[2][:-1].isdigit():
+                    move_2 = int(instruction_parts[2][:-1])
+                else:
+                    move_2 = eval(instruction_parts[2][:-1])
                 drop_out_flag = True
                 if move_1 not in executing_blocks and move_2 not in executing_blocks:
                     for move in parallization_moves:
@@ -190,10 +196,11 @@ def schedule_QCCD(
 if __name__ == "__main__":
     import pickle
 
-    file_name = "QFT_20_compiled_H_6_4"
+    file_name = "QAOA_20_compiled_Enchilada_4_3"
     qasm_result_filename = f"bqskit/shuttling/qccd/result/{file_name}.pkl"
     stored_data = pickle.load(open(qasm_result_filename, "rb"))
-    instruction_lst, output_circuit, initial_mapping, initial_ion_assignment, machine_model = stored_data
+    (runtime, compile_time, instruction_lst, output_circuit, gate_counts,
+     initial_ion_assignment, initial_mapping, final_mapping, machine_model) = stored_data
     print("Number of instructions: {}".format(len(instruction_lst)))
     # for instruction in instruction_lst:
     #     print(instruction)
