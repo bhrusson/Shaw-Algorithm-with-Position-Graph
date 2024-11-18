@@ -25,8 +25,8 @@ gate_type = sys.argv[5]
 print("Input filename: ", str(input_filename))
 print("Trap type: ", str(trap_type))
 print("Trap capacity: ", str(trap_capacity))
-print("Gate type: ", str(gate_type))
 print("Num layout passes: ", str(num_layout_passes))
+print("Gate type: ", str(gate_type))
 # print("QASM output filename: ", str(qasm_result_filename))
 # print("Output filename: ", str(result_filename))
 
@@ -108,7 +108,7 @@ with Compiler() as compiler:
 """
 Save qasm file
 """
-qasm_result_filename = f"bqskit/shuttling/qccd/result/{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
+qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
 output_circuit.save(qasm_result_filename)
 
 """
@@ -135,6 +135,6 @@ result = [
           data['final_mapping'],
           machine_model
           ]
-result_filename = f"bqskit/shuttling/qccd/result/{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
+result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)
