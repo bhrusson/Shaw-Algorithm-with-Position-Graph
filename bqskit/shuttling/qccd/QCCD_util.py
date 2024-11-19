@@ -1,3 +1,4 @@
+import math
 from bqskit.ir import Circuit
 from bqskit.ir.gates import CNOTGate, XGate
 from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
@@ -37,7 +38,7 @@ def create_testing_physical_machine(
         max_traps_size = [trap_capacity] * num_traps
         for i in range(num_traps):
             if i % 2 == 1:
-                max_traps_size[i] = max_traps_size[i] // 2
+                max_traps_size[i] = math.ceil(max_traps_size[i] / 2)
             else:
                 continue
         executable = [True, False, True, False, True, False, True, False, True]

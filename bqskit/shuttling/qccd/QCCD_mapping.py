@@ -1,6 +1,6 @@
 """This module implements the GeneralizedSabreAlgorithm class."""
 from __future__ import annotations
-
+import math
 import copy
 import logging
 import itertools
@@ -174,6 +174,7 @@ class QCCDMappingAlgorithm:
         if not all(r == circuit.radixes[0] for r in circuit.radixes):
             raise RuntimeError('Cannot currently map to hybrid-level systems.')
         total_moving_time = 0.0
+        longest_path = np.max([len(path) for path in self.qccd_machine.position_graph.all_pairs_shortest_path()])
         # total_moves = {'segment': 0,
         #                'split_merge': 0,
         #                'inner_swap': 0,
@@ -185,7 +186,7 @@ class QCCDMappingAlgorithm:
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 print("There is repetition..... !!!!!")
                 repeated_path = True
-            if self.iter_count > 9:
+            if self.iter_count > math.ceil(longest_path/2):
                 print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                 if modify_circuit:
@@ -514,7 +515,7 @@ class QCCDMappingAlgorithm:
             print("Neighbor: {}".format(neighbor))
             if neighbor in path:
                 removed_labeled = True
-                if len(blockage_neighbors) == 1: # or self.qccd_machine.position_graph.get_qudit_degrees()[neighbor] > 2:
+                if len(blockage_neighbors) == 1:
                     removed_labeled = False
                 for neighbor_ext in self.qccd_machine.position_graph.get_neighbors_of(neighbor):
                     if neighbor_ext not in ion_assignment.values() and neighbor_ext not in path:
@@ -536,10 +537,21 @@ class QCCDMappingAlgorithm:
         print(f"Potential blockage neighbors: {potential_blockage}")
         # Todo: Instead of simply use the first element, can we do sth better? (DONE)
         if blockage_neighbors:
-            cogestion_rates = [self.cogestion_rate(blockage_neighbor, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity) for
-                               blockage_neighbor in blockage_neighbors]
-            choosen_idx = int(np.argmin(cogestion_rates))
-            print("Cogestion rates: ", cogestion_rates)
+            congestion = np.array([self.congestion_rate(blockage_neighbor, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity) for
+                                         blockage_neighbor in blockage_neighbors])
+            _logger.debug(f"Congestion: {congestion}")
+            congestion_rates = congestion[:, 0]
+            congestion_scores = congestion[:, 1]
+            print("Cogestion rates: ", congestion_rates)
+            choosen_indices = list(np.where(congestion_rates == np.min(congestion_rates))) #int(np.argmin(cogestion_rates))
+            print("Choosen indices:", choosen_indices[0])
+            print("Len choosen indices: ", len(choosen_indices[0]))
+            print("Choosen indices types: ", len(choosen_indices[0]))
+            if len(choosen_indices[0]) > 1:
+                print("Congestion scores: ", congestion_scores)
+                choosen_idx = int(np.argmin(congestion_scores[choosen_indices[0]]))
+            else:
+                choosen_idx = int(choosen_indices[0][0])
             print(f"Choose to resolve {blockage_neighbors[choosen_idx]}")
             self._apply_move((blockage, blockage_neighbors[choosen_idx]), ion_assignment)
             leading_moves.append(tuple(sorted((blockage, blockage_neighbors[choosen_idx]))))
@@ -549,18 +561,28 @@ class QCCDMappingAlgorithm:
             print("Current ion assignment: ", ion_assignment)
             return leading_moves
         else:
-            cogestion_rates = [self.cogestion_rate(blockage_neighbor, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity) for
-                               blockage_neighbor in potential_blockage]
-            print(f"Cogestion rates: {cogestion_rates}")
-            if cogestion_rates == []:
-                cogestion_rates = [1.0]
-            choosen_idx = int(np.argmin(cogestion_rates))
-            if cogestion_rates[choosen_idx] == 1.0:
+            congestion = np.array([self.congestion_rate(blockage_neighbor, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity) for
+                                        blockage_neighbor in potential_blockage])
+            congestion_rates = congestion[:, 0]
+            congestion_scores = congestion[:, 1]
+            print(f"Cogestion rates: {congestion_rates}")
+            if len(congestion_rates) == 0:
+                congestion_rates = [1.0]
+            choosen_indices = list(np.where(congestion_rates == np.min(congestion_rates))) #int(np.argmin(cogestion_rates))
+            print("Choosen indices:", choosen_indices[0])
+            print("Len choosen indices: ", len(choosen_indices[0]))
+            if len(choosen_indices[0]) > 1:
+                print("Congestion score: ", congestion_scores)
+                choosen_idx = int(np.argmin(congestion_scores[choosen_indices[0]]))
+            else:
+                choosen_idx = int(choosen_indices[0][0])
+
+            if congestion_rates[choosen_idx] == 1.0:
                 print(f"As the best path leads to deadend, we choose to re-add the target to potential neighbor")
-                if self.cogestion_rate(target, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity) < cogestion_rates[choosen_idx]:
+                if self.congestion_rate(target, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity)[0] < congestion_rates[choosen_idx]:
                     # Reverse move (treat target as blockage and vice versa)
                     print(f"Blockage: {blockage}, target: {target}")
-                    leading_moves += self._resolve_congestion(blockage, [], target, ion_assignment, blockage)
+                    leading_moves += self._resolve_congestion(blockage, [], target, ion_assignment, original_target)
                     self._apply_move((blockage, target), ion_assignment)
                     leading_moves.append(tuple(sorted((blockage, target))))
                     print(
@@ -569,7 +591,7 @@ class QCCDMappingAlgorithm:
                     blockage = target
                     target = ion_assignment[target_ion_index]
                     print(f"Blockage: {blockage}, target: {target}")
-                    leading_moves += self._resolve_congestion(target, [], blockage, ion_assignment, target)
+                    leading_moves += self._resolve_congestion(target, [], blockage, ion_assignment, original_target)
                     self._apply_move((blockage, target), ion_assignment)
                     leading_moves.append(tuple(sorted((blockage, target))))
                     print(
@@ -580,7 +602,7 @@ class QCCDMappingAlgorithm:
             else:
                 print(f"Choose to resolve {potential_blockage[choosen_idx]}")
                 leading_moves += self._resolve_congestion(blockage, path, potential_blockage[choosen_idx],
-                                                          ion_assignment, target)
+                                                          ion_assignment, original_target)
                 self._apply_move((blockage, potential_blockage[choosen_idx]), ion_assignment)
                 leading_moves.append(tuple(sorted((blockage, potential_blockage[choosen_idx]))))
                 print(f"Blockage: {blockage}, potential blockage: {potential_blockage[choosen_idx]}")
@@ -589,7 +611,7 @@ class QCCDMappingAlgorithm:
                 print("Current ion assignment: ", ion_assignment)
         return leading_moves
 
-    def cogestion_rate(self,
+    def congestion_rate(self,
                        position: int,
                        target: int,
                        blockage: int,
@@ -598,22 +620,34 @@ class QCCDMappingAlgorithm:
         print(f"Position: {position}")
         print(f"Blockage: {blockage}")
         depth_d_neighbors = []
+        full_neighbors = []
         while len(depth_d_neighbors) < depth:
             if len(depth_d_neighbors) == 0:
                 node_d_neighbors = self.qccd_machine.position_graph.get_neighbors_of(position)
+                node_d_neighbors.remove(blockage)
+                full_neighbors += node_d_neighbors
             else:
                 node_d_neighbors = []
                 for pos in depth_d_neighbors[-1]:
-                    node_d_neighbors += self.qccd_machine.position_graph.get_neighbors_of(pos)
-            if blockage in node_d_neighbors:
-                node_d_neighbors.remove(blockage)
-            if position in node_d_neighbors:
-                node_d_neighbors.remove(position)
-            if target in node_d_neighbors:
-                node_d_neighbors.remove(target)
-            depth_d_neighbors.append(node_d_neighbors)
+                    for node in self.qccd_machine.position_graph.get_neighbors_of(pos):
+                        if node not in full_neighbors and node != target and node != blockage and node != position:
+                            node_d_neighbors.append(node)
+                            full_neighbors.append(node)
+            depth_d_neighbors.append(list(set(node_d_neighbors)))
+        print("Depth d neighbors:", depth_d_neighbors)
         num_neighbors = 0
         num_occupied_neighbors = 0
+        if position in ion_assignment.values():
+            congestion_score = 1.0
+        else:
+            congestion_score = 0.0
+        layer_weight = 1
+        for layer in depth_d_neighbors:
+            for node in layer:
+                if node in ion_assignment.values():
+                    congestion_score += 1 * layer_weight
+            layer_weight -= .1
+        print(f"Congestion score: {congestion_score}")
         neighbors = list(itertools.chain.from_iterable(depth_d_neighbors))
         neighbors = set(neighbors)
         print(f"d_neighbors: {neighbors}")
@@ -622,8 +656,8 @@ class QCCDMappingAlgorithm:
             if neighbor in ion_assignment.values():
                 num_occupied_neighbors += 1
         if num_neighbors == 0:
-            return 1.0
-        return num_occupied_neighbors / num_neighbors
+            return 1.0, np.inf
+        return num_occupied_neighbors / num_neighbors, congestion_score
 
     ######################################################################################
     def backward_pass(
@@ -659,7 +693,7 @@ class QCCDMappingAlgorithm:
         leading_moves: list[tuple[int, int]] = []
         next_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
         _logger.debug(f'Starting backward sabre QCCD pass with ion assignment: {pi}.')
-
+        longest_path = np.max([len(path) for path in self.qccd_machine.position_graph.all_pairs_shortest_path()])
         # Main Loop
         while len(F) > 0:
             # Retrieve executable gates giving the current ion assignment: pi
@@ -667,7 +701,7 @@ class QCCDMappingAlgorithm:
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 print("There is repetition..... !!!!!")
                 repeated_path = True
-            if self.iter_count > 15:
+            if self.iter_count > math.ceil(longest_path/ 2):
                 print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
             print("Current ion mapping: ", ion_assignment)
@@ -776,6 +810,7 @@ class QCCDMappingAlgorithm:
                 list_of_best_score = [move]
             elif score == best_score:
                 list_of_best_score.append(move)
+            _logger.debug(f"Score of move {move}: {score}")
         if best_move is None:
             print("*** Unable to find best move. ***")
             return None
@@ -793,12 +828,11 @@ class QCCDMappingAlgorithm:
                     move_relative_score = -self.qccd_machine.timing_data['merge']
                 for n in F:
                     location = circuit[n].location
-                    p1, p2 = ion_assignment[pi[location[0]]], ion_assignment[pi[location[1]]]
-                    if p1 in move or p2 in move:
+                    p = [ion_assignment[pi[loc]] for loc in location]
+                    if any([pos in move for pos in p]):
                         move_relative_score = 0.0
                     else:
-                        move_relative_score += (np.min([D[p1][move[0]], D[p1][move[1]]]) +
-                                                np.min([D[p2][move[0]], D[p2][move[1]]]))
+                        move_relative_score += np.sum([np.min([D[pos][move[0]], D[pos][move[1]]]) for pos in p])
                 move_relative_scores.append(move_relative_score)
             return list_of_best_score[np.argmin(move_relative_scores)]
 

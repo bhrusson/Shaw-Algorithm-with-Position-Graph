@@ -432,8 +432,8 @@ class QCCDMachineModel(MachineModel):
 
 if __name__ == '__main__':
     from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
-    type = 'Enchilada'
-    trap_capacity = 4
+    type = 'H'
+    trap_capacity = 5
     physical_model = create_testing_physical_machine(type=type,
                                                      trap_capacity=trap_capacity
                                                      )
@@ -460,6 +460,8 @@ if __name__ == '__main__':
     print(machine_model.trap_end_points)
     print("Total number of positions...")
     print(machine_model.total_num_positions)
+    print("Longest path .....")
+    print(np.max([len(path) for path in machine_model.position_graph.all_pairs_shortest_path()]))
     # new_placement = [3, 4, 0, 2, 1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     # print("There is a new placement :", new_placement)
     # machine_model.update_wrt_perm(initial_placement=list(range(machine_model.total_num_positions)),

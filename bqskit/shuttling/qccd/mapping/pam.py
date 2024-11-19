@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import math
 import itertools as it
 import logging
 from typing import Dict
@@ -72,7 +73,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             decay_delta: float = 0.001,
             decay_reset_interval: int = 5,
             decay_reset_on_gate: bool = True,
-            extended_set_size: int = 10,
+            extended_set_size: int = 5,
             extended_set_weight: float = 0.5,
             qccd_machine: QCCDMachineModel = None,
             cogestion_segment_rate: float = 0.6
@@ -185,7 +186,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
         prev_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
         leading_moves: list[tuple[int, int]] = []
         _logger.debug(f'Starting forward pam pass with ion assignment: {ion_assignment}.')
-
+        longest_path = np.max([len(path) for path in self.qccd_machine.position_graph.all_pairs_shortest_path()])
         if modify_circuit:
             instructions_list = []
             mapped_circuit = Circuit(circuit.num_qudits, circuit.radixes)
@@ -198,7 +199,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 print("There is repetition..... !!!!!")
                 repeated_path = True
-            if self.iter_count > 12:
+            if self.iter_count > math.ceil(longest_path/2):
                 _logger.debug(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
@@ -323,7 +324,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                     print(f"Front is modified to {F}.")
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
-            print(f"Extended set: {[circuit[n] for n in E]}")
+            # print(f"Extended set: {[circuit[n] for n in E]}")
             best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay)
             if best_move is None:
                 _logger.debug("Try bruteforce due to no best move is found...")
@@ -434,13 +435,14 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             if (len(local_graph._edges) < 2) and len(physical_location) > 2:
                 trap_ids = []
                 for position in physical_location:
-                    trap_ids.append(self.qccd_machine.get_trap_id(position))
-                if None in trap_ids:
-                    trap_ids.remove(None)
+                    tmp_trap_id = self.qccd_machine.get_trap_id(position)
+                    if tmp_trap_id is not None:
+                        trap_ids.append(tmp_trap_id)
                 trap_id = max(set(trap_ids), key=trap_ids.count)
-                _logger.debug(f"Trap id: {trap_ids}")
+                _logger.debug(f"Trap id: {trap_id}")
                 physical_location = list(self.qccd_machine.physical_to_position[trap_id])[:3]
                 local_graph = cg.get_subgraph(physical_location)
+                _logger.debug(f"Updated local graph: {local_graph}")
             if local_graph.get_qudit_degrees() == [0] * local_graph.num_qudits:
                 _logger.debug(f"The coupling graph is empty")
                 if len(physical_location) > 2:

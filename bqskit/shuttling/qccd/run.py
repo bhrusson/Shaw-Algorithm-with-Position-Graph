@@ -69,7 +69,7 @@ executable_spaces = 0
 for trap in machine_model.physical_graph.executable_trap_list:
     executable_spaces += trap.max_num_ions
 if cir.num_qudits == executable_spaces:
-    congestion_rate = 0.6
+    congestion_rate = 0.5
 else:
     congestion_rate = 1.0
 print("Congestion rate: ", congestion_rate)
@@ -135,6 +135,6 @@ result = [
           data['final_mapping'],
           machine_model
           ]
-result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
+result_filename = f"bqskit/shuttling/qccd/new_result/SHAPER_{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)
