@@ -20,6 +20,10 @@ trap_type = sys.argv[2]
 trap_capacity = int(sys.argv[3])
 num_layout_passes = int(sys.argv[4])
 gate_type = sys.argv[5]
+if len(sys.argv) < 7:
+    run_index = 0
+else:
+    run_index = sys.argv[6]
 # qasm_result_filename = sys.argv[5]
 # result_filename = sys.argv[6]
 print("Input filename: ", str(input_filename))
@@ -27,6 +31,7 @@ print("Trap type: ", str(trap_type))
 print("Trap capacity: ", str(trap_capacity))
 print("Num layout passes: ", str(num_layout_passes))
 print("Gate type: ", str(gate_type))
+print("Run index: ", str(run_index))
 # print("QASM output filename: ", str(qasm_result_filename))
 # print("Output filename: ", str(result_filename))
 
@@ -108,7 +113,7 @@ with Compiler() as compiler:
 """
 Save qasm file
 """
-qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
+qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_idx:{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
 output_circuit.save(qasm_result_filename)
 
 """
@@ -135,6 +140,6 @@ result = [
           data['final_mapping'],
           machine_model
           ]
-result_filename = f"bqskit/shuttling/qccd/new_result/SHAPER_{input_filename}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
+result_filename = f"bqskit/shuttling/qccd/new_result/SHAPER_{input_filename}_idx:{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)

@@ -800,29 +800,33 @@ class QCCDMappingAlgorithm:
         # Gather all considerable moves
         move_candidate_list = self._obtain_moves(circuit, pi, ion_assignment)
         print("All candidate move: ", move_candidate_list)
-        list_of_best_score = []
+        list_of_best_move = []
         # Score them, tracking the best one
+        # scores = Parallel(n_jobs=5)(delayed(self._score_move)(circuit, F, D, pi, ion_assignment, move, decay, E)
+        #                             for move in move_candidate_list)
+        # list_of_best_score = np.argwhere(scores == np.max(scores)).flatten().tolist()
+        # list_of_best_moves = list(move_candidate_list)[list_of_best_score]
         for move in move_candidate_list:
             score = self._score_move(circuit, F, D, pi, ion_assignment, move, decay, E)
             if score < best_score:
                 best_score = score
                 best_move = move
-                list_of_best_score = [move]
+                list_of_best_move = [move]
             elif score == best_score:
-                list_of_best_score.append(move)
+                list_of_best_move.append(move)
             _logger.debug(f"Score of move {move}: {score}")
         if best_move is None:
             print("*** Unable to find best move. ***")
             return None
             # raise RuntimeError('Unable to find best move.')
-        print(f"List of best move: {list_of_best_score}")
-        if len(list_of_best_score) == 1:
+        print(f"List of best move: {list_of_best_move}")
+        if len(list_of_best_move) == 1:
             return best_move
         else:
             # ToDo: There is some case where we have to decide between moves with
             #  same score, we choose move with the most potential influence... (Done)
             move_relative_scores = []
-            for move in list_of_best_score:
+            for move in list_of_best_move:
                 move_relative_score = 0.0
                 if D[move[0]][move[1]] == self.qccd_machine.timing_data['merge']:
                     move_relative_score = -self.qccd_machine.timing_data['merge']
@@ -834,7 +838,7 @@ class QCCDMappingAlgorithm:
                     else:
                         move_relative_score += np.sum([np.min([D[pos][move[0]], D[pos][move[1]]]) for pos in p])
                 move_relative_scores.append(move_relative_score)
-            return list_of_best_score[np.argmin(move_relative_scores)]
+            return list_of_best_move[np.argmin(move_relative_scores)]
 
     def _obtain_moves(
             self,
