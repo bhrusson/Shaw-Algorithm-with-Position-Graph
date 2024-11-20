@@ -28,12 +28,13 @@ for cmd in "${commands[@]}"; do
     for ((i=1; i<=repetitions; i++)); do
         # Replace {i} in the command with the current iteration index
         updated_cmd=$(echo $cmd | sed "s/{i}/$i/g")
-        # Extract the base log filename from the command
-        log_base=$(echo $updated_cmd | awk -F'>' '{print $2}' | xargs | sed 's/.log//')
-        # Add the run number to the log file name
-        log_file="${log_base}_run${i}.log"
+
+        # Generate a unique log file name for each run
+        base_log_name=$(echo $updated_cmd | awk -F' ' '{print $5 "_" $6 "_" $3 "_" $4}')
+        log_file="bqskit/shuttling/qccd/logs/${base_log_name}_run${i}.log"
+
         # Run the command and redirect output to the log file
-        eval "${cmd/&>.*/} &> ${log_file}"
+        eval "${updated_cmd} &> ${log_file}"
         echo "Executed: $cmd -> Log: $log_file"
     done
 done
