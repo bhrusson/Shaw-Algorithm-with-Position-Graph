@@ -1,0 +1,1865 @@
+Simulation
+Program: bqskit/shuttling/qccd/benchmark_circuits/TFIM_n16_s100_compiled.qasm
+Machine: H
+Model: MPar1
+Ions: 5
+Mapper: Greedy
+Reorder: Naive
+SerialTrap: 1
+SerialComm: 0
+SerialAll: 0
+Gatetype: FM
+Swaptype: GateSwap
+qbit 1: 4 qbit 2: 5 dep gates: 0
+qbit 1: 4 qbit 2: 5 dep gates: 0
+qbit 1: 6 qbit 2: 7 dep gates: 1
+qbit 1: 6 qbit 2: 7 dep gates: 1
+qbit 1: 8 qbit 2: 9 dep gates: 2
+qbit 1: 8 qbit 2: 9 dep gates: 2
+qbit 1: 10 qbit 2: 11 dep gates: 3
+qbit 1: 10 qbit 2: 11 dep gates: 3
+qbit 1: 12 qbit 2: 13 dep gates: 4
+qbit 1: 12 qbit 2: 13 dep gates: 4
+qbit 1: 7 qbit 2: 8 dep gates: 6
+qbit 1: 7 qbit 2: 8 dep gates: 7
+qbit 1: 9 qbit 2: 10 dep gates: 7
+qbit 1: 9 qbit 2: 10 dep gates: 8
+qbit 1: 3 qbit 2: 4 dep gates: 5
+qbit 1: 5 qbit 2: 6 dep gates: 5
+qbit 1: 5 qbit 2: 6 dep gates: 6
+qbit 1: 11 qbit 2: 12 dep gates: 8
+qbit 1: 11 qbit 2: 12 dep gates: 9
+qbit 1: 13 qbit 2: 14 dep gates: 9
+qbit 1: 7 qbit 2: 8 dep gates: 10
+qbit 1: 7 qbit 2: 8 dep gates: 10
+qbit 1: 9 qbit 2: 10 dep gates: 11
+qbit 1: 9 qbit 2: 10 dep gates: 11
+qbit 1: 13 qbit 2: 14 dep gates: 15
+qbit 1: 13 qbit 2: 14 dep gates: 15
+qbit 1: 3 qbit 2: 4 dep gates: 12
+qbit 1: 3 qbit 2: 4 dep gates: 12
+qbit 1: 5 qbit 2: 6 dep gates: 13
+qbit 1: 5 qbit 2: 6 dep gates: 13
+qbit 1: 11 qbit 2: 12 dep gates: 14
+qbit 1: 11 qbit 2: 12 dep gates: 14
+qbit 1: 8 qbit 2: 9 dep gates: 16
+qbit 1: 8 qbit 2: 9 dep gates: 17
+qbit 1: 2 qbit 2: 3 dep gates: 19
+qbit 1: 4 qbit 2: 5 dep gates: 19
+qbit 1: 4 qbit 2: 5 dep gates: 20
+qbit 1: 6 qbit 2: 7 dep gates: 20
+qbit 1: 6 qbit 2: 7 dep gates: 16
+qbit 1: 10 qbit 2: 11 dep gates: 17
+qbit 1: 10 qbit 2: 11 dep gates: 21
+qbit 1: 12 qbit 2: 13 dep gates: 21
+qbit 1: 12 qbit 2: 13 dep gates: 18
+qbit 1: 8 qbit 2: 9 dep gates: 22
+qbit 1: 8 qbit 2: 9 dep gates: 22
+qbit 1: 2 qbit 2: 3 dep gates: 23
+qbit 1: 2 qbit 2: 3 dep gates: 23
+qbit 1: 4 qbit 2: 5 dep gates: 24
+qbit 1: 4 qbit 2: 5 dep gates: 24
+qbit 1: 6 qbit 2: 7 dep gates: 25
+qbit 1: 6 qbit 2: 7 dep gates: 25
+qbit 1: 10 qbit 2: 11 dep gates: 26
+qbit 1: 10 qbit 2: 11 dep gates: 26
+qbit 1: 12 qbit 2: 13 dep gates: 27
+qbit 1: 12 qbit 2: 13 dep gates: 27
+qbit 1: 3 qbit 2: 4 dep gates: 29
+qbit 1: 3 qbit 2: 4 dep gates: 30
+qbit 1: 9 qbit 2: 10 dep gates: 28
+qbit 1: 9 qbit 2: 10 dep gates: 32
+qbit 1: 1 qbit 2: 2 dep gates: 29
+qbit 1: 5 qbit 2: 6 dep gates: 30
+qbit 1: 5 qbit 2: 6 dep gates: 31
+qbit 1: 7 qbit 2: 8 dep gates: 31
+qbit 1: 7 qbit 2: 8 dep gates: 28
+qbit 1: 11 qbit 2: 12 dep gates: 32
+qbit 1: 11 qbit 2: 12 dep gates: 33
+qbit 1: 13 qbit 2: 14 dep gates: 33
+qbit 1: 13 qbit 2: 14 dep gates: 18
+qbit 1: 3 qbit 2: 4 dep gates: 34
+qbit 1: 3 qbit 2: 4 dep gates: 34
+qbit 1: 9 qbit 2: 10 dep gates: 35
+qbit 1: 9 qbit 2: 10 dep gates: 35
+qbit 1: 1 qbit 2: 2 dep gates: 36
+qbit 1: 1 qbit 2: 2 dep gates: 36
+qbit 1: 5 qbit 2: 6 dep gates: 37
+qbit 1: 5 qbit 2: 6 dep gates: 37
+qbit 1: 7 qbit 2: 8 dep gates: 38
+qbit 1: 7 qbit 2: 8 dep gates: 38
+qbit 1: 11 qbit 2: 12 dep gates: 39
+qbit 1: 11 qbit 2: 12 dep gates: 39
+qbit 1: 13 qbit 2: 14 dep gates: 40
+qbit 1: 13 qbit 2: 14 dep gates: 40
+qbit 1: 2 qbit 2: 3 dep gates: 43
+qbit 1: 2 qbit 2: 3 dep gates: 41
+qbit 1: 14 qbit 2: 15 dep gates: 47
+qbit 1: 0 qbit 2: 1 dep gates: 43
+qbit 1: 4 qbit 2: 5 dep gates: 41
+qbit 1: 4 qbit 2: 5 dep gates: 44
+qbit 1: 6 qbit 2: 7 dep gates: 44
+qbit 1: 6 qbit 2: 7 dep gates: 45
+qbit 1: 8 qbit 2: 9 dep gates: 45
+qbit 1: 8 qbit 2: 9 dep gates: 42
+qbit 1: 10 qbit 2: 11 dep gates: 42
+qbit 1: 10 qbit 2: 11 dep gates: 46
+qbit 1: 12 qbit 2: 13 dep gates: 46
+qbit 1: 12 qbit 2: 13 dep gates: 47
+qbit 1: 2 qbit 2: 3 dep gates: 48
+qbit 1: 2 qbit 2: 3 dep gates: 48
+qbit 1: 14 qbit 2: 15 dep gates: 49
+qbit 1: 14 qbit 2: 15 dep gates: 49
+qbit 1: 0 qbit 2: 1 dep gates: 50
+qbit 1: 0 qbit 2: 1 dep gates: 50
+qbit 1: 4 qbit 2: 5 dep gates: 51
+qbit 1: 4 qbit 2: 5 dep gates: 51
+qbit 1: 6 qbit 2: 7 dep gates: 52
+qbit 1: 6 qbit 2: 7 dep gates: 52
+qbit 1: 8 qbit 2: 9 dep gates: 53
+qbit 1: 8 qbit 2: 9 dep gates: 53
+qbit 1: 10 qbit 2: 11 dep gates: 54
+qbit 1: 10 qbit 2: 11 dep gates: 54
+qbit 1: 12 qbit 2: 13 dep gates: 55
+qbit 1: 12 qbit 2: 13 dep gates: 55
+qbit 1: 3 qbit 2: 4 dep gates: 56
+qbit 1: 3 qbit 2: 4 dep gates: 59
+qbit 1: 1 qbit 2: 2 dep gates: 58
+qbit 1: 1 qbit 2: 2 dep gates: 56
+qbit 1: 5 qbit 2: 6 dep gates: 59
+qbit 1: 5 qbit 2: 6 dep gates: 60
+qbit 1: 7 qbit 2: 8 dep gates: 60
+qbit 1: 7 qbit 2: 8 dep gates: 61
+qbit 1: 9 qbit 2: 10 dep gates: 61
+qbit 1: 9 qbit 2: 10 dep gates: 62
+qbit 1: 13 qbit 2: 14 dep gates: 63
+qbit 1: 13 qbit 2: 14 dep gates: 57
+qbit 1: 3 qbit 2: 4 dep gates: 64
+qbit 1: 3 qbit 2: 4 dep gates: 64
+qbit 1: 1 qbit 2: 2 dep gates: 65
+qbit 1: 1 qbit 2: 2 dep gates: 65
+qbit 1: 5 qbit 2: 6 dep gates: 66
+qbit 1: 5 qbit 2: 6 dep gates: 66
+qbit 1: 7 qbit 2: 8 dep gates: 67
+qbit 1: 7 qbit 2: 8 dep gates: 67
+qbit 1: 9 qbit 2: 10 dep gates: 68
+qbit 1: 9 qbit 2: 10 dep gates: 68
+qbit 1: 13 qbit 2: 14 dep gates: 69
+qbit 1: 13 qbit 2: 14 dep gates: 69
+qbit 1: 0 qbit 2: 1 dep gates: 58
+qbit 1: 0 qbit 2: 1 dep gates: 71
+qbit 1: 4 qbit 2: 5 dep gates: 70
+qbit 1: 4 qbit 2: 5 dep gates: 72
+qbit 1: 10 qbit 2: 11 dep gates: 74
+qbit 1: 10 qbit 2: 11 dep gates: 62
+qbit 1: 2 qbit 2: 3 dep gates: 71
+qbit 1: 2 qbit 2: 3 dep gates: 70
+qbit 1: 6 qbit 2: 7 dep gates: 72
+qbit 1: 6 qbit 2: 7 dep gates: 73
+qbit 1: 8 qbit 2: 9 dep gates: 73
+qbit 1: 8 qbit 2: 9 dep gates: 74
+qbit 1: 4 qbit 2: 5 dep gates: 77
+qbit 1: 4 qbit 2: 5 dep gates: 77
+qbit 1: 10 qbit 2: 11 dep gates: 78
+qbit 1: 10 qbit 2: 11 dep gates: 78
+qbit 1: 2 qbit 2: 3 dep gates: 79
+qbit 1: 2 qbit 2: 3 dep gates: 79
+qbit 1: 6 qbit 2: 7 dep gates: 80
+qbit 1: 6 qbit 2: 7 dep gates: 80
+qbit 1: 8 qbit 2: 9 dep gates: 81
+qbit 1: 8 qbit 2: 9 dep gates: 81
+qbit 1: 11 qbit 2: 12 dep gates: 83
+qbit 1: 11 qbit 2: 12 dep gates: 63
+qbit 1: 3 qbit 2: 4 dep gates: 84
+qbit 1: 3 qbit 2: 4 dep gates: 82
+qbit 1: 5 qbit 2: 6 dep gates: 82
+qbit 1: 5 qbit 2: 6 dep gates: 85
+qbit 1: 1 qbit 2: 2 dep gates: 76
+qbit 1: 1 qbit 2: 2 dep gates: 84
+qbit 1: 7 qbit 2: 8 dep gates: 85
+qbit 1: 7 qbit 2: 8 dep gates: 86
+qbit 1: 9 qbit 2: 10 dep gates: 86
+qbit 1: 9 qbit 2: 10 dep gates: 83
+qbit 1: 11 qbit 2: 12 dep gates: 87
+qbit 1: 11 qbit 2: 12 dep gates: 87
+qbit 1: 3 qbit 2: 4 dep gates: 88
+qbit 1: 3 qbit 2: 4 dep gates: 88
+qbit 1: 5 qbit 2: 6 dep gates: 89
+qbit 1: 5 qbit 2: 6 dep gates: 89
+qbit 1: 1 qbit 2: 2 dep gates: 90
+qbit 1: 1 qbit 2: 2 dep gates: 90
+qbit 1: 7 qbit 2: 8 dep gates: 91
+qbit 1: 7 qbit 2: 8 dep gates: 91
+qbit 1: 9 qbit 2: 10 dep gates: 92
+qbit 1: 9 qbit 2: 10 dep gates: 92
+qbit 1: 12 qbit 2: 13 dep gates: 93
+qbit 1: 12 qbit 2: 13 dep gates: 75
+qbit 1: 4 qbit 2: 5 dep gates: 94
+qbit 1: 4 qbit 2: 5 dep gates: 95
+qbit 1: 10 qbit 2: 11 dep gates: 98
+qbit 1: 10 qbit 2: 11 dep gates: 93
+qbit 1: 0 qbit 2: 1 dep gates: 76
+qbit 1: 0 qbit 2: 1 dep gates: 96
+qbit 1: 2 qbit 2: 3 dep gates: 96
+qbit 1: 2 qbit 2: 3 dep gates: 94
+qbit 1: 6 qbit 2: 7 dep gates: 95
+qbit 1: 6 qbit 2: 7 dep gates: 97
+qbit 1: 8 qbit 2: 9 dep gates: 97
+qbit 1: 8 qbit 2: 9 dep gates: 98
+qbit 1: 12 qbit 2: 13 dep gates: 99
+qbit 1: 12 qbit 2: 13 dep gates: 99
+qbit 1: 4 qbit 2: 5 dep gates: 100
+qbit 1: 4 qbit 2: 5 dep gates: 100
+qbit 1: 10 qbit 2: 11 dep gates: 101
+qbit 1: 10 qbit 2: 11 dep gates: 101
+qbit 1: 2 qbit 2: 3 dep gates: 103
+qbit 1: 2 qbit 2: 3 dep gates: 103
+qbit 1: 6 qbit 2: 7 dep gates: 104
+qbit 1: 6 qbit 2: 7 dep gates: 104
+qbit 1: 8 qbit 2: 9 dep gates: 105
+qbit 1: 8 qbit 2: 9 dep gates: 105
+qbit 1: 11 qbit 2: 12 dep gates: 108
+qbit 1: 11 qbit 2: 12 dep gates: 106
+qbit 1: 1 qbit 2: 2 dep gates: 102
+qbit 1: 1 qbit 2: 2 dep gates: 109
+qbit 1: 3 qbit 2: 4 dep gates: 109
+qbit 1: 3 qbit 2: 4 dep gates: 107
+qbit 1: 5 qbit 2: 6 dep gates: 107
+qbit 1: 5 qbit 2: 6 dep gates: 110
+qbit 1: 7 qbit 2: 8 dep gates: 110
+qbit 1: 7 qbit 2: 8 dep gates: 111
+qbit 1: 9 qbit 2: 10 dep gates: 111
+qbit 1: 9 qbit 2: 10 dep gates: 108
+qbit 1: 1 qbit 2: 2 dep gates: 113
+qbit 1: 1 qbit 2: 2 dep gates: 113
+qbit 1: 3 qbit 2: 4 dep gates: 114
+qbit 1: 3 qbit 2: 4 dep gates: 114
+qbit 1: 5 qbit 2: 6 dep gates: 115
+qbit 1: 5 qbit 2: 6 dep gates: 115
+qbit 1: 7 qbit 2: 8 dep gates: 116
+qbit 1: 7 qbit 2: 8 dep gates: 116
+qbit 1: 9 qbit 2: 10 dep gates: 117
+qbit 1: 9 qbit 2: 10 dep gates: 117
+qbit 1: 0 qbit 2: 1 dep gates: 102
+qbit 1: 0 qbit 2: 1 dep gates: 118
+qbit 1: 6 qbit 2: 7 dep gates: 120
+qbit 1: 6 qbit 2: 7 dep gates: 121
+qbit 1: 10 qbit 2: 11 dep gates: 122
+qbit 1: 10 qbit 2: 11 dep gates: 112
+qbit 1: 0 qbit 2: 1 dep gates: 123
+qbit 1: 0 qbit 2: 1 dep gates: 123
+qbit 1: 2 qbit 2: 3 dep gates: 118
+qbit 1: 2 qbit 2: 3 dep gates: 119
+qbit 1: 4 qbit 2: 5 dep gates: 119
+qbit 1: 4 qbit 2: 5 dep gates: 120
+qbit 1: 8 qbit 2: 9 dep gates: 121
+qbit 1: 8 qbit 2: 9 dep gates: 122
+qbit 1: 6 qbit 2: 7 dep gates: 124
+qbit 1: 6 qbit 2: 7 dep gates: 124
+qbit 1: 10 qbit 2: 11 dep gates: 125
+qbit 1: 10 qbit 2: 11 dep gates: 125
+qbit 1: 2 qbit 2: 3 dep gates: 127
+qbit 1: 2 qbit 2: 3 dep gates: 127
+qbit 1: 4 qbit 2: 5 dep gates: 128
+qbit 1: 4 qbit 2: 5 dep gates: 128
+qbit 1: 8 qbit 2: 9 dep gates: 129
+qbit 1: 8 qbit 2: 9 dep gates: 129
+qbit 1: 11 qbit 2: 12 dep gates: 131
+qbit 1: 11 qbit 2: 12 dep gates: 112
+qbit 1: 1 qbit 2: 2 dep gates: 126
+qbit 1: 1 qbit 2: 2 dep gates: 132
+qbit 1: 7 qbit 2: 8 dep gates: 130
+qbit 1: 7 qbit 2: 8 dep gates: 134
+qbit 1: 3 qbit 2: 4 dep gates: 132
+qbit 1: 3 qbit 2: 4 dep gates: 133
+qbit 1: 5 qbit 2: 6 dep gates: 133
+qbit 1: 5 qbit 2: 6 dep gates: 130
+qbit 1: 9 qbit 2: 10 dep gates: 134
+qbit 1: 9 qbit 2: 10 dep gates: 131
+qbit 1: 11 qbit 2: 12 dep gates: 135
+qbit 1: 11 qbit 2: 12 dep gates: 135
+qbit 1: 1 qbit 2: 2 dep gates: 136
+qbit 1: 1 qbit 2: 2 dep gates: 136
+qbit 1: 7 qbit 2: 8 dep gates: 137
+qbit 1: 7 qbit 2: 8 dep gates: 137
+qbit 1: 0 qbit 2: 1 dep gates: 126
+qbit 1: 0 qbit 2: 1 dep gates: 142
+qbit 1: 3 qbit 2: 4 dep gates: 138
+qbit 1: 3 qbit 2: 4 dep gates: 138
+qbit 1: 5 qbit 2: 6 dep gates: 139
+qbit 1: 5 qbit 2: 6 dep gates: 139
+qbit 1: 9 qbit 2: 10 dep gates: 140
+qbit 1: 9 qbit 2: 10 dep gates: 140
+qbit 1: 12 qbit 2: 13 dep gates: 141
+qbit 1: 12 qbit 2: 13 dep gates: 106
+qbit 1: 4 qbit 2: 5 dep gates: 145
+qbit 1: 4 qbit 2: 5 dep gates: 146
+qbit 1: 6 qbit 2: 7 dep gates: 146
+qbit 1: 6 qbit 2: 7 dep gates: 143
+qbit 1: 0 qbit 2: 1 dep gates: 144
+qbit 1: 0 qbit 2: 1 dep gates: 144
+qbit 1: 8 qbit 2: 9 dep gates: 143
+qbit 1: 8 qbit 2: 9 dep gates: 147
+qbit 1: 10 qbit 2: 11 dep gates: 147
+qbit 1: 10 qbit 2: 11 dep gates: 141
+qbit 1: 12 qbit 2: 13 dep gates: 148
+qbit 1: 12 qbit 2: 13 dep gates: 148
+qbit 1: 4 qbit 2: 5 dep gates: 149
+qbit 1: 4 qbit 2: 5 dep gates: 149
+qbit 1: 6 qbit 2: 7 dep gates: 150
+qbit 1: 6 qbit 2: 7 dep gates: 150
+qbit 1: 13 qbit 2: 14 dep gates: 154
+qbit 1: 13 qbit 2: 14 dep gates: 75
+qbit 1: 8 qbit 2: 9 dep gates: 152
+qbit 1: 8 qbit 2: 9 dep gates: 152
+qbit 1: 10 qbit 2: 11 dep gates: 153
+qbit 1: 10 qbit 2: 11 dep gates: 153
+qbit 1: 3 qbit 2: 4 dep gates: 145
+qbit 1: 3 qbit 2: 4 dep gates: 155
+qbit 1: 5 qbit 2: 6 dep gates: 155
+qbit 1: 5 qbit 2: 6 dep gates: 156
+qbit 1: 13 qbit 2: 14 dep gates: 157
+qbit 1: 13 qbit 2: 14 dep gates: 157
+qbit 1: 3 qbit 2: 4 dep gates: 160
+qbit 1: 3 qbit 2: 4 dep gates: 160
+qbit 1: 7 qbit 2: 8 dep gates: 156
+qbit 1: 7 qbit 2: 8 dep gates: 158
+qbit 1: 9 qbit 2: 10 dep gates: 158
+qbit 1: 9 qbit 2: 10 dep gates: 159
+qbit 1: 14 qbit 2: 15 dep gates: 162
+qbit 1: 14 qbit 2: 15 dep gates: 57
+qbit 1: 2 qbit 2: 3 dep gates: 142
+qbit 1: 2 qbit 2: 3 dep gates: 163
+qbit 1: 5 qbit 2: 6 dep gates: 161
+qbit 1: 5 qbit 2: 6 dep gates: 161
+qbit 1: 11 qbit 2: 12 dep gates: 159
+qbit 1: 11 qbit 2: 12 dep gates: 154
+qbit 1: 4 qbit 2: 5 dep gates: 163
+qbit 1: 4 qbit 2: 5 dep gates: 168
+qbit 1: 7 qbit 2: 8 dep gates: 164
+qbit 1: 7 qbit 2: 8 dep gates: 164
+qbit 1: 9 qbit 2: 10 dep gates: 165
+qbit 1: 9 qbit 2: 10 dep gates: 165
+qbit 1: 14 qbit 2: 15 dep gates: 166
+qbit 1: 14 qbit 2: 15 dep gates: 166
+qbit 1: 2 qbit 2: 3 dep gates: 167
+qbit 1: 2 qbit 2: 3 dep gates: 167
+qbit 1: 6 qbit 2: 7 dep gates: 168
+qbit 1: 6 qbit 2: 7 dep gates: 171
+qbit 1: 8 qbit 2: 9 dep gates: 171
+qbit 1: 8 qbit 2: 9 dep gates: 172
+qbit 1: 11 qbit 2: 12 dep gates: 169
+qbit 1: 11 qbit 2: 12 dep gates: 169
+qbit 1: 4 qbit 2: 5 dep gates: 170
+qbit 1: 4 qbit 2: 5 dep gates: 170
+qbit 1: 10 qbit 2: 11 dep gates: 172
+qbit 1: 10 qbit 2: 11 dep gates: 177
+qbit 1: 1 qbit 2: 2 dep gates: 151
+qbit 1: 1 qbit 2: 2 dep gates: 174
+qbit 1: 3 qbit 2: 4 dep gates: 174
+qbit 1: 3 qbit 2: 4 dep gates: 178
+qbit 1: 6 qbit 2: 7 dep gates: 175
+qbit 1: 6 qbit 2: 7 dep gates: 175
+qbit 1: 8 qbit 2: 9 dep gates: 176
+qbit 1: 8 qbit 2: 9 dep gates: 176
+qbit 1: 12 qbit 2: 13 dep gates: 177
+qbit 1: 12 qbit 2: 13 dep gates: 162
+qbit 1: 10 qbit 2: 11 dep gates: 179
+qbit 1: 10 qbit 2: 11 dep gates: 179
+qbit 1: 1 qbit 2: 2 dep gates: 180
+qbit 1: 1 qbit 2: 2 dep gates: 180
+qbit 1: 3 qbit 2: 4 dep gates: 181
+qbit 1: 3 qbit 2: 4 dep gates: 181
+qbit 1: 5 qbit 2: 6 dep gates: 178
+qbit 1: 5 qbit 2: 6 dep gates: 182
+qbit 1: 7 qbit 2: 8 dep gates: 182
+qbit 1: 7 qbit 2: 8 dep gates: 183
+qbit 1: 12 qbit 2: 13 dep gates: 184
+qbit 1: 12 qbit 2: 13 dep gates: 184
+qbit 1: 9 qbit 2: 10 dep gates: 183
+qbit 1: 9 qbit 2: 10 dep gates: 185
+qbit 1: 5 qbit 2: 6 dep gates: 188
+qbit 1: 5 qbit 2: 6 dep gates: 188
+qbit 1: 7 qbit 2: 8 dep gates: 189
+qbit 1: 7 qbit 2: 8 dep gates: 189
+qbit 1: 11 qbit 2: 12 dep gates: 185
+qbit 1: 11 qbit 2: 12 dep gates: 190
+qbit 1: 13 qbit 2: 14 dep gates: 190
+qbit 1: 13 qbit 2: 14 dep gates: 173
+qbit 1: 9 qbit 2: 10 dep gates: 191
+qbit 1: 9 qbit 2: 10 dep gates: 191
+qbit 1: 11 qbit 2: 12 dep gates: 194
+qbit 1: 11 qbit 2: 12 dep gates: 194
+qbit 1: 13 qbit 2: 14 dep gates: 195
+qbit 1: 13 qbit 2: 14 dep gates: 195
+parse object map:
+{0: [4, 5], 1: [6, 7], 2: [8, 9], 3: [10, 11], 4: [12, 13], 5: [4, 5], 6: [6, 7], 7: [8, 9], 8: [10, 11], 9: [12, 13], 10: [7, 8], 11: [9, 10], 12: [3, 4], 13: [5, 6], 14: [11, 12], 15: [13, 14], 16: [7, 8], 17: [9, 10], 18: [13, 14], 19: [3, 4], 20: [5, 6], 21: [11, 12], 22: [8, 9], 23: [2, 3], 24: [4, 5], 25: [6, 7], 26: [10, 11], 27: [12, 13], 28: [8, 9], 29: [2, 3], 30: [4, 5], 31: [6, 7], 32: [10, 11], 33: [12, 13], 34: [3, 4], 35: [9, 10], 36: [1, 2], 37: [5, 6], 38: [7, 8], 39: [11, 12], 40: [13, 14], 41: [3, 4], 42: [9, 10], 43: [1, 2], 44: [5, 6], 45: [7, 8], 46: [11, 12], 47: [13, 14], 48: [2, 3], 49: [14, 15], 50: [0, 1], 51: [4, 5], 52: [6, 7], 53: [8, 9], 54: [10, 11], 55: [12, 13], 56: [2, 3], 57: [14, 15], 58: [0, 1], 59: [4, 5], 60: [6, 7], 61: [8, 9], 62: [10, 11], 63: [12, 13], 64: [3, 4], 65: [1, 2], 66: [5, 6], 67: [7, 8], 68: [9, 10], 69: [13, 14], 70: [3, 4], 71: [1, 2], 72: [5, 6], 73: [7, 8], 74: [9, 10], 75: [13, 14], 76: [0, 1], 77: [4, 5], 78: [10, 11], 79: [2, 3], 80: [6, 7], 81: [8, 9], 82: [4, 5], 83: [10, 11], 84: [2, 3], 85: [6, 7], 86: [8, 9], 87: [11, 12], 88: [3, 4], 89: [5, 6], 90: [1, 2], 91: [7, 8], 92: [9, 10], 93: [11, 12], 94: [3, 4], 95: [5, 6], 96: [1, 2], 97: [7, 8], 98: [9, 10], 99: [12, 13], 100: [4, 5], 101: [10, 11], 102: [0, 1], 103: [2, 3], 104: [6, 7], 105: [8, 9], 106: [12, 13], 107: [4, 5], 108: [10, 11], 109: [2, 3], 110: [6, 7], 111: [8, 9], 112: [11, 12], 113: [1, 2], 114: [3, 4], 115: [5, 6], 116: [7, 8], 117: [9, 10], 118: [1, 2], 119: [3, 4], 120: [5, 6], 121: [7, 8], 122: [9, 10], 123: [0, 1], 124: [6, 7], 125: [10, 11], 126: [0, 1], 127: [2, 3], 128: [4, 5], 129: [8, 9], 130: [6, 7], 131: [10, 11], 132: [2, 3], 133: [4, 5], 134: [8, 9], 135: [11, 12], 136: [1, 2], 137: [7, 8], 138: [3, 4], 139: [5, 6], 140: [9, 10], 141: [11, 12], 142: [1, 2], 143: [7, 8], 144: [0, 1], 145: [3, 4], 146: [5, 6], 147: [9, 10], 148: [12, 13], 149: [4, 5], 150: [6, 7], 151: [0, 1], 152: [8, 9], 153: [10, 11], 154: [12, 13], 155: [4, 5], 156: [6, 7], 157: [13, 14], 158: [8, 9], 159: [10, 11], 160: [3, 4], 161: [5, 6], 162: [13, 14], 163: [3, 4], 164: [7, 8], 165: [9, 10], 166: [14, 15], 167: [2, 3], 168: [5, 6], 169: [11, 12], 170: [4, 5], 171: [7, 8], 172: [9, 10], 173: [14, 15], 174: [2, 3], 175: [6, 7], 176: [8, 9], 177: [11, 12], 178: [4, 5], 179: [10, 11], 180: [1, 2], 181: [3, 4], 182: [6, 7], 183: [8, 9], 184: [12, 13], 185: [10, 11], 186: [1, 2], 187: [3, 4], 188: [5, 6], 189: [7, 8], 190: [12, 13], 191: [9, 10], 192: [5, 6], 193: [7, 8], 194: [11, 12], 195: [13, 14], 196: [9, 10], 197: [11, 12], 198: [13, 14]}
+parse object graph:
+DiGraph with 199 nodes and 284 edges
+Initial_qubit layout:  {0: [4, 5, 3, 6, 7], 1: [13, 2, 1, 14, 0], 2: [8, 9, 10, 11, 12], 3: [15]}
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+12
+13
+10
+11
+14
+15
+19
+20
+16
+17
+21
+18
+23
+24
+25
+22
+26
+27
+29
+30
+31
+28
+32
+33
+36
+34
+37
+38
+35
+39
+40
+43
+41
+44
+45
+42
+46
+47
+50
+48
+51
+52
+53
+54
+49
+55
+58
+56
+59
+60
+61
+62
+57
+63
+65
+64
+66
+67
+68
+69
+71
+70
+72
+73
+74
+75
+76
+79
+77
+80
+78
+81
+84
+82
+85
+83
+86
+90
+88
+89
+87
+91
+92
+96
+94
+95
+93
+97
+98
+102
+103
+100
+99
+104
+101
+105
+109
+107
+106
+110
+108
+111
+113
+114
+115
+112
+116
+117
+118
+119
+120
+121
+122
+123
+127
+128
+124
+125
+129
+126
+132
+133
+130
+131
+134
+136
+138
+139
+135
+137
+140
+142
+145
+146
+141
+143
+147
+144
+149
+148
+150
+152
+153
+151
+155
+154
+156
+158
+159
+160
+157
+161
+164
+165
+169
+163
+162
+168
+171
+172
+177
+167
+166
+170
+175
+176
+179
+184
+174
+173
+178
+182
+183
+185
+190
+180
+181
+188
+189
+191
+194
+195
+186
+187
+192
+193
+196
+197
+198
+GAT [8, 9] T2 (0, 100)
+GAT [4, 5] T0 (0, 100)
+GAT [10, 11] T2 (100, 200)
+GAT [6, 7] T0 (100, 200)
+SPL [4] T0->S0 (200, 448)
+MOV [4] S0->S4 (448, 553)
+MOV [4] S4->S3 (553, 658)
+MER [4] S3->T3 (658, 780)
+SPL [13] T1->S2 (780, 1028)
+MOV [13] S2->S3 (1028, 1133)
+MER [13] S3->T3 (1133, 1297)
+SPL [8] T2->S1 (1297, 1545)
+MOV [8] S1->S4 (1545, 1650)
+MOV [8] S4->S3 (1650, 1755)
+MER [8] S3->T3 (1755, 1961)
+SPL [12] T2->S1 (1961, 2041)
+MOV [12] S1->S4 (2041, 2146)
+MOV [12] S4->S3 (2146, 2251)
+MER [12] S3->T3 (2251, 2499)
+GAT [12, 13] T3 (2499, 2599)
+SPL [4] T3->S3 (2599, 2805)
+MOV [4] S3->S4 (2805, 2910)
+MOV [4] S4->S0 (2910, 3015)
+SPL [8] T3->S3 (3015, 3137)
+GAT [12, 13] T3 (3137, 3237)
+MOV [8] S3->S4 (3137, 3242)
+MER [4] S0->T0 (3015, 3263)
+MOV [8] S4->S1 (3242, 3347)
+GAT [4, 5] T0 (3263, 3363)
+GAT [6, 7] T0 (3363, 3463)
+MER [8] S1->T2 (3347, 3553)
+GAT [3, 4] T0 (3463, 3563)
+GAT [8, 9] T2 (3553, 3653)
+GAT [5, 6] T0 (3563, 3663)
+GAT [10, 11] T2 (3653, 3753)
+SPL [7] T0->S0 (3663, 3785)
+GAT [3, 4] T0 (3785, 3885)
+MOV [7] S0->S1 (3785, 3890)
+GAT [5, 6] T0 (3885, 3985)
+MER [7] S1->T2 (3890, 4138)
+GAT [7, 8] T2 (4138, 4238)
+GAT [9, 10] T2 (4238, 4338)
+SPL [11] T2->S1 (4338, 4502)
+GAT [7, 8] T2 (4502, 4602)
+MOV [11] S1->S4 (4502, 4607)
+GAT [9, 10] T2 (4602, 4702)
+MOV [11] S4->S3 (4607, 4712)
+MER [11] S3->T3 (4712, 4918)
+GAT [11, 12] T3 (4918, 5018)
+SPL [13] T3->S3 (5018, 5182)
+GAT [11, 12] T3 (5182, 5282)
+MOV [13] S3->S2 (5182, 5287)
+MER [13] S2->T1 (5287, 5535)
+GAT [13, 14] T1 (5535, 5635)
+GAT [13, 14] T1 (5635, 5735)
+SPL [2] T1->S2 (5735, 5983)
+MOV [2] S2->S4 (5983, 6088)
+MOV [2] S4->S0 (6088, 6193)
+MER [2] S0->T0 (6193, 6441)
+GAT [2, 3] T0 (6441, 6541)
+GAT [4, 5] T0 (6541, 6641)
+SPL [6] T0->S0 (6641, 6805)
+GAT [2, 3] T0 (6805, 6905)
+MOV [6] S0->S1 (6805, 6910)
+GAT [4, 5] T0 (6905, 7005)
+MER [6] S1->T2 (6910, 7158)
+GAT [6, 7] T2 (7158, 7258)
+GAT [8, 9] T2 (7258, 7358)
+SPL [10] T2->S1 (7358, 7564)
+GAT [6, 7] T2 (7564, 7664)
+MOV [10] S1->S4 (7564, 7669)
+GAT [8, 9] T2 (7664, 7764)
+MOV [10] S4->S3 (7669, 7774)
+MER [10] S3->T3 (7774, 7980)
+GAT [10, 11] T3 (7980, 8080)
+SPL [12] T3->S3 (8080, 8244)
+GAT [10, 11] T3 (8244, 8344)
+MOV [12] S3->S2 (8244, 8349)
+MER [12] S2->T1 (8349, 8597)
+GAT [12, 13] T1 (8597, 8697)
+GAT [12, 13] T1 (8697, 8797)
+SPL [1] T1->S2 (8797, 9045)
+MOV [1] S2->S4 (9045, 9150)
+MOV [1] S4->S0 (9150, 9255)
+MER [1] S0->T0 (9255, 9503)
+GAT [1, 2] T0 (9503, 9603)
+GAT [3, 4] T0 (9603, 9703)
+SPL [5] T0->S0 (9703, 9951)
+GAT [1, 2] T0 (9951, 10051)
+MOV [5] S0->S1 (9951, 10056)
+GAT [3, 4] T0 (10051, 10151)
+MER [5] S1->T2 (10056, 10304)
+GAT [5, 6] T2 (10304, 10404)
+GAT [7, 8] T2 (10404, 10504)
+SPL [9] T2->S1 (10504, 10752)
+GAT [5, 6] T2 (10752, 10852)
+MOV [9] S1->S4 (10752, 10857)
+GAT [7, 8] T2 (10852, 10952)
+MOV [9] S4->S3 (10857, 10962)
+MER [9] S3->T3 (10962, 11168)
+GAT [9, 10] T3 (11168, 11268)
+SPL [11] T3->S3 (11268, 11432)
+GAT [9, 10] T3 (11432, 11532)
+MOV [11] S3->S2 (11432, 11537)
+MER [11] S2->T1 (11537, 11785)
+GAT [11, 12] T1 (11785, 11885)
+GAT [13, 14] T1 (11885, 11985)
+GAT [11, 12] T1 (11985, 12085)
+GAT [13, 14] T1 (12085, 12185)
+SPL [0] T1->S2 (12185, 12391)
+MOV [0] S2->S4 (12391, 12496)
+MOV [0] S4->S0 (12496, 12601)
+MER [0] S0->T0 (12601, 12849)
+GAT [0, 1] T0 (12849, 12949)
+GAT [2, 3] T0 (12949, 13049)
+SPL [4] T0->S0 (13049, 13255)
+GAT [0, 1] T0 (13255, 13355)
+MOV [4] S0->S1 (13255, 13360)
+GAT [2, 3] T0 (13355, 13455)
+GAT [1, 2] T0 (13455, 13555)
+MER [4] S1->T2 (13360, 13608)
+GAT [4, 5] T2 (13608, 13708)
+GAT [6, 7] T2 (13708, 13808)
+SPL [8] T2->S1 (13808, 14056)
+GAT [4, 5] T2 (14056, 14156)
+MOV [8] S1->S4 (14056, 14161)
+GAT [6, 7] T2 (14156, 14256)
+MOV [8] S4->S3 (14161, 14266)
+SPL [3] T0->S0 (14161, 14367)
+GAT [1, 2] T0 (14367, 14467)
+MOV [3] S0->S1 (14367, 14472)
+MER [8] S3->T3 (14266, 14472)
+GAT [0, 1] T0 (14467, 14567)
+GAT [8, 9] T3 (14472, 14572)
+MER [3] S1->T2 (14472, 14720)
+SPL [10] T3->S3 (14572, 14736)
+GAT [3, 4] T2 (14720, 14820)
+MOV [10] S3->S2 (14736, 14841)
+GAT [5, 6] T2 (14820, 14920)
+MER [10] S2->T1 (14841, 15089)
+GAT [10, 11] T1 (15089, 15189)
+SPL [14] T1->S2 (15189, 15437)
+GAT [12, 13] T1 (15437, 15537)
+MOV [14] S2->S3 (15437, 15542)
+GAT [10, 11] T1 (15537, 15637)
+GAT [12, 13] T1 (15637, 15737)
+MER [14] S3->T3 (15542, 15748)
+GAT [14, 15] T3 (15748, 15848)
+GAT [8, 9] T3 (15848, 15948)
+GAT [14, 15] T3 (15948, 16048)
+SPL [7] T2->S1 (15948, 16196)
+GAT [3, 4] T2 (16196, 16296)
+MOV [7] S1->S4 (16196, 16301)
+GAT [5, 6] T2 (16296, 16396)
+MOV [7] S4->S3 (16301, 16406)
+SPL [3] T2->S1 (16396, 16476)
+GAT [4, 5] T2 (16476, 16576)
+MOV [3] S1->S0 (16476, 16581)
+MER [7] S3->T3 (16406, 16654)
+GAT [7, 8] T3 (16654, 16754)
+MER [3] S0->T0 (16581, 16787)
+GAT [2, 3] T0 (16787, 16887)
+SPL [9] T3->S3 (16754, 16960)
+GAT [2, 3] T0 (16887, 16987)
+MOV [9] S3->S2 (16960, 17065)
+GAT [1, 2] T0 (16987, 17087)
+MER [9] S2->T1 (17065, 17313)
+GAT [9, 10] T1 (17313, 17413)
+SPL [13] T1->S2 (17413, 17661)
+GAT [9, 10] T1 (17661, 17761)
+MOV [13] S2->S3 (17661, 17766)
+GAT [10, 11] T1 (17761, 17861)
+MER [13] S3->T3 (17766, 18014)
+GAT [13, 14] T3 (18014, 18114)
+GAT [7, 8] T3 (18114, 18214)
+GAT [13, 14] T3 (18214, 18314)
+SPL [7] T3->S3 (18314, 18436)
+MOV [7] S3->S4 (18436, 18541)
+MOV [7] S4->S1 (18541, 18646)
+SPL [8] T3->S3 (18541, 18705)
+MOV [8] S3->S2 (18705, 18810)
+MER [7] S1->T2 (18646, 18852)
+GAT [6, 7] T2 (18852, 18952)
+GAT [4, 5] T2 (18952, 19052)
+MER [8] S2->T1 (18810, 19058)
+SPL [3] T0->S0 (19052, 19132)
+GAT [6, 7] T2 (19052, 19152)
+GAT [8, 9] T1 (19058, 19158)
+MOV [3] S0->S1 (19132, 19237)
+GAT [10, 11] T1 (19158, 19258)
+GAT [8, 9] T1 (19258, 19358)
+GAT [11, 12] T1 (19358, 19458)
+MER [3] S1->T2 (19237, 19485)
+GAT [3, 4] T2 (19485, 19585)
+GAT [5, 6] T2 (19585, 19685)
+SPL [12] T1->S2 (19458, 19706)
+MOV [12] S2->S3 (19706, 19811)
+SPL [6] T2->S1 (19685, 19933)
+MER [12] S3->T3 (19811, 20017)
+MOV [6] S1->S0 (19933, 20038)
+MER [6] S0->T0 (20038, 20244)
+GAT [1, 2] T0 (20244, 20344)
+SPL [7] T2->S1 (20244, 20366)
+GAT [3, 4] T2 (20366, 20466)
+MOV [7] S1->S4 (20366, 20471)
+SPL [6] T0->S0 (20471, 20551)
+MOV [7] S4->S2 (20471, 20576)
+GAT [0, 1] T0 (20551, 20651)
+MOV [6] S0->S1 (20551, 20656)
+MER [7] S2->T1 (20576, 20824)
+MER [6] S1->T2 (20656, 20862)
+GAT [7, 8] T1 (20824, 20924)
+GAT [5, 6] T2 (20862, 20962)
+GAT [9, 10] T1 (20924, 21024)
+SPL [3] T2->S1 (20962, 21084)
+GAT [4, 5] T2 (21084, 21184)
+MOV [3] S1->S0 (21084, 21189)
+SPL [11] T1->S2 (21024, 21272)
+GAT [7, 8] T1 (21272, 21372)
+MOV [11] S2->S3 (21272, 21377)
+MER [3] S0->T0 (21189, 21395)
+GAT [9, 10] T1 (21372, 21472)
+GAT [2, 3] T0 (21395, 21495)
+SPL [7] T1->S2 (21472, 21552)
+GAT [2, 3] T0 (21495, 21595)
+MER [11] S3->T3 (21377, 21625)
+MOV [7] S2->S4 (21552, 21657)
+GAT [1, 2] T0 (21595, 21695)
+GAT [11, 12] T3 (21625, 21725)
+MOV [7] S4->S1 (21657, 21762)
+GAT [12, 13] T3 (21725, 21825)
+SPL [11] T3->S3 (21825, 21905)
+MER [7] S1->T2 (21762, 21968)
+GAT [12, 13] T3 (21905, 22005)
+MOV [11] S3->S2 (21905, 22010)
+GAT [6, 7] T2 (21968, 22068)
+GAT [4, 5] T2 (22068, 22168)
+MER [11] S2->T1 (22010, 22216)
+SPL [3] T0->S0 (22168, 22248)
+GAT [6, 7] T2 (22168, 22268)
+GAT [10, 11] T1 (22216, 22316)
+GAT [1, 2] T0 (22248, 22348)
+MOV [3] S0->S1 (22248, 22353)
+GAT [8, 9] T1 (22316, 22416)
+GAT [0, 1] T0 (22348, 22448)
+GAT [10, 11] T1 (22416, 22516)
+MER [3] S1->T2 (22353, 22601)
+GAT [8, 9] T1 (22516, 22616)
+SPL [11] T1->S2 (22616, 22696)
+GAT [3, 4] T2 (22601, 22701)
+MOV [11] S2->S3 (22696, 22801)
+GAT [5, 6] T2 (22701, 22801)
+SPL [7] T2->S1 (22801, 22923)
+GAT [3, 4] T2 (22923, 23023)
+MOV [7] S1->S4 (22923, 23028)
+MER [11] S3->T3 (22801, 23049)
+GAT [5, 6] T2 (23023, 23123)
+MOV [7] S4->S2 (23028, 23133)
+GAT [11, 12] T3 (23049, 23149)
+SPL [3] T2->S1 (23123, 23203)
+GAT [4, 5] T2 (23203, 23303)
+MOV [3] S1->S0 (23203, 23308)
+MER [7] S2->T1 (23133, 23339)
+GAT [7, 8] T1 (23339, 23439)
+MER [3] S0->T0 (23308, 23514)
+GAT [9, 10] T1 (23439, 23539)
+GAT [2, 3] T0 (23514, 23614)
+GAT [7, 8] T1 (23539, 23639)
+GAT [0, 1] T0 (23614, 23714)
+GAT [9, 10] T1 (23639, 23739)
+GAT [2, 3] T0 (23714, 23814)
+SPL [7] T1->S2 (23739, 23819)
+GAT [1, 2] T0 (23814, 23914)
+MOV [7] S2->S4 (23819, 23924)
+SPL [11] T3->S3 (23924, 24004)
+MOV [7] S4->S1 (23924, 24029)
+MOV [11] S3->S2 (24004, 24109)
+MER [7] S1->T2 (24029, 24235)
+MER [11] S2->T1 (24109, 24315)
+GAT [6, 7] T2 (24235, 24335)
+GAT [10, 11] T1 (24315, 24415)
+GAT [4, 5] T2 (24335, 24435)
+SPL [3] T0->S0 (24435, 24515)
+GAT [8, 9] T1 (24415, 24515)
+GAT [6, 7] T2 (24435, 24535)
+GAT [1, 2] T0 (24515, 24615)
+GAT [10, 11] T1 (24515, 24615)
+MOV [3] S0->S1 (24515, 24620)
+GAT [0, 1] T0 (24615, 24715)
+GAT [8, 9] T1 (24615, 24715)
+SPL [11] T1->S2 (24715, 24795)
+MER [3] S1->T2 (24620, 24868)
+MOV [11] S2->S3 (24795, 24900)
+GAT [3, 4] T2 (24868, 24968)
+GAT [5, 6] T2 (24968, 25068)
+MER [11] S3->T3 (24900, 25148)
+SPL [7] T2->S1 (25068, 25190)
+GAT [11, 12] T3 (25148, 25248)
+GAT [3, 4] T2 (25190, 25290)
+MOV [7] S1->S4 (25190, 25295)
+GAT [11, 12] T3 (25248, 25348)
+GAT [5, 6] T2 (25290, 25390)
+MOV [7] S4->S2 (25295, 25400)
+GAT [12, 13] T3 (25348, 25448)
+GAT [4, 5] T2 (25390, 25490)
+MER [7] S2->T1 (25400, 25606)
+GAT [7, 8] T1 (25606, 25706)
+GAT [9, 10] T1 (25706, 25806)
+GAT [7, 8] T1 (25806, 25906)
+GAT [9, 10] T1 (25906, 26006)
+SPL [6] T2->S1 (25906, 26028)
+MOV [6] S1->S4 (26028, 26133)
+MOV [6] S4->S2 (26133, 26238)
+MER [6] S2->T1 (26238, 26486)
+GAT [6, 7] T1 (26486, 26586)
+GAT [8, 9] T1 (26586, 26686)
+SPL [10] T1->S2 (26686, 26934)
+GAT [6, 7] T1 (26934, 27034)
+MOV [10] S2->S4 (26934, 27039)
+GAT [8, 9] T1 (27034, 27134)
+MOV [10] S4->S0 (27039, 27144)
+MER [10] S0->T0 (27144, 27350)
+SPL [15] T3->S3 (27144, 27392)
+MOV [15] S3->S4 (27392, 27497)
+MOV [15] S4->S1 (27497, 27602)
+MER [15] S1->T2 (27602, 27808)
+SPL [10] T0->S0 (27808, 27888)
+GAT [4, 5] T2 (27808, 27908)
+GAT [0, 1] T0 (27888, 27988)
+MOV [10] S0->S4 (27888, 27993)
+GAT [3, 4] T2 (27908, 28008)
+MOV [10] S4->S3 (27993, 28098)
+SPL [5] T2->S1 (28098, 28304)
+MER [10] S3->T3 (28098, 28346)
+MOV [5] S1->S4 (28304, 28409)
+GAT [10, 11] T3 (28346, 28446)
+MOV [5] S4->S2 (28409, 28514)
+GAT [12, 13] T3 (28446, 28546)
+GAT [10, 11] T3 (28546, 28646)
+GAT [13, 14] T3 (28646, 28746)
+MER [5] S2->T1 (28514, 28762)
+GAT [5, 6] T1 (28762, 28862)
+GAT [7, 8] T1 (28862, 28962)
+SPL [9] T1->S2 (28962, 29210)
+GAT [5, 6] T1 (29210, 29310)
+MOV [9] S2->S4 (29210, 29315)
+GAT [7, 8] T1 (29310, 29410)
+MOV [9] S4->S0 (29315, 29420)
+MER [9] S0->T0 (29420, 29626)
+SPL [14] T3->S3 (29420, 29668)
+MOV [14] S3->S4 (29668, 29773)
+MOV [14] S4->S1 (29773, 29878)
+MER [14] S1->T2 (29878, 30084)
+SPL [9] T0->S0 (30084, 30164)
+GAT [3, 4] T2 (30084, 30184)
+MOV [9] S0->S4 (30164, 30269)
+MOV [9] S4->S3 (30269, 30374)
+MER [9] S3->T3 (30374, 30622)
+GAT [9, 10] T3 (30622, 30722)
+GAT [11, 12] T3 (30722, 30822)
+SPL [13] T3->S3 (30822, 31070)
+GAT [9, 10] T3 (31070, 31170)
+MOV [13] S3->S4 (31070, 31175)
+GAT [11, 12] T3 (31170, 31270)
+MOV [13] S4->S1 (31175, 31280)
+MER [13] S1->T2 (31280, 31528)
+GAT [13, 14] T2 (31528, 31628)
+SPL [3] T2->S1 (31628, 31834)
+GAT [14, 15] T2 (31834, 31934)
+MOV [3] S1->S0 (31834, 31939)
+SPL [4] T2->S1 (31939, 32145)
+MER [3] S0->T0 (31939, 32145)
+GAT [2, 3] T0 (32145, 32245)
+MOV [4] S1->S4 (32145, 32250)
+GAT [2, 3] T0 (32245, 32345)
+MOV [4] S4->S2 (32250, 32355)
+GAT [1, 2] T0 (32345, 32445)
+MER [4] S2->T1 (32355, 32603)
+GAT [4, 5] T1 (32603, 32703)
+GAT [6, 7] T1 (32703, 32803)
+SPL [8] T1->S2 (32803, 33051)
+GAT [4, 5] T1 (33051, 33151)
+MOV [8] S2->S3 (33051, 33156)
+GAT [6, 7] T1 (33151, 33251)
+MER [8] S3->T3 (33156, 33404)
+GAT [8, 9] T3 (33404, 33504)
+GAT [10, 11] T3 (33504, 33604)
+SPL [12] T3->S3 (33604, 33852)
+GAT [8, 9] T3 (33852, 33952)
+MOV [12] S3->S4 (33852, 33957)
+GAT [10, 11] T3 (33952, 34052)
+MOV [12] S4->S1 (33957, 34062)
+SPL [3] T0->S0 (34062, 34142)
+GAT [1, 2] T0 (34142, 34242)
+MOV [3] S0->S4 (34142, 34247)
+MER [12] S1->T2 (34062, 34268)
+MOV [3] S4->S2 (34247, 34352)
+GAT [12, 13] T2 (34268, 34368)
+GAT [14, 15] T2 (34368, 34468)
+GAT [12, 13] T2 (34468, 34568)
+MER [3] S2->T1 (34352, 34600)
+GAT [3, 4] T1 (34600, 34700)
+GAT [5, 6] T1 (34700, 34800)
+SPL [7] T1->S2 (34800, 35048)
+GAT [3, 4] T1 (35048, 35148)
+MOV [7] S2->S3 (35048, 35153)
+GAT [5, 6] T1 (35148, 35248)
+MER [7] S3->T3 (35153, 35401)
+GAT [7, 8] T3 (35401, 35501)
+GAT [9, 10] T3 (35501, 35601)
+SPL [11] T3->S3 (35601, 35849)
+GAT [7, 8] T3 (35849, 35949)
+MOV [11] S3->S4 (35849, 35954)
+GAT [9, 10] T3 (35949, 36049)
+MOV [11] S4->S1 (35954, 36059)
+MER [11] S1->T2 (36059, 36307)
+GAT [11, 12] T2 (36307, 36407)
+GAT [13, 14] T2 (36407, 36507)
+GAT [11, 12] T2 (36507, 36607)
+GAT [13, 14] T2 (36607, 36707)
+Current event:  (2, 1, 0, 100, {'ions': [8, 9], 'trap': 2})
+Current event:  (0, 1, 0, 100, {'ions': [4, 5], 'trap': 0})
+Current event:  (3, 1, 100, 200, {'ions': [10, 11], 'trap': 2})
+Current event:  (1, 1, 100, 200, {'ions': [6, 7], 'trap': 0})
+Current event:  (4, 2, 200, 448, {'ions': [4], 'trap': 0, 'seg': 0, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 4, 'i2': 7})
+Current event:  (5, 4, 448, 553, {'ions': [4], 'source_seg': 0, 'dest_seg': 4})
+Current event:  (6, 4, 553, 658, {'ions': [4], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (7, 3, 658, 780, {'ions': [4], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (8, 2, 780, 1028, {'ions': [13], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 13, 'i2': 0})
+Current event:  (9, 4, 1028, 1133, {'ions': [13], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (10, 3, 1133, 1297, {'ions': [13], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (11, 2, 1297, 1545, {'ions': [8], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 8, 'i2': 12})
+Current event:  (12, 4, 1545, 1650, {'ions': [8], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (13, 4, 1650, 1755, {'ions': [8], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (14, 3, 1755, 1961, {'ions': [8], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (15, 2, 1961, 2041, {'ions': [12], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (16, 4, 2041, 2146, {'ions': [12], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (17, 4, 2146, 2251, {'ions': [12], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (18, 3, 2251, 2499, {'ions': [12], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (19, 1, 2499, 2599, {'ions': [12, 13], 'trap': 3})
+Current event:  (20, 2, 2599, 2805, {'ions': [4], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 4, 'i2': 12})
+Current event:  (21, 4, 2805, 2910, {'ions': [4], 'source_seg': 3, 'dest_seg': 4})
+Current event:  (22, 4, 2910, 3015, {'ions': [4], 'source_seg': 4, 'dest_seg': 0})
+Current event:  (26, 2, 3015, 3137, {'ions': [8], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 1, 'ion_hops': 0, 'i1': 8, 'i2': 12})
+Current event:  (32, 1, 3137, 3237, {'ions': [12, 13], 'trap': 3})
+Current event:  (27, 4, 3137, 3242, {'ions': [8], 'source_seg': 3, 'dest_seg': 4})
+Current event:  (23, 3, 3015, 3263, {'ions': [4], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (28, 4, 3242, 3347, {'ions': [8], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (24, 1, 3263, 3363, {'ions': [4, 5], 'trap': 0})
+Current event:  (25, 1, 3363, 3463, {'ions': [6, 7], 'trap': 0})
+Current event:  (29, 3, 3347, 3553, {'ions': [8], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (33, 1, 3463, 3563, {'ions': [3, 4], 'trap': 0})
+Current event:  (30, 1, 3553, 3653, {'ions': [8, 9], 'trap': 2})
+Current event:  (34, 1, 3563, 3663, {'ions': [5, 6], 'trap': 0})
+Current event:  (31, 1, 3653, 3753, {'ions': [10, 11], 'trap': 2})
+Current event:  (35, 2, 3663, 3785, {'ions': [7], 'trap': 0, 'seg': 0, 'swap_cnt': 1, 'swap_hops': 1, 'ion_hops': 0, 'i1': 7, 'i2': 4})
+Current event:  (49, 1, 3785, 3885, {'ions': [3, 4], 'trap': 0})
+Current event:  (36, 4, 3785, 3890, {'ions': [7], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (50, 1, 3885, 3985, {'ions': [5, 6], 'trap': 0})
+Current event:  (37, 3, 3890, 4138, {'ions': [7], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (38, 1, 4138, 4238, {'ions': [7, 8], 'trap': 2})
+Current event:  (39, 1, 4238, 4338, {'ions': [9, 10], 'trap': 2})
+Current event:  (40, 2, 4338, 4502, {'ions': [11], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 2, 'ion_hops': 0, 'i1': 11, 'i2': 7})
+Current event:  (51, 1, 4502, 4602, {'ions': [7, 8], 'trap': 2})
+Current event:  (41, 4, 4502, 4607, {'ions': [11], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (52, 1, 4602, 4702, {'ions': [9, 10], 'trap': 2})
+Current event:  (42, 4, 4607, 4712, {'ions': [11], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (43, 3, 4712, 4918, {'ions': [11], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (44, 1, 4918, 5018, {'ions': [11, 12], 'trap': 3})
+Current event:  (45, 2, 5018, 5182, {'ions': [13], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 2, 'ion_hops': 0, 'i1': 13, 'i2': 11})
+Current event:  (53, 1, 5182, 5282, {'ions': [11, 12], 'trap': 3})
+Current event:  (46, 4, 5182, 5287, {'ions': [13], 'source_seg': 3, 'dest_seg': 2})
+Current event:  (47, 3, 5287, 5535, {'ions': [13], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (48, 1, 5535, 5635, {'ions': [13, 14], 'trap': 1})
+Current event:  (54, 1, 5635, 5735, {'ions': [13, 14], 'trap': 1})
+Current event:  (55, 2, 5735, 5983, {'ions': [2], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 2, 'i2': 13})
+Current event:  (56, 4, 5983, 6088, {'ions': [2], 'source_seg': 2, 'dest_seg': 4})
+Current event:  (57, 4, 6088, 6193, {'ions': [2], 'source_seg': 4, 'dest_seg': 0})
+Current event:  (58, 3, 6193, 6441, {'ions': [2], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (59, 1, 6441, 6541, {'ions': [2, 3], 'trap': 0})
+Current event:  (60, 1, 6541, 6641, {'ions': [4, 5], 'trap': 0})
+Current event:  (61, 2, 6641, 6805, {'ions': [6], 'trap': 0, 'seg': 0, 'swap_cnt': 1, 'swap_hops': 2, 'ion_hops': 0, 'i1': 6, 'i2': 2})
+Current event:  (75, 1, 6805, 6905, {'ions': [2, 3], 'trap': 0})
+Current event:  (62, 4, 6805, 6910, {'ions': [6], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (76, 1, 6905, 7005, {'ions': [4, 5], 'trap': 0})
+Current event:  (63, 3, 6910, 7158, {'ions': [6], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (64, 1, 7158, 7258, {'ions': [6, 7], 'trap': 2})
+Current event:  (65, 1, 7258, 7358, {'ions': [8, 9], 'trap': 2})
+Current event:  (66, 2, 7358, 7564, {'ions': [10], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 10, 'i2': 6})
+Current event:  (77, 1, 7564, 7664, {'ions': [6, 7], 'trap': 2})
+Current event:  (67, 4, 7564, 7669, {'ions': [10], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (78, 1, 7664, 7764, {'ions': [8, 9], 'trap': 2})
+Current event:  (68, 4, 7669, 7774, {'ions': [10], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (69, 3, 7774, 7980, {'ions': [10], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (70, 1, 7980, 8080, {'ions': [10, 11], 'trap': 3})
+Current event:  (71, 2, 8080, 8244, {'ions': [12], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 2, 'ion_hops': 0, 'i1': 12, 'i2': 10})
+Current event:  (79, 1, 8244, 8344, {'ions': [10, 11], 'trap': 3})
+Current event:  (72, 4, 8244, 8349, {'ions': [12], 'source_seg': 3, 'dest_seg': 2})
+Current event:  (73, 3, 8349, 8597, {'ions': [12], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (74, 1, 8597, 8697, {'ions': [12, 13], 'trap': 1})
+Current event:  (80, 1, 8697, 8797, {'ions': [12, 13], 'trap': 1})
+Current event:  (81, 2, 8797, 9045, {'ions': [1], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 1, 'i2': 12})
+Current event:  (82, 4, 9045, 9150, {'ions': [1], 'source_seg': 2, 'dest_seg': 4})
+Current event:  (83, 4, 9150, 9255, {'ions': [1], 'source_seg': 4, 'dest_seg': 0})
+Current event:  (84, 3, 9255, 9503, {'ions': [1], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (85, 1, 9503, 9603, {'ions': [1, 2], 'trap': 0})
+Current event:  (86, 1, 9603, 9703, {'ions': [3, 4], 'trap': 0})
+Current event:  (87, 2, 9703, 9951, {'ions': [5], 'trap': 0, 'seg': 0, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 5, 'i2': 1})
+Current event:  (102, 1, 9951, 10051, {'ions': [1, 2], 'trap': 0})
+Current event:  (88, 4, 9951, 10056, {'ions': [5], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (103, 1, 10051, 10151, {'ions': [3, 4], 'trap': 0})
+Current event:  (89, 3, 10056, 10304, {'ions': [5], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (90, 1, 10304, 10404, {'ions': [5, 6], 'trap': 2})
+Current event:  (91, 1, 10404, 10504, {'ions': [7, 8], 'trap': 2})
+Current event:  (92, 2, 10504, 10752, {'ions': [9], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 9, 'i2': 5})
+Current event:  (104, 1, 10752, 10852, {'ions': [5, 6], 'trap': 2})
+Current event:  (93, 4, 10752, 10857, {'ions': [9], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (105, 1, 10852, 10952, {'ions': [7, 8], 'trap': 2})
+Current event:  (94, 4, 10857, 10962, {'ions': [9], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (95, 3, 10962, 11168, {'ions': [9], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (96, 1, 11168, 11268, {'ions': [9, 10], 'trap': 3})
+Current event:  (97, 2, 11268, 11432, {'ions': [11], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 2, 'ion_hops': 0, 'i1': 11, 'i2': 9})
+Current event:  (106, 1, 11432, 11532, {'ions': [9, 10], 'trap': 3})
+Current event:  (98, 4, 11432, 11537, {'ions': [11], 'source_seg': 3, 'dest_seg': 2})
+Current event:  (99, 3, 11537, 11785, {'ions': [11], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (100, 1, 11785, 11885, {'ions': [11, 12], 'trap': 1})
+Current event:  (101, 1, 11885, 11985, {'ions': [13, 14], 'trap': 1})
+Current event:  (107, 1, 11985, 12085, {'ions': [11, 12], 'trap': 1})
+Current event:  (108, 1, 12085, 12185, {'ions': [13, 14], 'trap': 1})
+Current event:  (109, 2, 12185, 12391, {'ions': [0], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 0, 'i2': 11})
+Current event:  (110, 4, 12391, 12496, {'ions': [0], 'source_seg': 2, 'dest_seg': 4})
+Current event:  (111, 4, 12496, 12601, {'ions': [0], 'source_seg': 4, 'dest_seg': 0})
+Current event:  (112, 3, 12601, 12849, {'ions': [0], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (113, 1, 12849, 12949, {'ions': [0, 1], 'trap': 0})
+Current event:  (114, 1, 12949, 13049, {'ions': [2, 3], 'trap': 0})
+Current event:  (115, 2, 13049, 13255, {'ions': [4], 'trap': 0, 'seg': 0, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 4, 'i2': 0})
+Current event:  (134, 1, 13255, 13355, {'ions': [0, 1], 'trap': 0})
+Current event:  (116, 4, 13255, 13360, {'ions': [4], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (135, 1, 13355, 13455, {'ions': [2, 3], 'trap': 0})
+Current event:  (142, 1, 13455, 13555, {'ions': [1, 2], 'trap': 0})
+Current event:  (117, 3, 13360, 13608, {'ions': [4], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (118, 1, 13608, 13708, {'ions': [4, 5], 'trap': 2})
+Current event:  (119, 1, 13708, 13808, {'ions': [6, 7], 'trap': 2})
+Current event:  (120, 2, 13808, 14056, {'ions': [8], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 8, 'i2': 4})
+Current event:  (136, 1, 14056, 14156, {'ions': [4, 5], 'trap': 2})
+Current event:  (121, 4, 14056, 14161, {'ions': [8], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (137, 1, 14156, 14256, {'ions': [6, 7], 'trap': 2})
+Current event:  (122, 4, 14161, 14266, {'ions': [8], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (143, 2, 14161, 14367, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 3, 'i2': 0})
+Current event:  (161, 1, 14367, 14467, {'ions': [1, 2], 'trap': 0})
+Current event:  (144, 4, 14367, 14472, {'ions': [3], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (123, 3, 14266, 14472, {'ions': [8], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (167, 1, 14467, 14567, {'ions': [0, 1], 'trap': 0})
+Current event:  (124, 1, 14472, 14572, {'ions': [8, 9], 'trap': 3})
+Current event:  (145, 3, 14472, 14720, {'ions': [3], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (125, 2, 14572, 14736, {'ions': [10], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 2, 'ion_hops': 0, 'i1': 10, 'i2': 8})
+Current event:  (146, 1, 14720, 14820, {'ions': [3, 4], 'trap': 2})
+Current event:  (126, 4, 14736, 14841, {'ions': [10], 'source_seg': 3, 'dest_seg': 2})
+Current event:  (147, 1, 14820, 14920, {'ions': [5, 6], 'trap': 2})
+Current event:  (127, 3, 14841, 15089, {'ions': [10], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (128, 1, 15089, 15189, {'ions': [10, 11], 'trap': 1})
+Current event:  (129, 2, 15189, 15437, {'ions': [14], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 14, 'i2': 10})
+Current event:  (133, 1, 15437, 15537, {'ions': [12, 13], 'trap': 1})
+Current event:  (130, 4, 15437, 15542, {'ions': [14], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (139, 1, 15537, 15637, {'ions': [10, 11], 'trap': 1})
+Current event:  (141, 1, 15637, 15737, {'ions': [12, 13], 'trap': 1})
+Current event:  (131, 3, 15542, 15748, {'ions': [14], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (132, 1, 15748, 15848, {'ions': [14, 15], 'trap': 3})
+Current event:  (138, 1, 15848, 15948, {'ions': [8, 9], 'trap': 3})
+Current event:  (140, 1, 15948, 16048, {'ions': [14, 15], 'trap': 3})
+Current event:  (148, 2, 15948, 16196, {'ions': [7], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 7, 'i2': 3})
+Current event:  (162, 1, 16196, 16296, {'ions': [3, 4], 'trap': 2})
+Current event:  (149, 4, 16196, 16301, {'ions': [7], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (163, 1, 16296, 16396, {'ions': [5, 6], 'trap': 2})
+Current event:  (150, 4, 16301, 16406, {'ions': [7], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (168, 2, 16396, 16476, {'ions': [3], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (172, 1, 16476, 16576, {'ions': [4, 5], 'trap': 2})
+Current event:  (169, 4, 16476, 16581, {'ions': [3], 'source_seg': 1, 'dest_seg': 0})
+Current event:  (151, 3, 16406, 16654, {'ions': [7], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (152, 1, 16654, 16754, {'ions': [7, 8], 'trap': 3})
+Current event:  (170, 3, 16581, 16787, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (171, 1, 16787, 16887, {'ions': [2, 3], 'trap': 0})
+Current event:  (153, 2, 16754, 16960, {'ions': [9], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 9, 'i2': 7})
+Current event:  (183, 1, 16887, 16987, {'ions': [2, 3], 'trap': 0})
+Current event:  (154, 4, 16960, 17065, {'ions': [9], 'source_seg': 3, 'dest_seg': 2})
+Current event:  (188, 1, 16987, 17087, {'ions': [1, 2], 'trap': 0})
+Current event:  (155, 3, 17065, 17313, {'ions': [9], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (156, 1, 17313, 17413, {'ions': [9, 10], 'trap': 1})
+Current event:  (157, 2, 17413, 17661, {'ions': [13], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 13, 'i2': 9})
+Current event:  (165, 1, 17661, 17761, {'ions': [9, 10], 'trap': 1})
+Current event:  (158, 4, 17661, 17766, {'ions': [13], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (178, 1, 17761, 17861, {'ions': [10, 11], 'trap': 1})
+Current event:  (159, 3, 17766, 18014, {'ions': [13], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (160, 1, 18014, 18114, {'ions': [13, 14], 'trap': 3})
+Current event:  (164, 1, 18114, 18214, {'ions': [7, 8], 'trap': 3})
+Current event:  (166, 1, 18214, 18314, {'ions': [13, 14], 'trap': 3})
+Current event:  (173, 2, 18314, 18436, {'ions': [7], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 1, 'ion_hops': 0, 'i1': 7, 'i2': 13})
+Current event:  (174, 4, 18436, 18541, {'ions': [7], 'source_seg': 3, 'dest_seg': 4})
+Current event:  (175, 4, 18541, 18646, {'ions': [7], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (179, 2, 18541, 18705, {'ions': [8], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 2, 'ion_hops': 0, 'i1': 8, 'i2': 13})
+Current event:  (180, 4, 18705, 18810, {'ions': [8], 'source_seg': 3, 'dest_seg': 2})
+Current event:  (176, 3, 18646, 18852, {'ions': [7], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (177, 1, 18852, 18952, {'ions': [6, 7], 'trap': 2})
+Current event:  (184, 1, 18952, 19052, {'ions': [4, 5], 'trap': 2})
+Current event:  (181, 3, 18810, 19058, {'ions': [8], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (189, 2, 19052, 19132, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (185, 1, 19052, 19152, {'ions': [6, 7], 'trap': 2})
+Current event:  (182, 1, 19058, 19158, {'ions': [8, 9], 'trap': 1})
+Current event:  (190, 4, 19132, 19237, {'ions': [3], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (186, 1, 19158, 19258, {'ions': [10, 11], 'trap': 1})
+Current event:  (187, 1, 19258, 19358, {'ions': [8, 9], 'trap': 1})
+Current event:  (194, 1, 19358, 19458, {'ions': [11, 12], 'trap': 1})
+Current event:  (191, 3, 19237, 19485, {'ions': [3], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (192, 1, 19485, 19585, {'ions': [3, 4], 'trap': 2})
+Current event:  (193, 1, 19585, 19685, {'ions': [5, 6], 'trap': 2})
+Current event:  (195, 2, 19458, 19706, {'ions': [12], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 12, 'i2': 8})
+Current event:  (196, 4, 19706, 19811, {'ions': [12], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (198, 2, 19685, 19933, {'ions': [6], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 6, 'i2': 3})
+Current event:  (197, 3, 19811, 20017, {'ions': [12], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (199, 4, 19933, 20038, {'ions': [6], 'source_seg': 1, 'dest_seg': 0})
+Current event:  (200, 3, 20038, 20244, {'ions': [6], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (207, 1, 20244, 20344, {'ions': [1, 2], 'trap': 0})
+Current event:  (201, 2, 20244, 20366, {'ions': [7], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 1, 'ion_hops': 0, 'i1': 7, 'i2': 3})
+Current event:  (208, 1, 20366, 20466, {'ions': [3, 4], 'trap': 2})
+Current event:  (202, 4, 20366, 20471, {'ions': [7], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (209, 2, 20471, 20551, {'ions': [6], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (203, 4, 20471, 20576, {'ions': [7], 'source_seg': 4, 'dest_seg': 2})
+Current event:  (219, 1, 20551, 20651, {'ions': [0, 1], 'trap': 0})
+Current event:  (210, 4, 20551, 20656, {'ions': [6], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (204, 3, 20576, 20824, {'ions': [7], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (211, 3, 20656, 20862, {'ions': [6], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (205, 1, 20824, 20924, {'ions': [7, 8], 'trap': 1})
+Current event:  (212, 1, 20862, 20962, {'ions': [5, 6], 'trap': 2})
+Current event:  (206, 1, 20924, 21024, {'ions': [9, 10], 'trap': 1})
+Current event:  (220, 2, 20962, 21084, {'ions': [3], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 1, 'ion_hops': 0, 'i1': 3, 'i2': 6})
+Current event:  (224, 1, 21084, 21184, {'ions': [4, 5], 'trap': 2})
+Current event:  (221, 4, 21084, 21189, {'ions': [3], 'source_seg': 1, 'dest_seg': 0})
+Current event:  (213, 2, 21024, 21272, {'ions': [11], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 11, 'i2': 7})
+Current event:  (217, 1, 21272, 21372, {'ions': [7, 8], 'trap': 1})
+Current event:  (214, 4, 21272, 21377, {'ions': [11], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (222, 3, 21189, 21395, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (218, 1, 21372, 21472, {'ions': [9, 10], 'trap': 1})
+Current event:  (223, 1, 21395, 21495, {'ions': [2, 3], 'trap': 0})
+Current event:  (226, 2, 21472, 21552, {'ions': [7], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (236, 1, 21495, 21595, {'ions': [2, 3], 'trap': 0})
+Current event:  (215, 3, 21377, 21625, {'ions': [11], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (227, 4, 21552, 21657, {'ions': [7], 'source_seg': 2, 'dest_seg': 4})
+Current event:  (242, 1, 21595, 21695, {'ions': [1, 2], 'trap': 0})
+Current event:  (216, 1, 21625, 21725, {'ions': [11, 12], 'trap': 3})
+Current event:  (228, 4, 21657, 21762, {'ions': [7], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (225, 1, 21725, 21825, {'ions': [12, 13], 'trap': 3})
+Current event:  (231, 2, 21825, 21905, {'ions': [11], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (229, 3, 21762, 21968, {'ions': [7], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (238, 1, 21905, 22005, {'ions': [12, 13], 'trap': 3})
+Current event:  (232, 4, 21905, 22010, {'ions': [11], 'source_seg': 3, 'dest_seg': 2})
+Current event:  (230, 1, 21968, 22068, {'ions': [6, 7], 'trap': 2})
+Current event:  (237, 1, 22068, 22168, {'ions': [4, 5], 'trap': 2})
+Current event:  (233, 3, 22010, 22216, {'ions': [11], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (243, 2, 22168, 22248, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (239, 1, 22168, 22268, {'ions': [6, 7], 'trap': 2})
+Current event:  (234, 1, 22216, 22316, {'ions': [10, 11], 'trap': 1})
+Current event:  (258, 1, 22248, 22348, {'ions': [1, 2], 'trap': 0})
+Current event:  (244, 4, 22248, 22353, {'ions': [3], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (235, 1, 22316, 22416, {'ions': [8, 9], 'trap': 1})
+Current event:  (263, 1, 22348, 22448, {'ions': [0, 1], 'trap': 0})
+Current event:  (240, 1, 22416, 22516, {'ions': [10, 11], 'trap': 1})
+Current event:  (245, 3, 22353, 22601, {'ions': [3], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (241, 1, 22516, 22616, {'ions': [8, 9], 'trap': 1})
+Current event:  (248, 2, 22616, 22696, {'ions': [11], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (246, 1, 22601, 22701, {'ions': [3, 4], 'trap': 2})
+Current event:  (249, 4, 22696, 22801, {'ions': [11], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (247, 1, 22701, 22801, {'ions': [5, 6], 'trap': 2})
+Current event:  (252, 2, 22801, 22923, {'ions': [7], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 1, 'ion_hops': 0, 'i1': 7, 'i2': 3})
+Current event:  (259, 1, 22923, 23023, {'ions': [3, 4], 'trap': 2})
+Current event:  (253, 4, 22923, 23028, {'ions': [7], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (250, 3, 22801, 23049, {'ions': [11], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (260, 1, 23023, 23123, {'ions': [5, 6], 'trap': 2})
+Current event:  (254, 4, 23028, 23133, {'ions': [7], 'source_seg': 4, 'dest_seg': 2})
+Current event:  (251, 1, 23049, 23149, {'ions': [11, 12], 'trap': 3})
+Current event:  (264, 2, 23123, 23203, {'ions': [3], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (268, 1, 23203, 23303, {'ions': [4, 5], 'trap': 2})
+Current event:  (265, 4, 23203, 23308, {'ions': [3], 'source_seg': 1, 'dest_seg': 0})
+Current event:  (255, 3, 23133, 23339, {'ions': [7], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (256, 1, 23339, 23439, {'ions': [7, 8], 'trap': 1})
+Current event:  (266, 3, 23308, 23514, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (257, 1, 23439, 23539, {'ions': [9, 10], 'trap': 1})
+Current event:  (267, 1, 23514, 23614, {'ions': [2, 3], 'trap': 0})
+Current event:  (261, 1, 23539, 23639, {'ions': [7, 8], 'trap': 1})
+Current event:  (279, 1, 23614, 23714, {'ions': [0, 1], 'trap': 0})
+Current event:  (262, 1, 23639, 23739, {'ions': [9, 10], 'trap': 1})
+Current event:  (280, 1, 23714, 23814, {'ions': [2, 3], 'trap': 0})
+Current event:  (269, 2, 23739, 23819, {'ions': [7], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (285, 1, 23814, 23914, {'ions': [1, 2], 'trap': 0})
+Current event:  (270, 4, 23819, 23924, {'ions': [7], 'source_seg': 2, 'dest_seg': 4})
+Current event:  (274, 2, 23924, 24004, {'ions': [11], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (271, 4, 23924, 24029, {'ions': [7], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (275, 4, 24004, 24109, {'ions': [11], 'source_seg': 3, 'dest_seg': 2})
+Current event:  (272, 3, 24029, 24235, {'ions': [7], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (276, 3, 24109, 24315, {'ions': [11], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (273, 1, 24235, 24335, {'ions': [6, 7], 'trap': 2})
+Current event:  (277, 1, 24315, 24415, {'ions': [10, 11], 'trap': 1})
+Current event:  (281, 1, 24335, 24435, {'ions': [4, 5], 'trap': 2})
+Current event:  (286, 2, 24435, 24515, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (278, 1, 24415, 24515, {'ions': [8, 9], 'trap': 1})
+Current event:  (282, 1, 24435, 24535, {'ions': [6, 7], 'trap': 2})
+Current event:  (301, 1, 24515, 24615, {'ions': [1, 2], 'trap': 0})
+Current event:  (283, 1, 24515, 24615, {'ions': [10, 11], 'trap': 1})
+Current event:  (287, 4, 24515, 24620, {'ions': [3], 'source_seg': 0, 'dest_seg': 1})
+Current event:  (307, 1, 24615, 24715, {'ions': [0, 1], 'trap': 0})
+Current event:  (284, 1, 24615, 24715, {'ions': [8, 9], 'trap': 1})
+Current event:  (291, 2, 24715, 24795, {'ions': [11], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (288, 3, 24620, 24868, {'ions': [3], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (292, 4, 24795, 24900, {'ions': [11], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (289, 1, 24868, 24968, {'ions': [3, 4], 'trap': 2})
+Current event:  (290, 1, 24968, 25068, {'ions': [5, 6], 'trap': 2})
+Current event:  (293, 3, 24900, 25148, {'ions': [11], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (295, 2, 25068, 25190, {'ions': [7], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 1, 'ion_hops': 0, 'i1': 7, 'i2': 3})
+Current event:  (294, 1, 25148, 25248, {'ions': [11, 12], 'trap': 3})
+Current event:  (302, 1, 25190, 25290, {'ions': [3, 4], 'trap': 2})
+Current event:  (296, 4, 25190, 25295, {'ions': [7], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (304, 1, 25248, 25348, {'ions': [11, 12], 'trap': 3})
+Current event:  (303, 1, 25290, 25390, {'ions': [5, 6], 'trap': 2})
+Current event:  (297, 4, 25295, 25400, {'ions': [7], 'source_seg': 4, 'dest_seg': 2})
+Current event:  (309, 1, 25348, 25448, {'ions': [12, 13], 'trap': 3})
+Current event:  (308, 1, 25390, 25490, {'ions': [4, 5], 'trap': 2})
+Current event:  (298, 3, 25400, 25606, {'ions': [7], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (299, 1, 25606, 25706, {'ions': [7, 8], 'trap': 1})
+Current event:  (300, 1, 25706, 25806, {'ions': [9, 10], 'trap': 1})
+Current event:  (305, 1, 25806, 25906, {'ions': [7, 8], 'trap': 1})
+Current event:  (306, 1, 25906, 26006, {'ions': [9, 10], 'trap': 1})
+Current event:  (310, 2, 25906, 26028, {'ions': [6], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 1, 'ion_hops': 0, 'i1': 6, 'i2': 3})
+Current event:  (311, 4, 26028, 26133, {'ions': [6], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (312, 4, 26133, 26238, {'ions': [6], 'source_seg': 4, 'dest_seg': 2})
+Current event:  (313, 3, 26238, 26486, {'ions': [6], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (314, 1, 26486, 26586, {'ions': [6, 7], 'trap': 1})
+Current event:  (315, 1, 26586, 26686, {'ions': [8, 9], 'trap': 1})
+Current event:  (316, 2, 26686, 26934, {'ions': [10], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 10, 'i2': 6})
+Current event:  (332, 1, 26934, 27034, {'ions': [6, 7], 'trap': 1})
+Current event:  (317, 4, 26934, 27039, {'ions': [10], 'source_seg': 2, 'dest_seg': 4})
+Current event:  (333, 1, 27034, 27134, {'ions': [8, 9], 'trap': 1})
+Current event:  (318, 4, 27039, 27144, {'ions': [10], 'source_seg': 4, 'dest_seg': 0})
+Current event:  (319, 3, 27144, 27350, {'ions': [10], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (320, 2, 27144, 27392, {'ions': [15], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 15, 'i2': 11})
+Current event:  (321, 4, 27392, 27497, {'ions': [15], 'source_seg': 3, 'dest_seg': 4})
+Current event:  (322, 4, 27497, 27602, {'ions': [15], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (323, 3, 27602, 27808, {'ions': [15], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (324, 2, 27808, 27888, {'ions': [10], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (330, 1, 27808, 27908, {'ions': [4, 5], 'trap': 2})
+Current event:  (329, 1, 27888, 27988, {'ions': [0, 1], 'trap': 0})
+Current event:  (325, 4, 27888, 27993, {'ions': [10], 'source_seg': 0, 'dest_seg': 4})
+Current event:  (335, 1, 27908, 28008, {'ions': [3, 4], 'trap': 2})
+Current event:  (326, 4, 27993, 28098, {'ions': [10], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (337, 2, 28098, 28304, {'ions': [5], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 5, 'i2': 15})
+Current event:  (327, 3, 28098, 28346, {'ions': [10], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (338, 4, 28304, 28409, {'ions': [5], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (328, 1, 28346, 28446, {'ions': [10, 11], 'trap': 3})
+Current event:  (339, 4, 28409, 28514, {'ions': [5], 'source_seg': 4, 'dest_seg': 2})
+Current event:  (331, 1, 28446, 28546, {'ions': [12, 13], 'trap': 3})
+Current event:  (334, 1, 28546, 28646, {'ions': [10, 11], 'trap': 3})
+Current event:  (336, 1, 28646, 28746, {'ions': [13, 14], 'trap': 3})
+Current event:  (340, 3, 28514, 28762, {'ions': [5], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (341, 1, 28762, 28862, {'ions': [5, 6], 'trap': 1})
+Current event:  (342, 1, 28862, 28962, {'ions': [7, 8], 'trap': 1})
+Current event:  (343, 2, 28962, 29210, {'ions': [9], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 9, 'i2': 5})
+Current event:  (363, 1, 29210, 29310, {'ions': [5, 6], 'trap': 1})
+Current event:  (344, 4, 29210, 29315, {'ions': [9], 'source_seg': 2, 'dest_seg': 4})
+Current event:  (364, 1, 29310, 29410, {'ions': [7, 8], 'trap': 1})
+Current event:  (345, 4, 29315, 29420, {'ions': [9], 'source_seg': 4, 'dest_seg': 0})
+Current event:  (346, 3, 29420, 29626, {'ions': [9], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (347, 2, 29420, 29668, {'ions': [14], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 14, 'i2': 10})
+Current event:  (348, 4, 29668, 29773, {'ions': [14], 'source_seg': 3, 'dest_seg': 4})
+Current event:  (349, 4, 29773, 29878, {'ions': [14], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (350, 3, 29878, 30084, {'ions': [14], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (351, 2, 30084, 30164, {'ions': [9], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (357, 1, 30084, 30184, {'ions': [3, 4], 'trap': 2})
+Current event:  (352, 4, 30164, 30269, {'ions': [9], 'source_seg': 0, 'dest_seg': 4})
+Current event:  (353, 4, 30269, 30374, {'ions': [9], 'source_seg': 4, 'dest_seg': 3})
+Current event:  (354, 3, 30374, 30622, {'ions': [9], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (355, 1, 30622, 30722, {'ions': [9, 10], 'trap': 3})
+Current event:  (356, 1, 30722, 30822, {'ions': [11, 12], 'trap': 3})
+Current event:  (358, 2, 30822, 31070, {'ions': [13], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 13, 'i2': 9})
+Current event:  (365, 1, 31070, 31170, {'ions': [9, 10], 'trap': 3})
+Current event:  (359, 4, 31070, 31175, {'ions': [13], 'source_seg': 3, 'dest_seg': 4})
+Current event:  (366, 1, 31170, 31270, {'ions': [11, 12], 'trap': 3})
+Current event:  (360, 4, 31175, 31280, {'ions': [13], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (361, 3, 31280, 31528, {'ions': [13], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (362, 1, 31528, 31628, {'ions': [13, 14], 'trap': 2})
+Current event:  (367, 2, 31628, 31834, {'ions': [3], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 3, 'i2': 13})
+Current event:  (371, 1, 31834, 31934, {'ions': [14, 15], 'trap': 2})
+Current event:  (368, 4, 31834, 31939, {'ions': [3], 'source_seg': 1, 'dest_seg': 0})
+Current event:  (372, 2, 31939, 32145, {'ions': [4], 'trap': 2, 'seg': 1, 'swap_cnt': 1, 'swap_hops': 3, 'ion_hops': 0, 'i1': 4, 'i2': 13})
+Current event:  (369, 3, 31939, 32145, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (370, 1, 32145, 32245, {'ions': [2, 3], 'trap': 0})
+Current event:  (373, 4, 32145, 32250, {'ions': [4], 'source_seg': 1, 'dest_seg': 4})
+Current event:  (388, 1, 32245, 32345, {'ions': [2, 3], 'trap': 0})
+Current event:  (374, 4, 32250, 32355, {'ions': [4], 'source_seg': 4, 'dest_seg': 2})
+Current event:  (395, 1, 32345, 32445, {'ions': [1, 2], 'trap': 0})
+Current event:  (375, 3, 32355, 32603, {'ions': [4], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (376, 1, 32603, 32703, {'ions': [4, 5], 'trap': 1})
+Current event:  (377, 1, 32703, 32803, {'ions': [6, 7], 'trap': 1})
+Current event:  (378, 2, 32803, 33051, {'ions': [8], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 8, 'i2': 4})
+Current event:  (390, 1, 33051, 33151, {'ions': [4, 5], 'trap': 1})
+Current event:  (379, 4, 33051, 33156, {'ions': [8], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (391, 1, 33151, 33251, {'ions': [6, 7], 'trap': 1})
+Current event:  (380, 3, 33156, 33404, {'ions': [8], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (381, 1, 33404, 33504, {'ions': [8, 9], 'trap': 3})
+Current event:  (382, 1, 33504, 33604, {'ions': [10, 11], 'trap': 3})
+Current event:  (383, 2, 33604, 33852, {'ions': [12], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 12, 'i2': 8})
+Current event:  (392, 1, 33852, 33952, {'ions': [8, 9], 'trap': 3})
+Current event:  (384, 4, 33852, 33957, {'ions': [12], 'source_seg': 3, 'dest_seg': 4})
+Current event:  (393, 1, 33952, 34052, {'ions': [10, 11], 'trap': 3})
+Current event:  (385, 4, 33957, 34062, {'ions': [12], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (396, 2, 34062, 34142, {'ions': [3], 'trap': 0, 'seg': 0, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (413, 1, 34142, 34242, {'ions': [1, 2], 'trap': 0})
+Current event:  (397, 4, 34142, 34247, {'ions': [3], 'source_seg': 0, 'dest_seg': 4})
+Current event:  (386, 3, 34062, 34268, {'ions': [12], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (398, 4, 34247, 34352, {'ions': [3], 'source_seg': 4, 'dest_seg': 2})
+Current event:  (387, 1, 34268, 34368, {'ions': [12, 13], 'trap': 2})
+Current event:  (389, 1, 34368, 34468, {'ions': [14, 15], 'trap': 2})
+Current event:  (394, 1, 34468, 34568, {'ions': [12, 13], 'trap': 2})
+Current event:  (399, 3, 34352, 34600, {'ions': [3], 'trap': 1, 'seg': 2, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (400, 1, 34600, 34700, {'ions': [3, 4], 'trap': 1})
+Current event:  (401, 1, 34700, 34800, {'ions': [5, 6], 'trap': 1})
+Current event:  (402, 2, 34800, 35048, {'ions': [7], 'trap': 1, 'seg': 2, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 7, 'i2': 3})
+Current event:  (414, 1, 35048, 35148, {'ions': [3, 4], 'trap': 1})
+Current event:  (403, 4, 35048, 35153, {'ions': [7], 'source_seg': 2, 'dest_seg': 3})
+Current event:  (415, 1, 35148, 35248, {'ions': [5, 6], 'trap': 1})
+Current event:  (404, 3, 35153, 35401, {'ions': [7], 'trap': 3, 'seg': 3, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (405, 1, 35401, 35501, {'ions': [7, 8], 'trap': 3})
+Current event:  (406, 1, 35501, 35601, {'ions': [9, 10], 'trap': 3})
+Current event:  (407, 2, 35601, 35849, {'ions': [11], 'trap': 3, 'seg': 3, 'swap_cnt': 1, 'swap_hops': 4, 'ion_hops': 0, 'i1': 11, 'i2': 7})
+Current event:  (416, 1, 35849, 35949, {'ions': [7, 8], 'trap': 3})
+Current event:  (408, 4, 35849, 35954, {'ions': [11], 'source_seg': 3, 'dest_seg': 4})
+Current event:  (417, 1, 35949, 36049, {'ions': [9, 10], 'trap': 3})
+Current event:  (409, 4, 35954, 36059, {'ions': [11], 'source_seg': 4, 'dest_seg': 1})
+Current event:  (410, 3, 36059, 36307, {'ions': [11], 'trap': 2, 'seg': 1, 'swap_cnt': 0, 'swap_hops': 0, 'ion_hops': 0, 'i1': 0, 'i2': 0})
+Current event:  (411, 1, 36307, 36407, {'ions': [11, 12], 'trap': 2})
+Current event:  (412, 1, 36407, 36507, {'ions': [13, 14], 'trap': 2})
+Current event:  (418, 1, 36507, 36607, {'ions': [11, 12], 'trap': 2})
+Current event:  (419, 1, 36607, 36707, {'ions': [13, 14], 'trap': 2})
+Program Finish: 36707
+OPCOUNTS Gate: 199 Split: 63 Move: 95 Merge: 63
+Gate: 19900 Split: 10962 Move: 9975 Merge: 14322
+Fidelity: 0.0005835790915223949
+Heating: 503
+GAT [8, 9] T2 (0, 100)
+GAT [4, 5] T0 (0, 100)
+GAT [10, 11] T2 (100, 200)
+GAT [6, 7] T0 (100, 200)
+SPL [4] T0->S0 (200, 448)
+MOV [4] S0->S4 (448, 553)
+MOV [4] S4->S3 (553, 658)
+MER [4] S3->T3 (658, 780)
+SPL [13] T1->S2 (780, 1028)
+MOV [13] S2->S3 (1028, 1133)
+MER [13] S3->T3 (1133, 1297)
+SPL [8] T2->S1 (1297, 1545)
+MOV [8] S1->S4 (1545, 1650)
+MOV [8] S4->S3 (1650, 1755)
+MER [8] S3->T3 (1755, 1961)
+SPL [12] T2->S1 (1961, 2041)
+MOV [12] S1->S4 (2041, 2146)
+MOV [12] S4->S3 (2146, 2251)
+MER [12] S3->T3 (2251, 2499)
+GAT [12, 13] T3 (2499, 2599)
+SPL [4] T3->S3 (2599, 2805)
+MOV [4] S3->S4 (2805, 2910)
+MOV [4] S4->S0 (2910, 3015)
+SPL [8] T3->S3 (3015, 3137)
+GAT [12, 13] T3 (3137, 3237)
+MOV [8] S3->S4 (3137, 3242)
+MER [4] S0->T0 (3015, 3263)
+MOV [8] S4->S1 (3242, 3347)
+GAT [4, 5] T0 (3263, 3363)
+GAT [6, 7] T0 (3363, 3463)
+MER [8] S1->T2 (3347, 3553)
+GAT [3, 4] T0 (3463, 3563)
+GAT [8, 9] T2 (3553, 3653)
+GAT [5, 6] T0 (3563, 3663)
+GAT [10, 11] T2 (3653, 3753)
+SPL [7] T0->S0 (3663, 3785)
+GAT [3, 4] T0 (3785, 3885)
+MOV [7] S0->S1 (3785, 3890)
+GAT [5, 6] T0 (3885, 3985)
+MER [7] S1->T2 (3890, 4138)
+GAT [7, 8] T2 (4138, 4238)
+GAT [9, 10] T2 (4238, 4338)
+SPL [11] T2->S1 (4338, 4502)
+GAT [7, 8] T2 (4502, 4602)
+MOV [11] S1->S4 (4502, 4607)
+GAT [9, 10] T2 (4602, 4702)
+MOV [11] S4->S3 (4607, 4712)
+MER [11] S3->T3 (4712, 4918)
+GAT [11, 12] T3 (4918, 5018)
+SPL [13] T3->S3 (5018, 5182)
+GAT [11, 12] T3 (5182, 5282)
+MOV [13] S3->S2 (5182, 5287)
+MER [13] S2->T1 (5287, 5535)
+GAT [13, 14] T1 (5535, 5635)
+GAT [13, 14] T1 (5635, 5735)
+SPL [2] T1->S2 (5735, 5983)
+MOV [2] S2->S4 (5983, 6088)
+MOV [2] S4->S0 (6088, 6193)
+MER [2] S0->T0 (6193, 6441)
+GAT [2, 3] T0 (6441, 6541)
+GAT [4, 5] T0 (6541, 6641)
+SPL [6] T0->S0 (6641, 6805)
+GAT [2, 3] T0 (6805, 6905)
+MOV [6] S0->S1 (6805, 6910)
+GAT [4, 5] T0 (6905, 7005)
+MER [6] S1->T2 (6910, 7158)
+GAT [6, 7] T2 (7158, 7258)
+GAT [8, 9] T2 (7258, 7358)
+SPL [10] T2->S1 (7358, 7564)
+GAT [6, 7] T2 (7564, 7664)
+MOV [10] S1->S4 (7564, 7669)
+GAT [8, 9] T2 (7664, 7764)
+MOV [10] S4->S3 (7669, 7774)
+MER [10] S3->T3 (7774, 7980)
+GAT [10, 11] T3 (7980, 8080)
+SPL [12] T3->S3 (8080, 8244)
+GAT [10, 11] T3 (8244, 8344)
+MOV [12] S3->S2 (8244, 8349)
+MER [12] S2->T1 (8349, 8597)
+GAT [12, 13] T1 (8597, 8697)
+GAT [12, 13] T1 (8697, 8797)
+SPL [1] T1->S2 (8797, 9045)
+MOV [1] S2->S4 (9045, 9150)
+MOV [1] S4->S0 (9150, 9255)
+MER [1] S0->T0 (9255, 9503)
+GAT [1, 2] T0 (9503, 9603)
+GAT [3, 4] T0 (9603, 9703)
+SPL [5] T0->S0 (9703, 9951)
+GAT [1, 2] T0 (9951, 10051)
+MOV [5] S0->S1 (9951, 10056)
+GAT [3, 4] T0 (10051, 10151)
+MER [5] S1->T2 (10056, 10304)
+GAT [5, 6] T2 (10304, 10404)
+GAT [7, 8] T2 (10404, 10504)
+SPL [9] T2->S1 (10504, 10752)
+GAT [5, 6] T2 (10752, 10852)
+MOV [9] S1->S4 (10752, 10857)
+GAT [7, 8] T2 (10852, 10952)
+MOV [9] S4->S3 (10857, 10962)
+MER [9] S3->T3 (10962, 11168)
+GAT [9, 10] T3 (11168, 11268)
+SPL [11] T3->S3 (11268, 11432)
+GAT [9, 10] T3 (11432, 11532)
+MOV [11] S3->S2 (11432, 11537)
+MER [11] S2->T1 (11537, 11785)
+GAT [11, 12] T1 (11785, 11885)
+GAT [13, 14] T1 (11885, 11985)
+GAT [11, 12] T1 (11985, 12085)
+GAT [13, 14] T1 (12085, 12185)
+SPL [0] T1->S2 (12185, 12391)
+MOV [0] S2->S4 (12391, 12496)
+MOV [0] S4->S0 (12496, 12601)
+MER [0] S0->T0 (12601, 12849)
+GAT [0, 1] T0 (12849, 12949)
+GAT [2, 3] T0 (12949, 13049)
+SPL [4] T0->S0 (13049, 13255)
+GAT [0, 1] T0 (13255, 13355)
+MOV [4] S0->S1 (13255, 13360)
+GAT [2, 3] T0 (13355, 13455)
+GAT [1, 2] T0 (13455, 13555)
+MER [4] S1->T2 (13360, 13608)
+GAT [4, 5] T2 (13608, 13708)
+GAT [6, 7] T2 (13708, 13808)
+SPL [8] T2->S1 (13808, 14056)
+GAT [4, 5] T2 (14056, 14156)
+MOV [8] S1->S4 (14056, 14161)
+GAT [6, 7] T2 (14156, 14256)
+MOV [8] S4->S3 (14161, 14266)
+SPL [3] T0->S0 (14161, 14367)
+GAT [1, 2] T0 (14367, 14467)
+MOV [3] S0->S1 (14367, 14472)
+MER [8] S3->T3 (14266, 14472)
+GAT [0, 1] T0 (14467, 14567)
+GAT [8, 9] T3 (14472, 14572)
+MER [3] S1->T2 (14472, 14720)
+SPL [10] T3->S3 (14572, 14736)
+GAT [3, 4] T2 (14720, 14820)
+MOV [10] S3->S2 (14736, 14841)
+GAT [5, 6] T2 (14820, 14920)
+MER [10] S2->T1 (14841, 15089)
+GAT [10, 11] T1 (15089, 15189)
+SPL [14] T1->S2 (15189, 15437)
+GAT [12, 13] T1 (15437, 15537)
+MOV [14] S2->S3 (15437, 15542)
+GAT [10, 11] T1 (15537, 15637)
+GAT [12, 13] T1 (15637, 15737)
+MER [14] S3->T3 (15542, 15748)
+GAT [14, 15] T3 (15748, 15848)
+GAT [8, 9] T3 (15848, 15948)
+GAT [14, 15] T3 (15948, 16048)
+SPL [7] T2->S1 (15948, 16196)
+GAT [3, 4] T2 (16196, 16296)
+MOV [7] S1->S4 (16196, 16301)
+GAT [5, 6] T2 (16296, 16396)
+MOV [7] S4->S3 (16301, 16406)
+SPL [3] T2->S1 (16396, 16476)
+GAT [4, 5] T2 (16476, 16576)
+MOV [3] S1->S0 (16476, 16581)
+MER [7] S3->T3 (16406, 16654)
+GAT [7, 8] T3 (16654, 16754)
+MER [3] S0->T0 (16581, 16787)
+GAT [2, 3] T0 (16787, 16887)
+SPL [9] T3->S3 (16754, 16960)
+GAT [2, 3] T0 (16887, 16987)
+MOV [9] S3->S2 (16960, 17065)
+GAT [1, 2] T0 (16987, 17087)
+MER [9] S2->T1 (17065, 17313)
+GAT [9, 10] T1 (17313, 17413)
+SPL [13] T1->S2 (17413, 17661)
+GAT [9, 10] T1 (17661, 17761)
+MOV [13] S2->S3 (17661, 17766)
+GAT [10, 11] T1 (17761, 17861)
+MER [13] S3->T3 (17766, 18014)
+GAT [13, 14] T3 (18014, 18114)
+GAT [7, 8] T3 (18114, 18214)
+GAT [13, 14] T3 (18214, 18314)
+SPL [7] T3->S3 (18314, 18436)
+MOV [7] S3->S4 (18436, 18541)
+MOV [7] S4->S1 (18541, 18646)
+SPL [8] T3->S3 (18541, 18705)
+MOV [8] S3->S2 (18705, 18810)
+MER [7] S1->T2 (18646, 18852)
+GAT [6, 7] T2 (18852, 18952)
+GAT [4, 5] T2 (18952, 19052)
+MER [8] S2->T1 (18810, 19058)
+SPL [3] T0->S0 (19052, 19132)
+GAT [6, 7] T2 (19052, 19152)
+GAT [8, 9] T1 (19058, 19158)
+MOV [3] S0->S1 (19132, 19237)
+GAT [10, 11] T1 (19158, 19258)
+GAT [8, 9] T1 (19258, 19358)
+GAT [11, 12] T1 (19358, 19458)
+MER [3] S1->T2 (19237, 19485)
+GAT [3, 4] T2 (19485, 19585)
+GAT [5, 6] T2 (19585, 19685)
+SPL [12] T1->S2 (19458, 19706)
+MOV [12] S2->S3 (19706, 19811)
+SPL [6] T2->S1 (19685, 19933)
+MER [12] S3->T3 (19811, 20017)
+MOV [6] S1->S0 (19933, 20038)
+MER [6] S0->T0 (20038, 20244)
+GAT [1, 2] T0 (20244, 20344)
+SPL [7] T2->S1 (20244, 20366)
+GAT [3, 4] T2 (20366, 20466)
+MOV [7] S1->S4 (20366, 20471)
+SPL [6] T0->S0 (20471, 20551)
+MOV [7] S4->S2 (20471, 20576)
+GAT [0, 1] T0 (20551, 20651)
+MOV [6] S0->S1 (20551, 20656)
+MER [7] S2->T1 (20576, 20824)
+MER [6] S1->T2 (20656, 20862)
+GAT [7, 8] T1 (20824, 20924)
+GAT [5, 6] T2 (20862, 20962)
+GAT [9, 10] T1 (20924, 21024)
+SPL [3] T2->S1 (20962, 21084)
+GAT [4, 5] T2 (21084, 21184)
+MOV [3] S1->S0 (21084, 21189)
+SPL [11] T1->S2 (21024, 21272)
+GAT [7, 8] T1 (21272, 21372)
+MOV [11] S2->S3 (21272, 21377)
+MER [3] S0->T0 (21189, 21395)
+GAT [9, 10] T1 (21372, 21472)
+GAT [2, 3] T0 (21395, 21495)
+SPL [7] T1->S2 (21472, 21552)
+GAT [2, 3] T0 (21495, 21595)
+MER [11] S3->T3 (21377, 21625)
+MOV [7] S2->S4 (21552, 21657)
+GAT [1, 2] T0 (21595, 21695)
+GAT [11, 12] T3 (21625, 21725)
+MOV [7] S4->S1 (21657, 21762)
+GAT [12, 13] T3 (21725, 21825)
+SPL [11] T3->S3 (21825, 21905)
+MER [7] S1->T2 (21762, 21968)
+GAT [12, 13] T3 (21905, 22005)
+MOV [11] S3->S2 (21905, 22010)
+GAT [6, 7] T2 (21968, 22068)
+GAT [4, 5] T2 (22068, 22168)
+MER [11] S2->T1 (22010, 22216)
+SPL [3] T0->S0 (22168, 22248)
+GAT [6, 7] T2 (22168, 22268)
+GAT [10, 11] T1 (22216, 22316)
+GAT [1, 2] T0 (22248, 22348)
+MOV [3] S0->S1 (22248, 22353)
+GAT [8, 9] T1 (22316, 22416)
+GAT [0, 1] T0 (22348, 22448)
+GAT [10, 11] T1 (22416, 22516)
+MER [3] S1->T2 (22353, 22601)
+GAT [8, 9] T1 (22516, 22616)
+SPL [11] T1->S2 (22616, 22696)
+GAT [3, 4] T2 (22601, 22701)
+MOV [11] S2->S3 (22696, 22801)
+GAT [5, 6] T2 (22701, 22801)
+SPL [7] T2->S1 (22801, 22923)
+GAT [3, 4] T2 (22923, 23023)
+MOV [7] S1->S4 (22923, 23028)
+MER [11] S3->T3 (22801, 23049)
+GAT [5, 6] T2 (23023, 23123)
+MOV [7] S4->S2 (23028, 23133)
+GAT [11, 12] T3 (23049, 23149)
+SPL [3] T2->S1 (23123, 23203)
+GAT [4, 5] T2 (23203, 23303)
+MOV [3] S1->S0 (23203, 23308)
+MER [7] S2->T1 (23133, 23339)
+GAT [7, 8] T1 (23339, 23439)
+MER [3] S0->T0 (23308, 23514)
+GAT [9, 10] T1 (23439, 23539)
+GAT [2, 3] T0 (23514, 23614)
+GAT [7, 8] T1 (23539, 23639)
+GAT [0, 1] T0 (23614, 23714)
+GAT [9, 10] T1 (23639, 23739)
+GAT [2, 3] T0 (23714, 23814)
+SPL [7] T1->S2 (23739, 23819)
+GAT [1, 2] T0 (23814, 23914)
+MOV [7] S2->S4 (23819, 23924)
+SPL [11] T3->S3 (23924, 24004)
+MOV [7] S4->S1 (23924, 24029)
+MOV [11] S3->S2 (24004, 24109)
+MER [7] S1->T2 (24029, 24235)
+MER [11] S2->T1 (24109, 24315)
+GAT [6, 7] T2 (24235, 24335)
+GAT [10, 11] T1 (24315, 24415)
+GAT [4, 5] T2 (24335, 24435)
+SPL [3] T0->S0 (24435, 24515)
+GAT [8, 9] T1 (24415, 24515)
+GAT [6, 7] T2 (24435, 24535)
+GAT [1, 2] T0 (24515, 24615)
+GAT [10, 11] T1 (24515, 24615)
+MOV [3] S0->S1 (24515, 24620)
+GAT [0, 1] T0 (24615, 24715)
+GAT [8, 9] T1 (24615, 24715)
+SPL [11] T1->S2 (24715, 24795)
+MER [3] S1->T2 (24620, 24868)
+MOV [11] S2->S3 (24795, 24900)
+GAT [3, 4] T2 (24868, 24968)
+GAT [5, 6] T2 (24968, 25068)
+MER [11] S3->T3 (24900, 25148)
+SPL [7] T2->S1 (25068, 25190)
+GAT [11, 12] T3 (25148, 25248)
+GAT [3, 4] T2 (25190, 25290)
+MOV [7] S1->S4 (25190, 25295)
+GAT [11, 12] T3 (25248, 25348)
+GAT [5, 6] T2 (25290, 25390)
+MOV [7] S4->S2 (25295, 25400)
+GAT [12, 13] T3 (25348, 25448)
+GAT [4, 5] T2 (25390, 25490)
+MER [7] S2->T1 (25400, 25606)
+GAT [7, 8] T1 (25606, 25706)
+GAT [9, 10] T1 (25706, 25806)
+GAT [7, 8] T1 (25806, 25906)
+GAT [9, 10] T1 (25906, 26006)
+SPL [6] T2->S1 (25906, 26028)
+MOV [6] S1->S4 (26028, 26133)
+MOV [6] S4->S2 (26133, 26238)
+MER [6] S2->T1 (26238, 26486)
+GAT [6, 7] T1 (26486, 26586)
+GAT [8, 9] T1 (26586, 26686)
+SPL [10] T1->S2 (26686, 26934)
+GAT [6, 7] T1 (26934, 27034)
+MOV [10] S2->S4 (26934, 27039)
+GAT [8, 9] T1 (27034, 27134)
+MOV [10] S4->S0 (27039, 27144)
+MER [10] S0->T0 (27144, 27350)
+SPL [15] T3->S3 (27144, 27392)
+MOV [15] S3->S4 (27392, 27497)
+MOV [15] S4->S1 (27497, 27602)
+MER [15] S1->T2 (27602, 27808)
+SPL [10] T0->S0 (27808, 27888)
+GAT [4, 5] T2 (27808, 27908)
+GAT [0, 1] T0 (27888, 27988)
+MOV [10] S0->S4 (27888, 27993)
+GAT [3, 4] T2 (27908, 28008)
+MOV [10] S4->S3 (27993, 28098)
+SPL [5] T2->S1 (28098, 28304)
+MER [10] S3->T3 (28098, 28346)
+MOV [5] S1->S4 (28304, 28409)
+GAT [10, 11] T3 (28346, 28446)
+MOV [5] S4->S2 (28409, 28514)
+GAT [12, 13] T3 (28446, 28546)
+GAT [10, 11] T3 (28546, 28646)
+GAT [13, 14] T3 (28646, 28746)
+MER [5] S2->T1 (28514, 28762)
+GAT [5, 6] T1 (28762, 28862)
+GAT [7, 8] T1 (28862, 28962)
+SPL [9] T1->S2 (28962, 29210)
+GAT [5, 6] T1 (29210, 29310)
+MOV [9] S2->S4 (29210, 29315)
+GAT [7, 8] T1 (29310, 29410)
+MOV [9] S4->S0 (29315, 29420)
+MER [9] S0->T0 (29420, 29626)
+SPL [14] T3->S3 (29420, 29668)
+MOV [14] S3->S4 (29668, 29773)
+MOV [14] S4->S1 (29773, 29878)
+MER [14] S1->T2 (29878, 30084)
+SPL [9] T0->S0 (30084, 30164)
+GAT [3, 4] T2 (30084, 30184)
+MOV [9] S0->S4 (30164, 30269)
+MOV [9] S4->S3 (30269, 30374)
+MER [9] S3->T3 (30374, 30622)
+GAT [9, 10] T3 (30622, 30722)
+GAT [11, 12] T3 (30722, 30822)
+SPL [13] T3->S3 (30822, 31070)
+GAT [9, 10] T3 (31070, 31170)
+MOV [13] S3->S4 (31070, 31175)
+GAT [11, 12] T3 (31170, 31270)
+MOV [13] S4->S1 (31175, 31280)
+MER [13] S1->T2 (31280, 31528)
+GAT [13, 14] T2 (31528, 31628)
+SPL [3] T2->S1 (31628, 31834)
+GAT [14, 15] T2 (31834, 31934)
+MOV [3] S1->S0 (31834, 31939)
+SPL [4] T2->S1 (31939, 32145)
+MER [3] S0->T0 (31939, 32145)
+GAT [2, 3] T0 (32145, 32245)
+MOV [4] S1->S4 (32145, 32250)
+GAT [2, 3] T0 (32245, 32345)
+MOV [4] S4->S2 (32250, 32355)
+GAT [1, 2] T0 (32345, 32445)
+MER [4] S2->T1 (32355, 32603)
+GAT [4, 5] T1 (32603, 32703)
+GAT [6, 7] T1 (32703, 32803)
+SPL [8] T1->S2 (32803, 33051)
+GAT [4, 5] T1 (33051, 33151)
+MOV [8] S2->S3 (33051, 33156)
+GAT [6, 7] T1 (33151, 33251)
+MER [8] S3->T3 (33156, 33404)
+GAT [8, 9] T3 (33404, 33504)
+GAT [10, 11] T3 (33504, 33604)
+SPL [12] T3->S3 (33604, 33852)
+GAT [8, 9] T3 (33852, 33952)
+MOV [12] S3->S4 (33852, 33957)
+GAT [10, 11] T3 (33952, 34052)
+MOV [12] S4->S1 (33957, 34062)
+SPL [3] T0->S0 (34062, 34142)
+GAT [1, 2] T0 (34142, 34242)
+MOV [3] S0->S4 (34142, 34247)
+MER [12] S1->T2 (34062, 34268)
+MOV [3] S4->S2 (34247, 34352)
+GAT [12, 13] T2 (34268, 34368)
+GAT [14, 15] T2 (34368, 34468)
+GAT [12, 13] T2 (34468, 34568)
+MER [3] S2->T1 (34352, 34600)
+GAT [3, 4] T1 (34600, 34700)
+GAT [5, 6] T1 (34700, 34800)
+SPL [7] T1->S2 (34800, 35048)
+GAT [3, 4] T1 (35048, 35148)
+MOV [7] S2->S3 (35048, 35153)
+GAT [5, 6] T1 (35148, 35248)
+MER [7] S3->T3 (35153, 35401)
+GAT [7, 8] T3 (35401, 35501)
+GAT [9, 10] T3 (35501, 35601)
+SPL [11] T3->S3 (35601, 35849)
+GAT [7, 8] T3 (35849, 35949)
+MOV [11] S3->S4 (35849, 35954)
+GAT [9, 10] T3 (35949, 36049)
+MOV [11] S4->S1 (35954, 36059)
+MER [11] S1->T2 (36059, 36307)
+GAT [11, 12] T2 (36307, 36407)
+GAT [13, 14] T2 (36407, 36507)
+GAT [11, 12] T2 (36507, 36607)
+GAT [13, 14] T2 (36607, 36707)
+SplitSWAP: 47
+----------------

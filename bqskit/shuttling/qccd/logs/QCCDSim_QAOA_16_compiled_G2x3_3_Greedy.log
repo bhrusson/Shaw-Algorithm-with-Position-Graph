@@ -1,0 +1,367 @@
+Simulation
+Program: bqskit/shuttling/qccd/benchmark_circuits/QAOA_16_compiled.qasm
+Machine: G2x3
+Model: MPar1
+Ions: 3
+Mapper: Greedy
+Reorder: Naive
+SerialTrap: 1
+SerialComm: 0
+SerialAll: 0
+Gatetype: FM
+Swaptype: GateSwap
+qbit 1: 0 qbit 2: 7 dep gates: 0
+qbit 1: 0 qbit 2: 7 dep gates: 0
+qbit 1: 1 qbit 2: 2 dep gates: 1
+qbit 1: 1 qbit 2: 2 dep gates: 1
+qbit 1: 3 qbit 2: 5 dep gates: 2
+qbit 1: 3 qbit 2: 5 dep gates: 2
+qbit 1: 3 qbit 2: 12 dep gates: 5
+qbit 1: 0 qbit 2: 11 dep gates: 3
+qbit 1: 1 qbit 2: 7 dep gates: 4
+qbit 1: 1 qbit 2: 7 dep gates: 3
+qbit 1: 3 qbit 2: 12 dep gates: 6
+qbit 1: 3 qbit 2: 12 dep gates: 6
+qbit 1: 0 qbit 2: 11 dep gates: 7
+qbit 1: 0 qbit 2: 11 dep gates: 7
+qbit 1: 0 qbit 2: 13 dep gates: 10
+qbit 1: 1 qbit 2: 7 dep gates: 8
+qbit 1: 1 qbit 2: 7 dep gates: 8
+qbit 1: 0 qbit 2: 13 dep gates: 11
+qbit 1: 0 qbit 2: 13 dep gates: 11
+qbit 1: 1 qbit 2: 8 dep gates: 12
+qbit 1: 4 qbit 2: 7 dep gates: 12
+qbit 1: 1 qbit 2: 8 dep gates: 14
+qbit 1: 1 qbit 2: 8 dep gates: 14
+qbit 1: 4 qbit 2: 7 dep gates: 15
+qbit 1: 4 qbit 2: 7 dep gates: 15
+qbit 1: 5 qbit 2: 7 dep gates: 5
+qbit 1: 5 qbit 2: 7 dep gates: 17
+qbit 1: 1 qbit 2: 10 dep gates: 16
+qbit 1: 5 qbit 2: 7 dep gates: 18
+qbit 1: 5 qbit 2: 7 dep gates: 18
+qbit 1: 1 qbit 2: 10 dep gates: 19
+qbit 1: 1 qbit 2: 10 dep gates: 19
+qbit 1: 1 qbit 2: 11 dep gates: 21
+qbit 1: 1 qbit 2: 11 dep gates: 10
+qbit 1: 5 qbit 2: 8 dep gates: 20
+qbit 1: 5 qbit 2: 8 dep gates: 16
+qbit 1: 7 qbit 2: 12 dep gates: 20
+qbit 1: 7 qbit 2: 12 dep gates: 9
+qbit 1: 1 qbit 2: 11 dep gates: 22
+qbit 1: 1 qbit 2: 11 dep gates: 22
+qbit 1: 5 qbit 2: 8 dep gates: 23
+qbit 1: 5 qbit 2: 8 dep gates: 23
+qbit 1: 7 qbit 2: 12 dep gates: 24
+qbit 1: 7 qbit 2: 12 dep gates: 24
+qbit 1: 0 qbit 2: 7 dep gates: 13
+qbit 1: 0 qbit 2: 7 dep gates: 27
+qbit 1: 1 qbit 2: 13 dep gates: 25
+qbit 1: 1 qbit 2: 13 dep gates: 13
+qbit 1: 5 qbit 2: 10 dep gates: 26
+qbit 1: 5 qbit 2: 10 dep gates: 21
+qbit 1: 4 qbit 2: 11 dep gates: 17
+qbit 1: 4 qbit 2: 11 dep gates: 25
+qbit 1: 6 qbit 2: 8 dep gates: 26
+qbit 1: 0 qbit 2: 7 dep gates: 28
+qbit 1: 0 qbit 2: 7 dep gates: 28
+qbit 1: 1 qbit 2: 13 dep gates: 29
+qbit 1: 1 qbit 2: 13 dep gates: 29
+qbit 1: 5 qbit 2: 10 dep gates: 30
+qbit 1: 5 qbit 2: 10 dep gates: 30
+qbit 1: 4 qbit 2: 11 dep gates: 31
+qbit 1: 4 qbit 2: 11 dep gates: 31
+qbit 1: 6 qbit 2: 8 dep gates: 32
+qbit 1: 6 qbit 2: 8 dep gates: 32
+qbit 1: 1 qbit 2: 2 dep gates: 34
+qbit 1: 1 qbit 2: 2 dep gates: 4
+qbit 1: 5 qbit 2: 13 dep gates: 35
+qbit 1: 5 qbit 2: 13 dep gates: 34
+qbit 1: 8 qbit 2: 12 dep gates: 37
+qbit 1: 8 qbit 2: 12 dep gates: 27
+qbit 1: 4 qbit 2: 15 dep gates: 36
+qbit 1: 1 qbit 2: 2 dep gates: 38
+qbit 1: 1 qbit 2: 2 dep gates: 38
+qbit 1: 5 qbit 2: 13 dep gates: 39
+qbit 1: 5 qbit 2: 13 dep gates: 39
+qbit 1: 8 qbit 2: 12 dep gates: 40
+qbit 1: 8 qbit 2: 12 dep gates: 40
+qbit 1: 4 qbit 2: 15 dep gates: 41
+qbit 1: 4 qbit 2: 15 dep gates: 41
+qbit 1: 10 qbit 2: 12 dep gates: 35
+qbit 1: 10 qbit 2: 12 dep gates: 44
+qbit 1: 1 qbit 2: 7 dep gates: 42
+qbit 1: 1 qbit 2: 7 dep gates: 33
+qbit 1: 8 qbit 2: 13 dep gates: 44
+qbit 1: 8 qbit 2: 13 dep gates: 43
+qbit 1: 5 qbit 2: 15 dep gates: 43
+qbit 1: 5 qbit 2: 15 dep gates: 45
+qbit 1: 10 qbit 2: 12 dep gates: 46
+qbit 1: 10 qbit 2: 12 dep gates: 46
+qbit 1: 1 qbit 2: 7 dep gates: 47
+qbit 1: 1 qbit 2: 7 dep gates: 47
+qbit 1: 8 qbit 2: 13 dep gates: 48
+qbit 1: 8 qbit 2: 13 dep gates: 48
+qbit 1: 5 qbit 2: 15 dep gates: 49
+qbit 1: 5 qbit 2: 15 dep gates: 49
+qbit 1: 1 qbit 2: 8 dep gates: 51
+qbit 1: 1 qbit 2: 8 dep gates: 52
+qbit 1: 4 qbit 2: 7 dep gates: 45
+qbit 1: 4 qbit 2: 7 dep gates: 51
+qbit 1: 10 qbit 2: 13 dep gates: 50
+qbit 1: 10 qbit 2: 13 dep gates: 52
+qbit 1: 3 qbit 2: 5 dep gates: 9
+qbit 1: 3 qbit 2: 5 dep gates: 53
+qbit 1: 14 qbit 2: 15 dep gates: 53
+qbit 1: 1 qbit 2: 8 dep gates: 54
+qbit 1: 1 qbit 2: 8 dep gates: 54
+qbit 1: 4 qbit 2: 7 dep gates: 55
+qbit 1: 4 qbit 2: 7 dep gates: 55
+qbit 1: 10 qbit 2: 13 dep gates: 56
+qbit 1: 10 qbit 2: 13 dep gates: 56
+qbit 1: 3 qbit 2: 5 dep gates: 57
+qbit 1: 3 qbit 2: 5 dep gates: 57
+qbit 1: 14 qbit 2: 15 dep gates: 58
+qbit 1: 14 qbit 2: 15 dep gates: 58
+qbit 1: 1 qbit 2: 10 dep gates: 59
+qbit 1: 1 qbit 2: 10 dep gates: 61
+qbit 1: 11 qbit 2: 13 dep gates: 36
+qbit 1: 11 qbit 2: 13 dep gates: 61
+qbit 1: 5 qbit 2: 7 dep gates: 62
+qbit 1: 5 qbit 2: 7 dep gates: 60
+qbit 1: 1 qbit 2: 10 dep gates: 64
+qbit 1: 1 qbit 2: 10 dep gates: 64
+qbit 1: 11 qbit 2: 13 dep gates: 65
+qbit 1: 11 qbit 2: 13 dep gates: 65
+qbit 1: 5 qbit 2: 7 dep gates: 66
+qbit 1: 5 qbit 2: 7 dep gates: 66
+qbit 1: 12 qbit 2: 13 dep gates: 50
+qbit 1: 12 qbit 2: 13 dep gates: 68
+qbit 1: 0 qbit 2: 11 dep gates: 33
+qbit 1: 0 qbit 2: 11 dep gates: 68
+qbit 1: 5 qbit 2: 8 dep gates: 69
+qbit 1: 5 qbit 2: 8 dep gates: 59
+qbit 1: 12 qbit 2: 13 dep gates: 70
+qbit 1: 12 qbit 2: 13 dep gates: 70
+qbit 1: 0 qbit 2: 11 dep gates: 71
+qbit 1: 0 qbit 2: 11 dep gates: 71
+qbit 1: 5 qbit 2: 8 dep gates: 72
+qbit 1: 5 qbit 2: 8 dep gates: 72
+qbit 1: 1 qbit 2: 11 dep gates: 67
+qbit 1: 1 qbit 2: 11 dep gates: 74
+qbit 1: 3 qbit 2: 12 dep gates: 62
+qbit 1: 3 qbit 2: 12 dep gates: 73
+qbit 1: 6 qbit 2: 8 dep gates: 37
+qbit 1: 6 qbit 2: 8 dep gates: 75
+qbit 1: 0 qbit 2: 13 dep gates: 74
+qbit 1: 0 qbit 2: 13 dep gates: 73
+qbit 1: 5 qbit 2: 10 dep gates: 75
+qbit 1: 5 qbit 2: 10 dep gates: 67
+qbit 1: 1 qbit 2: 11 dep gates: 76
+qbit 1: 1 qbit 2: 11 dep gates: 76
+qbit 1: 3 qbit 2: 12 dep gates: 77
+qbit 1: 3 qbit 2: 12 dep gates: 77
+qbit 1: 6 qbit 2: 8 dep gates: 78
+qbit 1: 6 qbit 2: 8 dep gates: 78
+qbit 1: 0 qbit 2: 13 dep gates: 79
+qbit 1: 0 qbit 2: 13 dep gates: 79
+qbit 1: 5 qbit 2: 10 dep gates: 80
+qbit 1: 5 qbit 2: 10 dep gates: 80
+qbit 1: 7 qbit 2: 12 dep gates: 69
+qbit 1: 7 qbit 2: 12 dep gates: 82
+qbit 1: 4 qbit 2: 11 dep gates: 60
+qbit 1: 4 qbit 2: 11 dep gates: 81
+qbit 1: 1 qbit 2: 13 dep gates: 81
+qbit 1: 1 qbit 2: 13 dep gates: 84
+qbit 1: 7 qbit 2: 12 dep gates: 86
+qbit 1: 7 qbit 2: 12 dep gates: 86
+qbit 1: 4 qbit 2: 11 dep gates: 87
+qbit 1: 4 qbit 2: 11 dep gates: 87
+qbit 1: 0 qbit 2: 7 dep gates: 84
+qbit 1: 0 qbit 2: 7 dep gates: 89
+qbit 1: 1 qbit 2: 13 dep gates: 88
+qbit 1: 1 qbit 2: 13 dep gates: 88
+qbit 1: 4 qbit 2: 15 dep gates: 90
+qbit 1: 4 qbit 2: 15 dep gates: 63
+qbit 1: 8 qbit 2: 12 dep gates: 83
+qbit 1: 8 qbit 2: 12 dep gates: 89
+qbit 1: 0 qbit 2: 7 dep gates: 91
+qbit 1: 0 qbit 2: 7 dep gates: 91
+qbit 1: 1 qbit 2: 2 dep gates: 92
+qbit 1: 1 qbit 2: 2 dep gates: 42
+qbit 1: 4 qbit 2: 15 dep gates: 93
+qbit 1: 4 qbit 2: 15 dep gates: 93
+qbit 1: 5 qbit 2: 13 dep gates: 85
+qbit 1: 5 qbit 2: 13 dep gates: 92
+qbit 1: 8 qbit 2: 12 dep gates: 94
+qbit 1: 8 qbit 2: 12 dep gates: 94
+qbit 1: 10 qbit 2: 12 dep gates: 85
+qbit 1: 10 qbit 2: 12 dep gates: 99
+qbit 1: 1 qbit 2: 2 dep gates: 96
+qbit 1: 1 qbit 2: 2 dep gates: 96
+qbit 1: 5 qbit 2: 13 dep gates: 98
+qbit 1: 5 qbit 2: 13 dep gates: 98
+qbit 1: 1 qbit 2: 7 dep gates: 101
+qbit 1: 1 qbit 2: 7 dep gates: 95
+qbit 1: 10 qbit 2: 12 dep gates: 100
+qbit 1: 10 qbit 2: 12 dep gates: 100
+qbit 1: 5 qbit 2: 15 dep gates: 102
+qbit 1: 5 qbit 2: 15 dep gates: 97
+qbit 1: 8 qbit 2: 13 dep gates: 99
+qbit 1: 8 qbit 2: 13 dep gates: 102
+qbit 1: 1 qbit 2: 7 dep gates: 103
+qbit 1: 1 qbit 2: 7 dep gates: 103
+qbit 1: 4 qbit 2: 7 dep gates: 97
+qbit 1: 4 qbit 2: 7 dep gates: 107
+qbit 1: 5 qbit 2: 15 dep gates: 105
+qbit 1: 5 qbit 2: 15 dep gates: 105
+qbit 1: 8 qbit 2: 13 dep gates: 106
+qbit 1: 8 qbit 2: 13 dep gates: 106
+qbit 1: 10 qbit 2: 13 dep gates: 104
+qbit 1: 10 qbit 2: 13 dep gates: 110
+qbit 1: 14 qbit 2: 15 dep gates: 63
+qbit 1: 14 qbit 2: 15 dep gates: 109
+qbit 1: 1 qbit 2: 8 dep gates: 107
+qbit 1: 1 qbit 2: 8 dep gates: 110
+qbit 1: 3 qbit 2: 5 dep gates: 82
+qbit 1: 3 qbit 2: 5 dep gates: 109
+qbit 1: 4 qbit 2: 7 dep gates: 108
+qbit 1: 4 qbit 2: 7 dep gates: 108
+qbit 1: 10 qbit 2: 13 dep gates: 111
+qbit 1: 10 qbit 2: 13 dep gates: 111
+qbit 1: 14 qbit 2: 15 dep gates: 112
+qbit 1: 14 qbit 2: 15 dep gates: 112
+qbit 1: 1 qbit 2: 8 dep gates: 113
+qbit 1: 1 qbit 2: 8 dep gates: 113
+qbit 1: 3 qbit 2: 5 dep gates: 114
+qbit 1: 3 qbit 2: 5 dep gates: 114
+qbit 1: 1 qbit 2: 10 dep gates: 118
+qbit 1: 1 qbit 2: 10 dep gates: 116
+qbit 1: 5 qbit 2: 7 dep gates: 119
+qbit 1: 5 qbit 2: 7 dep gates: 115
+qbit 1: 11 qbit 2: 13 dep gates: 90
+qbit 1: 11 qbit 2: 13 dep gates: 116
+qbit 1: 1 qbit 2: 10 dep gates: 120
+qbit 1: 1 qbit 2: 10 dep gates: 120
+qbit 1: 5 qbit 2: 7 dep gates: 121
+qbit 1: 5 qbit 2: 7 dep gates: 121
+qbit 1: 11 qbit 2: 13 dep gates: 122
+qbit 1: 11 qbit 2: 13 dep gates: 122
+qbit 1: 0 qbit 2: 11 dep gates: 95
+qbit 1: 0 qbit 2: 11 dep gates: 125
+qbit 1: 5 qbit 2: 8 dep gates: 124
+qbit 1: 5 qbit 2: 8 dep gates: 118
+qbit 1: 12 qbit 2: 13 dep gates: 104
+qbit 1: 12 qbit 2: 13 dep gates: 125
+qbit 1: 0 qbit 2: 11 dep gates: 126
+qbit 1: 0 qbit 2: 11 dep gates: 126
+qbit 1: 5 qbit 2: 8 dep gates: 127
+qbit 1: 5 qbit 2: 8 dep gates: 127
+qbit 1: 12 qbit 2: 13 dep gates: 128
+qbit 1: 12 qbit 2: 13 dep gates: 128
+qbit 1: 0 qbit 2: 13 dep gates: 129
+qbit 1: 0 qbit 2: 13 dep gates: 131
+qbit 1: 1 qbit 2: 11 dep gates: 123
+qbit 1: 1 qbit 2: 11 dep gates: 129
+qbit 1: 3 qbit 2: 12 dep gates: 119
+qbit 1: 3 qbit 2: 12 dep gates: 131
+qbit 1: 5 qbit 2: 10 dep gates: 130
+qbit 1: 5 qbit 2: 10 dep gates: 123
+qbit 1: 6 qbit 2: 8 dep gates: 83
+qbit 1: 6 qbit 2: 8 dep gates: 130
+qbit 1: 0 qbit 2: 13 dep gates: 132
+qbit 1: 0 qbit 2: 13 dep gates: 132
+qbit 1: 1 qbit 2: 11 dep gates: 133
+qbit 1: 1 qbit 2: 11 dep gates: 133
+qbit 1: 3 qbit 2: 12 dep gates: 134
+qbit 1: 3 qbit 2: 12 dep gates: 134
+qbit 1: 5 qbit 2: 10 dep gates: 135
+qbit 1: 5 qbit 2: 10 dep gates: 135
+qbit 1: 6 qbit 2: 8 dep gates: 136
+qbit 1: 6 qbit 2: 8 dep gates: 136
+qbit 1: 7 qbit 2: 12 dep gates: 124
+qbit 1: 7 qbit 2: 12 dep gates: 139
+qbit 1: 1 qbit 2: 13 dep gates: 138
+qbit 1: 1 qbit 2: 13 dep gates: 137
+qbit 1: 4 qbit 2: 11 dep gates: 115
+qbit 1: 4 qbit 2: 11 dep gates: 138
+qbit 1: 7 qbit 2: 12 dep gates: 142
+qbit 1: 7 qbit 2: 12 dep gates: 142
+qbit 1: 1 qbit 2: 13 dep gates: 143
+qbit 1: 1 qbit 2: 13 dep gates: 143
+qbit 1: 4 qbit 2: 11 dep gates: 144
+qbit 1: 4 qbit 2: 11 dep gates: 144
+qbit 1: 8 qbit 2: 12 dep gates: 141
+qbit 1: 8 qbit 2: 12 dep gates: 145
+qbit 1: 4 qbit 2: 15 dep gates: 147
+qbit 1: 4 qbit 2: 15 dep gates: 117
+qbit 1: 5 qbit 2: 13 dep gates: 140
+qbit 1: 5 qbit 2: 13 dep gates: 146
+qbit 1: 8 qbit 2: 12 dep gates: 148
+qbit 1: 8 qbit 2: 12 dep gates: 148
+qbit 1: 4 qbit 2: 15 dep gates: 149
+qbit 1: 4 qbit 2: 15 dep gates: 149
+qbit 1: 5 qbit 2: 13 dep gates: 150
+qbit 1: 5 qbit 2: 13 dep gates: 150
+qbit 1: 10 qbit 2: 12 dep gates: 140
+qbit 1: 10 qbit 2: 12 dep gates: 151
+qbit 1: 5 qbit 2: 15 dep gates: 153
+qbit 1: 5 qbit 2: 15 dep gates: 152
+qbit 1: 8 qbit 2: 13 dep gates: 151
+qbit 1: 8 qbit 2: 13 dep gates: 153
+qbit 1: 10 qbit 2: 12 dep gates: 154
+qbit 1: 10 qbit 2: 12 dep gates: 154
+qbit 1: 5 qbit 2: 15 dep gates: 155
+qbit 1: 5 qbit 2: 15 dep gates: 155
+qbit 1: 8 qbit 2: 13 dep gates: 156
+qbit 1: 8 qbit 2: 13 dep gates: 156
+qbit 1: 10 qbit 2: 13 dep gates: 157
+qbit 1: 10 qbit 2: 13 dep gates: 159
+qbit 1: 14 qbit 2: 15 dep gates: 117
+qbit 1: 14 qbit 2: 15 dep gates: 158
+qbit 1: 10 qbit 2: 13 dep gates: 160
+qbit 1: 10 qbit 2: 13 dep gates: 160
+qbit 1: 14 qbit 2: 15 dep gates: 161
+qbit 1: 14 qbit 2: 15 dep gates: 161
+qbit 1: 11 qbit 2: 13 dep gates: 147
+qbit 1: 11 qbit 2: 13 dep gates: 162
+qbit 1: 11 qbit 2: 13 dep gates: 164
+qbit 1: 11 qbit 2: 13 dep gates: 164
+qbit 1: 12 qbit 2: 13 dep gates: 157
+qbit 1: 12 qbit 2: 13 dep gates: 165
+qbit 1: 12 qbit 2: 13 dep gates: 166
+qbit 1: 12 qbit 2: 13 dep gates: 166
+parse object map:
+{0: [0, 7], 1: [1, 2], 2: [3, 5], 3: [0, 7], 4: [1, 2], 5: [3, 5], 6: [3, 12], 7: [0, 11], 8: [1, 7], 9: [3, 12], 10: [0, 11], 11: [0, 13], 12: [1, 7], 13: [0, 13], 14: [1, 8], 15: [4, 7], 16: [1, 8], 17: [4, 7], 18: [5, 7], 19: [1, 10], 20: [5, 7], 21: [1, 10], 22: [1, 11], 23: [5, 8], 24: [7, 12], 25: [1, 11], 26: [5, 8], 27: [7, 12], 28: [0, 7], 29: [1, 13], 30: [5, 10], 31: [4, 11], 32: [6, 8], 33: [0, 7], 34: [1, 13], 35: [5, 10], 36: [4, 11], 37: [6, 8], 38: [1, 2], 39: [5, 13], 40: [8, 12], 41: [4, 15], 42: [1, 2], 43: [5, 13], 44: [8, 12], 45: [4, 15], 46: [10, 12], 47: [1, 7], 48: [8, 13], 49: [5, 15], 50: [10, 12], 51: [1, 7], 52: [8, 13], 53: [5, 15], 54: [1, 8], 55: [4, 7], 56: [10, 13], 57: [3, 5], 58: [14, 15], 59: [1, 8], 60: [4, 7], 61: [10, 13], 62: [3, 5], 63: [14, 15], 64: [1, 10], 65: [11, 13], 66: [5, 7], 67: [1, 10], 68: [11, 13], 69: [5, 7], 70: [12, 13], 71: [0, 11], 72: [5, 8], 73: [12, 13], 74: [0, 11], 75: [5, 8], 76: [1, 11], 77: [3, 12], 78: [6, 8], 79: [0, 13], 80: [5, 10], 81: [1, 11], 82: [3, 12], 83: [6, 8], 84: [0, 13], 85: [5, 10], 86: [7, 12], 87: [4, 11], 88: [1, 13], 89: [7, 12], 90: [4, 11], 91: [0, 7], 92: [1, 13], 93: [4, 15], 94: [8, 12], 95: [0, 7], 96: [1, 2], 97: [4, 15], 98: [5, 13], 99: [8, 12], 100: [10, 12], 101: [1, 2], 102: [5, 13], 103: [1, 7], 104: [10, 12], 105: [5, 15], 106: [8, 13], 107: [1, 7], 108: [4, 7], 109: [5, 15], 110: [8, 13], 111: [10, 13], 112: [14, 15], 113: [1, 8], 114: [3, 5], 115: [4, 7], 116: [10, 13], 117: [14, 15], 118: [1, 8], 119: [3, 5], 120: [1, 10], 121: [5, 7], 122: [11, 13], 123: [1, 10], 124: [5, 7], 125: [11, 13], 126: [0, 11], 127: [5, 8], 128: [12, 13], 129: [0, 11], 130: [5, 8], 131: [12, 13], 132: [0, 13], 133: [1, 11], 134: [3, 12], 135: [5, 10], 136: [6, 8], 137: [0, 13], 138: [1, 11], 139: [3, 12], 140: [5, 10], 141: [6, 8], 142: [7, 12], 143: [1, 13], 144: [4, 11], 145: [7, 12], 146: [1, 13], 147: [4, 11], 148: [8, 12], 149: [4, 15], 150: [5, 13], 151: [8, 12], 152: [4, 15], 153: [5, 13], 154: [10, 12], 155: [5, 15], 156: [8, 13], 157: [10, 12], 158: [5, 15], 159: [8, 13], 160: [10, 13], 161: [14, 15], 162: [10, 13], 163: [14, 15], 164: [11, 13], 165: [11, 13], 166: [12, 13], 167: [12, 13]}
+parse object graph:
+DiGraph with 168 nodes and 237 edges
+Initial_qubit layout:  {0: [0, 7, 11], 1: [5, 12, 2], 2: [15, 6, 14], 3: [], 4: [8, 10, 3], 5: [13, 1, 4]}
+0
+1
+Traceback (most recent call last):
+  File "/home/edyounis/bqskit-shuttling/bqskit/shuttling/qccd/QCCDSim/run.py", line 136, in <module>
+    ejfs.run()
+  File "/home/edyounis/bqskit-shuttling/bqskit/shuttling/qccd/QCCDSim/ejf_schedule.py", line 400, in run
+    self.schedule_gate(g)
+  File "/home/edyounis/bqskit-shuttling/bqskit/shuttling/qccd/QCCDSim/ejf_schedule.py", line 307, in schedule_gate
+    rebal_flag, new_fin_time = self.rebalance_traps(focus_traps=[ion1_trap, ion2_trap], fire_time=fire_time)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/edyounis/bqskit-shuttling/bqskit/shuttling/qccd/QCCDSim/ejf_schedule.py", line 343, in rebalance_traps
+    finish_time = self.do_rebalance_traps(fire_time)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/edyounis/bqskit-shuttling/bqskit/shuttling/qccd/QCCDSim/ejf_schedule.py", line 353, in do_rebalance_traps
+    flow_dict = rebal.clear_all_blocks()
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/edyounis/bqskit-shuttling/bqskit/shuttling/qccd/QCCDSim/rebalance.py", line 46, in clear_all_blocks
+    flowCost, flowDict = nx.network_simplex(graph) 
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/edyounis/bqskit-shuttling/.env/lib/python3.11/site-packages/networkx/utils/decorators.py", line 788, in func
+    return argmap._lazy_compile(__wrapper)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<class 'networkx.utils.decorators.argmap'> compilation 37", line 4, in argmap_network_simplex_33
+  File "/home/edyounis/bqskit-shuttling/.env/lib/python3.11/site-packages/networkx/utils/backends.py", line 967, in __call__
+    return self.orig_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/edyounis/bqskit-shuttling/.env/lib/python3.11/site-packages/networkx/algorithms/flow/networksimplex.py", line 532, in network_simplex
+    raise nx.NetworkXUnfeasible("total node demand is not zero")
+networkx.exception.NetworkXUnfeasible: total node demand is not zero
