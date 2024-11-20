@@ -443,6 +443,9 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                 physical_location = list(self.qccd_machine.physical_to_position[trap_id])[:3]
                 local_graph = cg.get_subgraph(physical_location)
                 _logger.debug(f"Updated local graph: {local_graph}")
+                if len(local_graph._edges) < 2:
+                    local_graph = CouplingGraph([(0, 1), (1, 2)], 3)
+                    _logger.debug(f"Updated local graph: {local_graph}")
             if local_graph.get_qudit_degrees() == [0] * local_graph.num_qudits:
                 _logger.debug(f"The coupling graph is empty")
                 if len(physical_location) > 2:
