@@ -14,6 +14,7 @@
  python bqskit/shuttling/qccd/run.py "QuantumVolume_20" "H" "6" "2" "FM" &> bqskit/shuttling/qccd/logs/QuantumVolume_20_H_6_2_FM.log
  python bqskit/shuttling/qccd/run.py "QFT_20_compiled" "H" "5" "2" "FM" &> bqskit/shuttling/qccd/logs/QFT_20_compiled_H_5_2_FM.log
  python bqskit/shuttling/qccd/run.py "QFT_20_compiled" "H" "6" "2" "FM" &> bqskit/shuttling/qccd/logs/QFT_20_compiled_H_6_2_FM.log
+
  python bqskit/shuttling/qccd/run.py "QAOA_16_compiled" "G2x3" "3" "2" "FM" &> bqskit/shuttling/qccd/logs/QAOA_16_compiled_G2x3_3_2_FM.log
  python bqskit/shuttling/qccd/run.py "QAOA_16_compiled" "G2x3" "4" "2" "FM" &> bqskit/shuttling/qccd/logs/QAOA_16_compiled_G2x3_4_2_FM.log
  python bqskit/shuttling/qccd/run.py "QuantumVolume_16" "G2x3" "3" "2" "FM" &> bqskit/shuttling/qccd/logs/QuantumVolume_16_G2x3_3_2_FM.log

@@ -18,6 +18,23 @@ commands=(
     'python bqskit/shuttling/qccd/run.py "QuantumVolume_20" "H" "6" "2" "FM" {i}'
     'python bqskit/shuttling/qccd/run.py "QFT_20_compiled" "H" "5" "2" "FM" {i}'
     'python bqskit/shuttling/qccd/run.py "QFT_20_compiled" "H" "6" "2" "FM" {i}'
+
+    'python bqskit/shuttling/qccd/run.py "QAOA_16_compiled" "G2x3" "3" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QAOA_16_compiled" "G2x3" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QuantumVolume_16" "G2x3" "3" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QuantumVolume_16" "G2x3" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QFT_16_compiled" "G2x3" "3" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QFT_16_compiled" "G2x3" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "TFIM_n16_s100_compiled" "G2x3" "3" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "TFIM_n16_s100_compiled" "G2x3" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "TFXY_n16_s100_compiled" "G2x3" "3" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "TFXY_n16_s100_compiled" "G2x3" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QAOA_20_compiled" "G2x3" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QAOA_20_compiled" "G2x3" "5" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QuantumVolume_20" "G2x3" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QuantumVolume_20" "G2x3" "5" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QFT_20_compiled" "G2x3" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QFT_20_compiled" "G2x3" "5" "2" "FM" {i}'
 )
 
 # Number of repetitions
