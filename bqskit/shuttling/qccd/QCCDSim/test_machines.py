@@ -1,7 +1,29 @@
 from machine import Machine, Trap, Segment, MachineParams
+import math
 
 
 #ISCA Test machines Begin
+
+def test_enchilada(capacity, mparams):
+    m = Machine(mparams)
+    t = [m.add_trap(i, capacity) if i % 2 == 0 else m.add_trap(i, math.ceil(capacity / 2)) for i in range(9)]
+    j = [m.add_junction(i) for i in range(6)]
+    m.add_segment(0, t[0], j[0], 'R')
+    m.add_segment(1, t[1], j[0], 'L')
+    m.add_segment(2, j[0], j[2])
+    m.add_segment(3, t[2], j[1], 'R')
+    m.add_segment(4, j[1], j[2])
+    m.add_segment(5, t[3], j[1], 'L')
+    m.add_segment(6, t[4], j[2], 'L')
+    m.add_segment(7, t[4], j[3], 'R')
+    m.add_segment(8, j[3], j[4])
+    m.add_segment(9, t[5], j[4], 'L')
+    m.add_segment(10, j[3], j[5])
+    m.add_segment(12, t[7], j[5], 'L')
+    m.add_segment(13, t[6], j[4], 'L')
+    m.add_segment(14, t[8], j[5], 'L')
+    return m
+
 
 def test_H_machine(capacity, mparams):
     m = Machine(mparams)

@@ -396,7 +396,7 @@ class EJFSchedule:
         cnt = 0
         #self.sys_state.print_state()
         for g in self.gates:
-            print(g)
+            #print(g)
             self.schedule_gate(g)
             cnt += 1
         #self.schedule.print_events()

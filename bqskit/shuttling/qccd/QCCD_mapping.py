@@ -697,14 +697,14 @@ class QCCDMappingAlgorithm:
         # Main Loop
         while len(F) > 0:
             # Retrieve executable gates giving the current ion assignment: pi
-            print("Front: ", [circuit[n] for n in F])
+            #print("Front: ", [circuit[n] for n in F])
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 print("There is repetition..... !!!!!")
                 repeated_path = True
             if self.iter_count > math.ceil(longest_path/ 2):
                 print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
-            print("Current ion mapping: ", ion_assignment)
+            #print("Current ion mapping: ", ion_assignment)
             execute_list = [n for n in F if self.qccd_machine.gate_is_executable(circuit[n], pi, ion_assignment)]
             # Execute the gates and update F
             if len(execute_list) > 0:
@@ -754,11 +754,11 @@ class QCCDMappingAlgorithm:
                 else:
                     tmp_F = list(F)[1:]
                     F = [list(F)[0]]
-                    print(f"Front is modified to {F}.")
+                    #print(f"Front is modified to {F}.")
 
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
-            print(f"Extended set: {[circuit[n] for n in E]}")
+            #print(f"Extended set: {[circuit[n] for n in E]}")
             best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay)
             if best_move is None:
                 leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
@@ -814,12 +814,12 @@ class QCCDMappingAlgorithm:
                 list_of_best_move = [move]
             elif score == best_score:
                 list_of_best_move.append(move)
-            _logger.debug(f"Score of move {move}: {score}")
+            #_logger.debug(f"Score of move {move}: {score}")
         if best_move is None:
             print("*** Unable to find best move. ***")
             return None
             # raise RuntimeError('Unable to find best move.')
-        print(f"List of best move: {list_of_best_move}")
+        # print(f"List of best move: {list_of_best_move}")
         if len(list_of_best_move) == 1:
             return best_move
         else:

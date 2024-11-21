@@ -1,3 +1,4 @@
+import copy
 import sys
 from parse import InputParse
 from mappers import *
@@ -79,12 +80,16 @@ elif machine_type == "H6":
     m = make_single_hexagon_machine(num_ions_per_region, mpar_model1)
 elif machine_type == "H":
     m = test_H_machine(num_ions_per_region, mpar_model1)
+elif machine_type == "Enchilada":
+    m = test_enchilada(num_ions_per_region, mpar_model1)
 else:
     assert 0
 
+for trap in m.traps:
+    print("Trap capacity: ", trap.capacity)
 #Print machine
-# nx.draw(m.graph)
-# plt.show()
+nx.draw(m.graph)
+plt.show()
 #Parse the input program DAG
 ip = InputParse()
 ip.parse_ir(openqasm_file_name)
@@ -94,10 +99,10 @@ qc = QuantumCircuit.from_qasm_file(openqasm_file_name)
 dag = circuit_to_dag(qc)
 dag_drawer(dag)
 
-print("parse object map:")
-print(ip.cx_gate_map)
-print("parse object graph:")
-print(ip.gate_graph)
+# print("parse object map:")
+# print(ip.cx_gate_map)
+# print("parse object graph:")
+# print(ip.gate_graph)
 
 #Map the program onto the machine regions
 #For every program qubit, this gives a region id
@@ -128,7 +133,7 @@ else:
         assert 0
 
 print("Initial_qubit layout: ", init_qubit_layout)
-
+initial_mapping = copy.deepcopy(init_qubit_layout)
 #Schedule gates in the prorgam in topological sorted order
 #EJF = earliest job first, here it refers to earliest gate first
 #This step performs the shuttling
@@ -141,7 +146,7 @@ data = analyzer.move_check()
 print("SplitSWAP:", ejfs.split_swap_counter)
 end_time = timer()
 print("----------------")
-result = [end_time-start_time, data]
+result = [end_time-start_time, data, initial_mapping]
 
 result_filename = f"bqskit/shuttling/qccd/new_result/QCCDSim_{input_filename}_{machine_type}_{num_ions_per_region}_{mapper_choice}.pkl"
 with open(result_filename, 'wb') as f:

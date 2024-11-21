@@ -57,10 +57,9 @@ class Analyzer:
         op_times[Schedule.Split] = 0
         op_times[Schedule.Move] = 0
         op_times[Schedule.Merge] = 0
-
         sys_state = MachineState(0, self.init_map, {})
         q = PriorityQueue()
-        self.schedule.print_events()
+        #self.schedule.print_events()
         prog_fin_time = 0
         log_fidelity = 0.0
         for event in self.schedule.events:

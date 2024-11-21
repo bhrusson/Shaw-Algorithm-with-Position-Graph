@@ -14,7 +14,7 @@ from bqskit.shuttling.qccd import (QCCDMachineModel, QCCDSubtopologySelectionPas
                                   )
 import sys
 import pickle
-enable_logging(True)
+#enable_logging(True)
 input_filename = sys.argv[1]
 trap_type = sys.argv[2]
 trap_capacity = int(sys.argv[3])
@@ -113,7 +113,7 @@ with Compiler() as compiler:
 """
 Save qasm file
 """
-qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_idx:{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
+qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
 output_circuit.save(qasm_result_filename)
 
 """
@@ -133,13 +133,12 @@ Save pickle result file
 result = [
           runtime, compile_time,
           data["instruction_list"],
-          output_circuit,
           output_circuit.gate_counts,
           data['initial_ion_assignment_qccd'],
           data['initial_mapping'],
           data['final_mapping'],
           machine_model
           ]
-result_filename = f"bqskit/shuttling/qccd/new_result/SHAPER_{input_filename}_idx:{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
+result_filename = f"bqskit/shuttling/qccd/new_result/SHAPER_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)

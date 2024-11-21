@@ -195,7 +195,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
 
         # Main Loop
         while len(F) > 0:
-            print("Front: ", [circuit[n] for n in F])
+            #print("Front: ", [circuit[n] for n in F])
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 print("There is repetition..... !!!!!")
                 repeated_path = True
@@ -321,7 +321,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                 else:
                     tmp_F = list(F)[1:]
                     F = [list(F)[0]]
-                    print(f"Front is modified to {F}.")
+                    #print(f"Front is modified to {F}.")
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
             # print(f"Extended set: {[circuit[n] for n in E]}")

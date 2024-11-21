@@ -249,7 +249,7 @@ class QubitMapAgg():
         self.machine_obj = machine_obj
         self.num_traps = len(self.machine_obj.traps)
         self.num_nodes = len(self.parse_obj.cx_graph.nodes)
-        print(self.num_nodes)
+        #print(self.num_nodes)
         self.trap_capacity = self.machine_obj.traps[0].capacity
         self.occupied_traps = 0
         self.qubit_mapping = {}
