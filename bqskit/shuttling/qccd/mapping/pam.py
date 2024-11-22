@@ -192,7 +192,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             mapped_circuit = Circuit(circuit.num_qudits, circuit.radixes)
             out_data: PAMBlockResultDict = {}
             runtime = 0.0
-
+        heuristic_move = True
         # Main Loop
         while len(F) > 0:
             #print("Front: ", [circuit[n] for n in F])
@@ -325,7 +325,7 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
             # print(f"Extended set: {[circuit[n] for n in E]}")
-            best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay)
+            best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay, heuristic_move)
             if best_move is None:
                 _logger.debug("Try bruteforce due to no best move is found...")
                 brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)

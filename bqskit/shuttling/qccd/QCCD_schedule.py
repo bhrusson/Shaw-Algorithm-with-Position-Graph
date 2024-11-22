@@ -24,6 +24,7 @@ def schedule_QCCD(
     executing_duration = 0.0
     next_gate = None
     just_executed = False
+    first_time_executed = True
     #print(f"Start scheduling QCCD.... Parallization: {parallel}")
     parallel_moves_w_gate_execution = []
     for instruction in instructions_list:
@@ -35,6 +36,8 @@ def schedule_QCCD(
             """
                 If the instruction is 'Execute', look at the circuit and try to execute it until meet a barrier.
             """
+            if first_time_executed:
+                first_time_executed = False
             #print("Current num cycle {}".format(num_cycles))
             if parallization_moves:
                 #print("Perform parallel moves ....")
@@ -173,7 +176,7 @@ def schedule_QCCD(
                     drop_out_flag = False
                 if not executing_blocks:
                     drop_out_flag = False
-                if executing_blocks == [] and executing_duration == 0.0:
+                if executing_blocks == [] and executing_duration == 0.0 and first_time_executed:
                     drop_out_flag = True
                 # print("Drop out flag: ", drop_out_flag)
                 # print("executing blocks: ", executing_blocks)
@@ -219,50 +222,39 @@ if __name__ == "__main__":
         "G2x3": [["3", "4"], ["4", "5"]],
     }
 
-
-    class DummyClass:
-        def __init__(self, *args, **kwargs):
-            pass
-
-
-    class IgnoringUnpickler(pickle.Unpickler):
-        def find_class(self, module, name):
-            try:
-                return super().find_class(module, name)
-            except Exception:
-                # Return a dummy function or class to skip the problematic variable
-                #print(f"Skipping problematic reference: {module}.{name}")
-                return DummyClass  # Return a dummy class
-
-    circuit_lst = ["QFT_20_compiled"]
-    architecture_lst = ["Enchilada"]
-    parameter_set = {"Enchilada": ["6"]}
     num_layout = 2
     for circuit_idx in range(len(circuit_lst)):
         for architecture in architecture_lst:
             parameter = parameter_set[architecture][0] if circuit_idx < 5 else parameter_set[architecture][1]
             for param_idx in range(len(parameter)):
                 param = parameter[param_idx]
-                # if param_idx == 0:
-                #     continue
-                file_name = f"SHAPER_{circuit_lst[circuit_idx]}_{architecture}_{param}_{num_layout}"
-                qasm_name = f"{circuit_lst[circuit_idx]}_{architecture}_{param}_{num_layout}"
-                qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{file_name}.pkl"
-                with open(
-                        qasm_result_filename,
-                        "rb") as input_file:
-                    stored_data = data = IgnoringUnpickler(input_file).load()
-                (runtime, compile_time, instruction_lst, output_circuit, gate_counts,
-                 initial_ion_assignment, initial_mapping, final_mapping, machine_model) = stored_data
-                output_circuit = Circuit.from_file(f"bqskit/shuttling/qccd/new_result/{qasm_name}.qasm")
-                runtime = schedule_QCCD(instructions_list=instruction_lst,
-                                        circuit=output_circuit,
-                                        initial_mapping=initial_mapping,
-                                        initial_ion_assignment=initial_ion_assignment,
-                                        qccd_machine=machine_model)
-                # print(f"File {file_name} ...")
-                # print("Final runtime: ", runtime / 1e-6)
-                print(round(runtime/1e-6))
+                print(f"SHAPER_{circuit_lst[circuit_idx]}_{architecture}_{param}_{num_layout}")
+                shuttling_time = []
+                runtime_lst = []
+                for idx in range(1, 6):
+                    file_name = f"SHAPER_{circuit_lst[circuit_idx]}_idx{idx}_{architecture}_{param}_{num_layout}"
+                    qasm_name = f"{circuit_lst[circuit_idx]}_idx{idx}_{architecture}_{param}_{num_layout}"
+                    qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{file_name}.pkl"
+                    if circuit_lst[circuit_idx] == "QFT_16_compiled" and architecture == "H" and param_idx == 0 and idx == 2:
+                        shuttling_time.append(46523)
+                        continue
+                    with open(
+                            qasm_result_filename,
+                            "rb") as input_file:
+                        stored_data = data = pickle.load(input_file)
+                    (runtime, compile_time, instruction_lst, output_circuit, gate_counts,
+                     initial_ion_assignment, initial_mapping, final_mapping, machine_model) = stored_data
+                    # output_circuit = Circuit.from_file(f"bqskit/shuttling/qccd/new_result/{qasm_name}.qasm")
+                    shuttlingtime = schedule_QCCD(instructions_list=instruction_lst,
+                                            circuit=output_circuit,
+                                            initial_mapping=initial_mapping,
+                                            initial_ion_assignment=initial_ion_assignment,
+                                            qccd_machine=machine_model)
+                    shuttling_time.append(shuttlingtime/1e-6)
+                    runtime_lst.append(compile_time)
+                print(f"Min shuttling time {np.min(shuttling_time)} with {np.std(shuttling_time)}")
+                print(f"Average runtime {np.average(runtime_lst)} with {np.std(runtime_lst)}")
+
 
     # qasm_result_filename = f"bqskit/shuttling/qccd/result/{file_name}.pkl"
     # (runtime, compile_time, instruction_lst, output_circuit, gate_counts,

@@ -182,6 +182,7 @@ class QCCDMappingAlgorithm:
         #                'junction_Y': 0}
         # Main Loop
         executed_flag = False
+        heuristic_move = True
         while len(F) > 0:
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 print("There is repetition..... !!!!!")
@@ -260,7 +261,7 @@ class QCCDMappingAlgorithm:
                     # print(f"Front is modified to {F}.")
             E = self._calc_extended_set(circuit, F)
             # print(f"Extended set: {[circuit[n] for n in E]}")
-            best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay)
+            best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay, heuristic_move)
             if best_move is None:
                 brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                 leading_moves += brute_force_moves
@@ -691,6 +692,7 @@ class QCCDMappingAlgorithm:
         self.iter_count = 0
         initial_extended_set_size = self.extended_set_size
         leading_moves: list[tuple[int, int]] = []
+        heuristic_move = True
         next_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
         _logger.debug(f'Starting backward sabre QCCD pass with ion assignment: {pi}.')
         longest_path = np.max([len(path) for path in self.qccd_machine.position_graph.all_pairs_shortest_path()])
@@ -759,7 +761,7 @@ class QCCDMappingAlgorithm:
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
             #print(f"Extended set: {[circuit[n] for n in E]}")
-            best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay)
+            best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay, heuristic_move)
             if best_move is None:
                 leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                 continue
@@ -791,6 +793,7 @@ class QCCDMappingAlgorithm:
             pi: list,
             ion_assignment: dict,
             decay: list[float],
+            heuristic_move: bool,
     ) -> tuple[int, int]:
         """Return the best move given the current algorithm state and ion assignment. (Logical function)"""
         # Track best one
@@ -798,7 +801,10 @@ class QCCDMappingAlgorithm:
         best_move = None
 
         # Gather all considerable moves
-        move_candidate_list = self._obtain_moves(circuit, pi, ion_assignment)
+        if heuristic_move:
+            move_candidate_list = self._obtain_heuristic_moves(circuit, F, pi, ion_assignment)
+        else:
+            move_candidate_list = self._obtain_moves(circuit, pi, ion_assignment)
         print("All candidate move: ", move_candidate_list)
         list_of_best_move = []
         # Score them, tracking the best one
@@ -839,6 +845,35 @@ class QCCDMappingAlgorithm:
                         move_relative_score += np.sum([np.min([D[pos][move[0]], D[pos][move[1]]]) for pos in p])
                 move_relative_scores.append(move_relative_score)
             return list_of_best_move[np.argmin(move_relative_scores)]
+
+    def _obtain_heuristic_moves(
+            self,
+            circuit: Circuit,
+            F: set[CircuitPoint],
+            pi: list,
+            ion_assignment: dict,
+    ) -> set[tuple[int, int]]:
+        """Produce all possible realizable physical moves w.r.t frontier given the current QCCD hardware."""
+        position_graph = self.qccd_machine.position_graph
+        position_to_physical = self.qccd_machine.position_to_physical
+        physical_qudit_positions = []
+        for location in F:
+            block = circuit[location]
+            for qudit in block.location:
+                physical_qudit_positions.append(ion_assignment[pi[qudit]])
+        physical_qudit_positions = list(set(physical_qudit_positions))
+        moves = set()
+        for physical_qudit_position in physical_qudit_positions:
+            neighbors = position_graph.get_neighbors_of(physical_qudit_position)
+            for neighbor in neighbors:
+                a = min(neighbor, physical_qudit_position)
+                b = max(neighbor, physical_qudit_position)
+                # Enforce condition to avoid two ions go into one segment
+                if a in list(ion_assignment.values()) and b in list(ion_assignment.values()):
+                    if position_to_physical[a] == 'segment' or position_to_physical[b] == 'segment':
+                        continue
+                moves.add((a, b))
+        return moves
 
     def _obtain_moves(
             self,
@@ -1054,7 +1089,7 @@ class QCCDMappingAlgorithm:
         p_list = [ion_assignment[pi[logical_qudit]] for logical_qudit in logical_qudits]
         pairwise_distance = [D[p1][p2] for p1, p2 in combinations(p_list, 2)]
         distance = np.max(pairwise_distance)
-        # Distance to nearest trap from p
+        # Distance to nearest trap from pg
         trap_p = [self.qccd_machine.get_trap_id(p) for p in p_list]
         if trap_p.count(None) == 0 and trap_p.count(trap_p[0]) == len(trap_p):
             total_F = 0.0
