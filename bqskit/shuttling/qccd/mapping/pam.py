@@ -310,7 +310,6 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                         brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                         if modify_circuit:
                             for move in brute_force_moves:
-                                # mapped_circuit.append_gate(SwapGate(), move)
                                 instructions_list.append(
                                     [f"Move {move}", f"{ion_assignment}", f"cost: {D[move[0]][move[1]]} seconds"])
                                 mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
@@ -331,7 +330,6 @@ class PermutationAwareQCCDMappingAlgorithm(QCCDMappingAlgorithm):
                 brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                 if modify_circuit:
                     for move in brute_force_moves:
-                        # mapped_circuit.append_gate(SwapGate(), move)
                         instructions_list.append(
                             [f"Move {move}", f"{ion_assignment}", f"cost: {D[move[0]][move[1]]} seconds"])
                         mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),

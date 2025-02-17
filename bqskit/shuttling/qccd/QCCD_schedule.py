@@ -221,8 +221,9 @@ if __name__ == "__main__":
         "H": [["4", "5"], ["5", "6"]],
         "G2x3": [["3", "4"], ["4", "5"]],
     }
-
+    all_variance = []
     num_layout = 2
+    all_runtime = []
     for circuit_idx in range(len(circuit_lst)):
         for architecture in architecture_lst:
             parameter = parameter_set[architecture][0] if circuit_idx < 5 else parameter_set[architecture][1]
@@ -245,16 +246,19 @@ if __name__ == "__main__":
                     (runtime, compile_time, instruction_lst, output_circuit, gate_counts,
                      initial_ion_assignment, initial_mapping, final_mapping, machine_model) = stored_data
                     # output_circuit = Circuit.from_file(f"bqskit/shuttling/qccd/new_result/{qasm_name}.qasm")
-                    shuttlingtime = schedule_QCCD(instructions_list=instruction_lst,
-                                            circuit=output_circuit,
-                                            initial_mapping=initial_mapping,
-                                            initial_ion_assignment=initial_ion_assignment,
-                                            qccd_machine=machine_model)
-                    shuttling_time.append(shuttlingtime/1e-6)
+                    # shuttlingtime = schedule_QCCD(instructions_list=instruction_lst,
+                    #                         circuit=output_circuit,
+                    #                         initial_mapping=initial_mapping,
+                    #                         initial_ion_assignment=initial_ion_assignment,
+                    #                         qccd_machine=machine_model)
+                    shuttling_time.append(runtime/1e-6)
                     runtime_lst.append(compile_time)
+                all_runtime.append(runtime_lst[int(np.argmin(shuttling_time))])
+                all_variance.append(np.std(shuttling_time)/np.average(shuttling_time))
                 print(f"Min shuttling time {np.min(shuttling_time)} with {np.std(shuttling_time)}")
-                print(f"Average runtime {np.average(runtime_lst)} with {np.std(runtime_lst)}")
-
+                print(f"Runtime {runtime_lst[int(np.argmin(shuttling_time))]} with {np.std(runtime_lst)}")
+    print(np.average(all_runtime))
+    print(np.average(all_variance)*100)
 
     # qasm_result_filename = f"bqskit/shuttling/qccd/result/{file_name}.pkl"
     # (runtime, compile_time, instruction_lst, output_circuit, gate_counts,

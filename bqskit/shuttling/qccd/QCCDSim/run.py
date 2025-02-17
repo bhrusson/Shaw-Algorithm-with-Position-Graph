@@ -13,6 +13,7 @@ import networkx as nx
 from qiskit import QuantumCircuit
 from qiskit.converters import circuit_to_dag
 from qiskit.visualization import dag_drawer
+from bqskit import Circuit, compile
 import matplotlib.pyplot as plt
 
 np.random.seed(12345)
@@ -30,7 +31,16 @@ serial_all = int(sys.argv[8])
 gate_type = sys.argv[9]
 swap_type = sys.argv[10]
 
+start_time = timer()
+"""
+Performing global optimization ....
+"""
 openqasm_file_name = f"bqskit/shuttling/qccd/benchmark_circuits/{input_filename}.qasm"
+cir = Circuit.from_file(openqasm_file_name)
+
+compiled_circuit = compile(cir, optimization_level=4)
+compiled_circuit.save(f"bqskit/shuttling/qccd/benchmark_circuits/{input_filename}_precompiled_alltoall.qasm")
+openqasm_file_name = f"bqskit/shuttling/qccd/benchmark_circuits/{input_filename}_precompiled_alltoall.qasm"
 ##########################################################
 mpar_model1 = MachineParams()
 mpar_model1.alpha = 0.003680029
@@ -57,7 +67,6 @@ mpar_model2.junction4_cross_time = 120
 mpar_model2.alpha
 machine_model = "MPar2"
 '''
-start_time = timer()
 print("Simulation")
 print("Program:", openqasm_file_name)
 print("Machine:", machine_type)
@@ -88,8 +97,8 @@ else:
 for trap in m.traps:
     print("Trap capacity: ", trap.capacity)
 #Print machine
-nx.draw(m.graph)
-plt.show()
+# nx.draw(m.graph)
+# plt.show()
 #Parse the input program DAG
 ip = InputParse()
 ip.parse_ir(openqasm_file_name)
@@ -148,6 +157,8 @@ end_time = timer()
 print("----------------")
 result = [end_time-start_time, data, initial_mapping]
 
-result_filename = f"bqskit/shuttling/qccd/new_result/QCCDSim_{input_filename}_{machine_type}_{num_ions_per_region}_{mapper_choice}.pkl"
+result_filename = f"bqskit/shuttling/qccd/rebuttal_result/precompiled_QCCDSim_{input_filename}_{machine_type}_{num_ions_per_region}_{mapper_choice}.pkl"
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)
+
+print(end_time-start_time)

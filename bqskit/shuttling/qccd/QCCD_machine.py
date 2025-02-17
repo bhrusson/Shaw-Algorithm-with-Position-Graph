@@ -432,8 +432,8 @@ class QCCDMachineModel(MachineModel):
 
 if __name__ == '__main__':
     from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
-    type = 'H'
-    trap_capacity = 5
+    type = 'H2'
+    trap_capacity = 3
     physical_model = create_testing_physical_machine(type=type,
                                                      trap_capacity=trap_capacity
                                                      )
