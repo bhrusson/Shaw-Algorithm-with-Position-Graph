@@ -4,7 +4,7 @@ from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
 from bqskit.ir.gates import CCXGate, CXGate
 from bqskit.ir import Operation
 
-physical_model = create_testing_physical_machine(trap_capacity=3,
+physical_model = create_testing_physical_machine(trap_capacity=6,
                                                  type='H2')
 timing_data = {'sq_timings': 30e-6,
                'tq_timings': 40e-6,
@@ -18,8 +18,8 @@ machine_model = QCCDMachineModel(physical_graph=physical_model,
                                  multi_qudit_gate_type='FM',
                                  timing_data=timing_data)
 
-ion_assignment = {0: 4, 1: 1, 2: 11, 3: 0, 4: 3, 5: 8, 6: 2, 7: 7, 8: 43, 9: 40, 10: 33, 11: 6, 12: 34, 13: 10, 14: 25, 15: 30, 16: 28, 17: 5, 18: 9, 19: 35}
-
+ion_assignment = {0: 24, 1: 2, 2: 62, 3: 52, 4: 64, 5: 19, 6: 39, 7: 28, 8: 65, 9: 40, 10: 51, 11: 26, 12: 53, 13: 66, 14: 4
+, 15: 14, 16: 7, 17: 55, 18: 3, 19: 61, 20: 16, 21: 38, 22: 15, 23: 29, 24: 27, 25: 9, 26: 8, 27: 56, 28: 18, 29: 46, 30: 10, 31: 30, 32: 54, 33: 33, 34: 63, 35: 11, 36: 13, 37: 36, 38: 43, 39: 20, 40: 5, 41: 21, 42: 45, 43: 58, 44: 50}
 # pi = [10, 7, 9, 8, 3, 2, 5, 1, 19, 0, 18, 4, 13, 6, 14, 15, 17, 12, 11, 16, 20, 21, 22, 23, 24, 25, 26, 27, 28]
 pi = list(range(machine_model.num_qudits))
 # circuit = Circuit(8)
@@ -35,7 +35,7 @@ mapping_algo = QCCDMappingAlgorithm(qccd_machine=machine_model,
                                     extended_set_size=5,
                                     extended_set_weight=0.5)
 mapping_algo._brute_force_congestion(
-    gate=Operation(CXGate(), (13, 17)),
+    gate=Operation(CCXGate(), (0, 13, 16)),
     D=machine_model.all_pair_travelling_time(),
     pi=pi,
     ion_assignment=ion_assignment

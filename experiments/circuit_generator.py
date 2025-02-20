@@ -114,10 +114,10 @@ def circuit_generate(circuit_type: str = "Toffoli", num_qubits: int = 3,
 
 
 if __name__ == "__main__":
-    num_qubits = 250
+    num_qubits = 50
     seed = 11
-    circuit_type = "QFT"
+    circuit_type = "QuantumVolume"
     cir = circuit_generate(circuit_type=circuit_type,
                            num_qubits=num_qubits,
                            seed=seed)
-    cir.save(f"bqskit/shuttling/qccd/benchmark_circuits/bqskit_QFT_{num_qubits}.qasm")
+    cir.save(f"bqskit/shuttling/qccd/benchmark_circuits/bqskit_{circuit_type}_{num_qubits}.qasm")

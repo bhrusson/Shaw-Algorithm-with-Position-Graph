@@ -39,7 +39,7 @@ def create_testing_physical_machine(
         max_traps_size.append(5)
         num_junctions = 0
         executable = [True, True, True, True, True, True, True, True, False, False]
-        measurable = [True, True, True, True, False, False, False, False, False, False]
+        measurable = [True, True, True, True, True, True, True, True, False, False]
         physical_machine = QCCD_physical_machine(num_traps=num_traps,
                                                  num_junctions=num_junctions,
                                                  max_traps_size=max_traps_size,
@@ -72,11 +72,12 @@ def create_testing_physical_machine(
                                      right=physical_machine.trap_list[7])
         physical_machine.print_physical_machine()
     elif type == "Helios":
-        num_traps = 20
-        max_traps_size = [trap_capacity] * num_traps
-        num_junctions = 0
-        executable = [True, True, True, True, False, False, False, False, False, False]
-        measurable = [True, True, True, True, False, False, False, False, False, False]
+        num_traps = 9
+        max_traps_size = [trap_capacity] * 8
+        max_traps_size.append(10)
+        num_junctions = 1
+        executable = [True, True, True, True, True, True, True, True, False]
+        measurable = [True, True, True, True, True, True, True, True, False]
         physical_machine = QCCD_physical_machine(num_traps=num_traps,
                                                  num_junctions=num_junctions,
                                                  max_traps_size=max_traps_size,
@@ -97,16 +98,16 @@ def create_testing_physical_machine(
                                      right=physical_machine.trap_list[6])
         physical_machine.add_segment(left=physical_machine.trap_list[6],
                                      right=physical_machine.trap_list[7])
-        """Left trap"""
-        physical_machine.add_segment(left=physical_machine.trap_list[0],
+        """Junction to traps"""
+        physical_machine.add_segment(left=physical_machine.junction_list[0],
+                                     right=physical_machine.trap_list[0])
+        physical_machine.add_segment(left=physical_machine.junction_list[0],
+                                     right=physical_machine.trap_list[4])
+        """Junction to storage"""
+        physical_machine.add_segment(left=physical_machine.trap_list[8],
+                                     right=physical_machine.junction_list[0])
+        physical_machine.add_segment(left=physical_machine.junction_list[0],
                                      right=physical_machine.trap_list[8])
-        physical_machine.add_segment(left=physical_machine.trap_list[4],
-                                     right=physical_machine.trap_list[8])
-        """Right trap"""
-        physical_machine.add_segment(left=physical_machine.trap_list[3],
-                                     right=physical_machine.trap_list[9])
-        physical_machine.add_segment(left=physical_machine.trap_list[7],
-                                     right=physical_machine.trap_list[9])
         physical_machine.print_physical_machine()
     elif type == "Enchilada":
         num_traps = 9

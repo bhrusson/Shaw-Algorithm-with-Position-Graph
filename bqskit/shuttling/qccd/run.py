@@ -62,7 +62,7 @@ num_qudits = cir.num_qudits
 """
 ion_assignment = {}
 all_available_trap_space = []
-for trap in machine_model.physical_graph.executable_trap_list: #trap_list:
+for trap in machine_model.physical_graph.trap_list:
     all_available_trap_space += machine_model.physical_to_position[trap.id]
 
 trap_seq = random.sample(all_available_trap_space, num_qudits)

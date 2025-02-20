@@ -180,7 +180,7 @@ class QCCDMappingAlgorithm:
                 # print("There is repetition..... !!!!!")
                 repeated_path = True
             if self.iter_count > math.ceil(longest_path / 2):
-                # print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
+                print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                 if modify_circuit:
                     for move in brute_force_moves:
@@ -206,7 +206,7 @@ class QCCDMappingAlgorithm:
                     F.remove(n)
                     prev_executed_counts.pop(n)
                     _logger.debug(f'Executing gate at point {n}.')
-                    # print(f'Executing gate at point {n}.')
+                    print(f'Executing gate at point {n}.')
                     if modify_circuit:
                         op = circuit[n]
                         physical_location = [pi[q] for q in op.location]
@@ -241,7 +241,7 @@ class QCCDMappingAlgorithm:
                 elif len(F) == 1 and self.extended_set_size == 0:
                     # Retrieve executable gates giving the current ion assignment `pi`
                     if self.iter_count > 2:
-                        # print("Try bruteforce due to repeated pattern...")
+                        print("Try bruteforce due to repeated pattern...")
                         brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                         if modify_circuit:
                             for move in brute_force_moves:
@@ -269,7 +269,7 @@ class QCCDMappingAlgorithm:
                                                    list(range(circuit.num_qudits)))
                 leading_moves += brute_force_moves
                 continue
-            # print(f"Best move: {best_move}")
+            print(f"Best move: {best_move}")
             self._apply_move(best_move, ion_assignment)
             leading_moves.append(best_move)
 
@@ -299,7 +299,7 @@ class QCCDMappingAlgorithm:
         leading_moves = []
         for p in gate.location:
             gate_pos.append(ion_assignment[pi[p]])
-        # print(f"Trying to solve brute-force congestion at gate {gate_pos} with {ion_assignment}")
+        print(f"Trying to solve brute-force congestion at gate {gate_pos} with {ion_assignment}")
         #raise ValueError("Stopping for debug....")
         _logger.debug(f"Trying to solve brute-force congestion at gate {gate_pos} with {ion_assignment}")
         selected_trap_space = []
@@ -359,8 +359,8 @@ class QCCDMappingAlgorithm:
 
         # Move the pos to the selected trap
         for pos_idx in range(len(gate_pos)):
-            # print(
-            #     f"Trying to moving ion {gate_pos[pos_idx]}... to {int(selected_trap_space[len(selected_trap_space) - 1 - pos_idx])}")
+            print(
+                f"Trying to moving ion {gate_pos[pos_idx]}... to {int(selected_trap_space[len(selected_trap_space) - 1 - pos_idx])}")
             #_logger.debug(f"Trying to moving ion {gate_pos[pos_idx]}...")
             # if pos_idx != len(gate_pos) - 1:
             #     print(f"Endpoint: {selected_end_point[pos_idx+1]}")
@@ -368,7 +368,7 @@ class QCCDMappingAlgorithm:
                 int(gate_pos[pos_idx]),
                 int(selected_trap_space[len(selected_trap_space) - 1 - pos_idx]), ion_assignment
             )
-            # print(f"Ion assignment after moving ion {gate_pos[pos_idx]}: {ion_assignment}")
+            print(f"Ion assignment after moving ion {gate_pos[pos_idx]}: {ion_assignment}")
             # _logger.debug(f"Ion assignment after moving ion {gate_pos[pos_idx]}: {ion_assignment}")
             # _logger.debug(f"Selected end point: {selected_end_point}")
             gate_pi = [pi[p] for p in gate.location]
@@ -378,35 +378,35 @@ class QCCDMappingAlgorithm:
             """
                 If too many ions are in the segment, move them back to trap. (Disable when trying H2 architecture)
             """
-            number_of_segment = len(self.qccd_machine.physical_to_position["segment_space"])
-            ion_at_segment = []
-            for ion in ion_assignment.keys():
-                if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
-                    ion_at_segment.append(ion)
-            if len(ion_at_segment) / number_of_segment >= self.cogestion_segment_rate:
-                # print("As there are many ions outside the traps, move them to the trap...")
-                available_spaces = []
-                for trap in self.qccd_machine.physical_graph.executable_trap_list:
-                    _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
-                    available_spaces += available_space
-                while ion_at_segment:
-                    leading_moves += self._brute_force_move(
-                        int(ion_assignment[ion_at_segment[0]]),
-                        int(available_spaces[0]), ion_assignment
-                    )
-                    available_spaces = []
-                    for trap in self.qccd_machine.physical_graph.executable_trap_list:
-                        _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
-                        available_spaces += available_space
-                    ion_at_segment = []
-                    for ion in ion_assignment.keys():
-                        if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
-                            ion_at_segment.append(ion)
-                    # print("Ion at segment: ", ion_at_segment)
-                    # print("Available trap space: ", available_spaces)
-            # print(f"Trying to solve brute-force congestion at gate {gate_pos} with {ion_assignment}")
-            # for ion_index in range(len(ion_order)):
-            #     gate_pos[ion_index] = ion_assignment[ion_order[ion_index]]
+            # number_of_segment = len(self.qccd_machine.physical_to_position["segment_space"])
+            # ion_at_segment = []
+            # for ion in ion_assignment.keys():
+            #     if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
+            #         ion_at_segment.append(ion)
+            # if len(ion_at_segment) / number_of_segment >= self.cogestion_segment_rate:
+            #     print("As there are many ions outside the traps, move them to the trap...")
+            #     available_spaces = []
+            #     for trap in self.qccd_machine.physical_graph.trap_list:
+            #         _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
+            #         available_spaces += available_space
+            #     while ion_at_segment:
+            #         leading_moves += self._brute_force_move(
+            #             int(ion_assignment[ion_at_segment[0]]),
+            #             int(available_spaces[0]), ion_assignment
+            #         )
+            #         available_spaces = []
+            #         for trap in self.qccd_machine.physical_graph.trap_list:
+            #             _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
+            #             available_spaces += available_space
+            #         ion_at_segment = []
+            #         for ion in ion_assignment.keys():
+            #             if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
+            #                 ion_at_segment.append(ion)
+            #         # print("Ion at segment: ", ion_at_segment)
+            #         # print("Available trap space: ", available_spaces)
+            #         # print(f"Trying to solve brute-force congestion at gate {gate_pos} with {ion_assignment}")
+            #     for ion_index in range(len(ion_order)):
+            #         gate_pos[ion_index] = ion_assignment[ion_order[ion_index]]
             """
                 Clearing the end-point of the selected trap
             """
@@ -416,7 +416,7 @@ class QCCDMappingAlgorithm:
                   (pos_idx != len(gate_pos) - 1 and
                    list(ion_assignment.keys())[list(ion_assignment.values()).index(selected_end_point[pos_idx + 1])]
                    not in gate_pi)):
-                # print(f"Clearing endpoint {selected_end_point[pos_idx+1]}.........")
+                print(f"Clearing endpoint {selected_end_point[pos_idx+1]}.........")
                 end_point_neighbors = self.qccd_machine.position_graph.get_neighbors_of(selected_end_point[pos_idx + 1])
                 # if any(position in end_point_neighbors for position in gate_pos):
                 #     print(f"Not clearing endpoint as it affect the next gate position...")
@@ -432,8 +432,8 @@ class QCCDMappingAlgorithm:
                 if not end_point_neighbors:
                     potential_blockage = [i for i in occupied_neighbors if self.qccd_machine.get_trap_id(i) is None]
                     leading_moves += self._brute_force_move(
-                        int(selected_end_point[pos_idx + 1]),
-                        int(potential_blockage[0]), ion_assignment
+                        int(selected_end_point[pos_idx + 1]), int(potential_blockage[0]),
+                        ion_assignment, clearing_ep=True
                     )
                 else:
                     self._apply_move((selected_end_point[pos_idx + 1], end_point_neighbors[0]), ion_assignment)
@@ -442,14 +442,15 @@ class QCCDMappingAlgorithm:
                     #       f"the endpoint")
             for ion_index in range(len(ion_order)):
                 gate_pos[ion_index] = ion_assignment[ion_order[ion_index]]
-            # print(f"Gate position gate updated to {gate_pos}--------------c")
+            print(f"Gate position gate updated to {gate_pos}--------------c")
         return leading_moves
 
     def _brute_force_move(
             self,
             position: int,
             trap_space: int,
-            ion_assignment: dict
+            ion_assignment: dict,
+            clearing_ep: bool = False
     ) -> list[tuple[int, int]]:
         """
             Physical function
@@ -496,12 +497,13 @@ class QCCDMappingAlgorithm:
             original_target: int,
             original_blockage: int,
             num_call: int = 0,
+            clearing_ep: bool = False,
     ) -> list[tuple[int, int]]:
         """
             Physical function
         """
-        # if num_call > 15:
-        #     raise ValueError("Too many repetitive call...")
+        if num_call > 100:
+            raise ValueError("Too many repetitive call...")
         # print(
         #     f"Trying to resolve blockage {blockage} from the target {target} path with ion assignment {ion_assignment}")
         _logger.debug(
@@ -515,8 +517,8 @@ class QCCDMappingAlgorithm:
         # print("Initial blockage neighbors: ", blockage_neighbors)
         if original_target in blockage_neighbors:
             blockage_neighbors.remove(original_target)
-        # if original_blockage in blockage_neighbors:
-        #     blockage_neighbors.remove(original_blockage)
+        if original_blockage in blockage_neighbors:
+            blockage_neighbors.remove(original_blockage)
         if target in blockage_neighbors:
             blockage_neighbors.remove(target)
         removed_blockage_neighbors = []
@@ -547,7 +549,7 @@ class QCCDMappingAlgorithm:
         # print(f"Potential blockage neighbors: {potential_blockage}")
         # Todo: Instead of simply use the first element, can we do sth better? (DONE)
         if blockage_neighbors:
-            congestion = np.array([self.congestion_rate(blockage_neighbor, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity) for
+            congestion = np.array([self.congestion_rate(blockage_neighbor, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity - 1 + num_call) for
                                          blockage_neighbor in blockage_neighbors])
             _logger.debug(f"Congestion: {congestion}")
             congestion_rates = congestion[:, 0]
@@ -570,8 +572,8 @@ class QCCDMappingAlgorithm:
             #     f"Perform move (1) {(blockage, blockage_neighbors[choosen_idx])} to try resolving the blockage at {blockage}")
             # print("Current ion assignment: ", ion_assignment)
             return leading_moves
-        else:
-            congestion = np.array([self.congestion_rate(blockage_neighbor, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity) for
+        elif potential_blockage:
+            congestion = np.array([self.congestion_rate(blockage_neighbor, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity - 1 + num_call) for
                                         blockage_neighbor in potential_blockage])
             congestion_rates = congestion[:, 0]
             congestion_scores = congestion[:, 1]
@@ -587,9 +589,9 @@ class QCCDMappingAlgorithm:
             else:
                 choosen_idx = int(choosen_indices[0][0])
 
-            if congestion_rates[choosen_idx] == 1.0:
+            if congestion_rates[choosen_idx] == 1.0 and clearing_ep is False:
                 # print(f"As the best path leads to deadend, we choose to re-add the target to potential neighbor")
-                if self.congestion_rate(target, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity)[0] < congestion_rates[choosen_idx]:
+                if self.congestion_rate(target, target, blockage, ion_assignment, depth=self.qccd_machine.max_ion_capacity - 1 + num_call)[0] <= congestion_rates[choosen_idx]:
                     # Reverse move (treat target as blockage and vice versa)
                     # print(f"Blockage: {blockage}, target: {target}")
                     leading_moves += self._resolve_congestion(blockage, [], target, ion_assignment,
@@ -602,10 +604,10 @@ class QCCDMappingAlgorithm:
                     blockage = target
                     target = ion_assignment[target_ion_index]
                     # print(f"Blockage: {blockage}, target: {target}")
-                    # if (self.qccd_machine.get_trap_id(blockage) != self.qccd_machine.get_trap_id(target)
-                    #         and self.qccd_machine.get_trap_id(blockage) is None):
-                    leading_moves += self._resolve_congestion(target, [], blockage, ion_assignment,
-                                                              original_target, original_blockage, num_call + 1)
+                    if (self.qccd_machine.get_trap_id(blockage) != self.qccd_machine.get_trap_id(target)
+                            and self.qccd_machine.get_trap_id(blockage) is None):
+                        leading_moves += self._resolve_congestion(target, [], blockage, ion_assignment,
+                                                                  original_target, original_blockage, num_call+1)
                     self._apply_move((blockage, target), ion_assignment)
                     leading_moves.append(tuple(sorted((blockage, target))))
                     # print(
@@ -625,29 +627,29 @@ class QCCDMappingAlgorithm:
                 #     f"Perform move (3) {(blockage, potential_blockage[choosen_idx])} to try resolving the blockage "
                 #     f"at {blockage} as we have moved the target ions.")
                 # print("Current ion assignment: ", ion_assignment)
-        # else:
-        #     print("No blockage neighbors...")
-        #     print(f"As the best path leads to deadend, we choose to re-add the target to potential neighbor")
-        #     print(f"Blockage: {blockage}, target: {target}")
-        #     leading_moves += self._resolve_congestion(blockage, [], target, ion_assignment,
-        #                                               original_target, original_blockage, num_call + 1)
-        #     self._apply_move((blockage, target), ion_assignment)
-        #     leading_moves.append(tuple(sorted((blockage, target))))
-        #     print(
-        #         f"Perform move (4) {(blockage, target)} to try resolving the blockage at {blockage}")
-        #     print("Current ion assignment: ", ion_assignment)
-        #     blockage = target
-        #     target = ion_assignment[target_ion_index]
-        #     print(f"Blockage: {blockage}, target: {target}")
-        #     if (self.qccd_machine.get_trap_id(blockage) != self.qccd_machine.get_trap_id(target)
-        #             and self.qccd_machine.get_trap_id(blockage) is None):
-        #         leading_moves += self._resolve_congestion(target, [], blockage, ion_assignment,
-        #                                                   original_target, original_blockage, num_call + 1)
-        #     self._apply_move((blockage, target), ion_assignment)
-        #     leading_moves.append(tuple(sorted((blockage, target))))
-        #     print(
-        #         f"Perform move (4') {(blockage, target)} to try resolving the blockage at {blockage}")
-        #     print("Current ion assignment: ", ion_assignment)
+        else:
+            # print("No blockage neighbors...")
+            # print(f"As the best path leads to deadend, we choose to re-add the target to potential neighbor")
+            # print(f"Blockage: {blockage}, target: {target}")
+            leading_moves += self._resolve_congestion(blockage, [], target, ion_assignment,
+                                                      original_target, original_blockage, num_call+1)
+            self._apply_move((blockage, target), ion_assignment)
+            leading_moves.append(tuple(sorted((blockage, target))))
+            # print(
+            #     f"Perform move (4) {(blockage, target)} to try resolving the blockage at {blockage}")
+            # print("Current ion assignment: ", ion_assignment)
+            blockage = target
+            target = ion_assignment[target_ion_index]
+            # print(f"Blockage: {blockage}, target: {target}")
+            if (self.qccd_machine.get_trap_id(blockage) != self.qccd_machine.get_trap_id(target)
+                    and self.qccd_machine.get_trap_id(blockage) is None):
+                leading_moves += self._resolve_congestion(target, [], blockage, ion_assignment,
+                                                          original_target, original_blockage, num_call+1)
+            self._apply_move((blockage, target), ion_assignment)
+            leading_moves.append(tuple(sorted((blockage, target))))
+            # print(
+            #     f"Perform move (4') {(blockage, target)} to try resolving the blockage at {blockage}")
+            # print("Current ion assignment: ", ion_assignment)
         return leading_moves
 
     def congestion_rate(self,
@@ -1028,7 +1030,7 @@ class QCCDMappingAlgorithm:
     #                                             D: list[list[float]],
     #                                             pi: dict) -> (float, float):
     #     # ToDo: If two point refer to the same point on the same trap, this create
-    #     #  local min situation and we need to modify this (2 point to 2 point on the same trap)
+    #     # local min situation and we need to modify this (2 point to 2 point on the same trap)
     #     distance = np.inf
     #     #print("Available space: ", available_space)
     #     for space in permutations(available_space, 2):
@@ -1291,5 +1293,3 @@ if __name__ == '__main__':
                                         extended_set_size=5,
                                         extended_set_weight=0.5)
     mapping_algo.forward_pass(circuit, pi, ion_assignment, modify_circuit=True)
-    qasm_result_filename = "bqskit/shuttling/qccd/result/mapping/Grover_5.qasm"
-    circuit.save(qasm_result_filename)
