@@ -20,7 +20,7 @@ commands=(
 )
 
 # Number of repetitions
-repetitions=5
+repetitions=2
 
 # Run each command multiple times
 for cmd in "${commands[@]}"; do
