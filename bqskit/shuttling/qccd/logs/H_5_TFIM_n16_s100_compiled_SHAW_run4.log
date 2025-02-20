@@ -1,0 +1,28 @@
+Input filename:  TFIM_n16_s100_compiled
+Algorithm:  SHAW
+Trap type:  H
+Trap capacity:  5
+Num layout passes:  2
+Gate type:  FM
+Run index:  4
+Creating a QCCD machine ...
+QCCD physical machine:
+### Traps ### 
+Trap(id='trap_0', max_num_ions=5, initial_num_ions=0, executable=True, measureable=False)
+Trap(id='trap_1', max_num_ions=5, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_2', max_num_ions=5, initial_num_ions=0, executable=True, measureable=False)
+Trap(id='trap_3', max_num_ions=5, initial_num_ions=0, executable=True, measureable=True)
+### Junctions ### 
+Junction(id='junction_0')
+Junction(id='junction_1')
+### Segments ### 
+Segment(id='segment_0', left=Trap(id='trap_0', max_num_ions=5, initial_num_ions=0, executable=True, measureable=False), right=Junction(id='junction_0'))
+Segment(id='segment_1', left=Trap(id='trap_1', max_num_ions=5, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_0'))
+Segment(id='segment_2', left=Junction(id='junction_0'), right=Junction(id='junction_1'))
+Segment(id='segment_3', left=Trap(id='trap_2', max_num_ions=5, initial_num_ions=0, executable=True, measureable=False), right=Junction(id='junction_1'))
+Segment(id='segment_4', left=Trap(id='trap_3', max_num_ions=5, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_1'))
+Finished creating the QCCD physical machine.
+Position graph:  CouplingGraph({(3, 4), (12, 13), (21, 22), (22, 23), (8, 9), (17, 18), (19, 24), (13, 14), (18, 19), (5, 6), (20, 22), (23, 24), (4, 20), (0, 1), (1, 2), (10, 11), (6, 7), (15, 16), (20, 21), (14, 23), (22, 24), (2, 3), (11, 12), (9, 21), (7, 8), (16, 17)})
+Initial ion assignment:  {0: 15, 1: 8, 2: 2, 3: 9, 4: 3, 5: 0, 6: 19, 7: 5, 8: 6, 9: 18, 10: 4, 11: 7, 12: 16, 13: 1, 14: 12, 15: 10}
+Congestion rate:  1.0
+Scheduling QCCD: 31780.99999999997 us, costing 36.247631854144856 s to compile

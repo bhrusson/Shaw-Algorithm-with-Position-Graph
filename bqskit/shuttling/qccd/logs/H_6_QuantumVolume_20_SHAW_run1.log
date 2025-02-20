@@ -1,0 +1,28 @@
+Input filename:  QuantumVolume_20
+Algorithm:  SHAW
+Trap type:  H
+Trap capacity:  6
+Num layout passes:  2
+Gate type:  FM
+Run index:  1
+Creating a QCCD machine ...
+QCCD physical machine:
+### Traps ### 
+Trap(id='trap_0', max_num_ions=6, initial_num_ions=0, executable=True, measureable=False)
+Trap(id='trap_1', max_num_ions=6, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_2', max_num_ions=6, initial_num_ions=0, executable=True, measureable=False)
+Trap(id='trap_3', max_num_ions=6, initial_num_ions=0, executable=True, measureable=True)
+### Junctions ### 
+Junction(id='junction_0')
+Junction(id='junction_1')
+### Segments ### 
+Segment(id='segment_0', left=Trap(id='trap_0', max_num_ions=6, initial_num_ions=0, executable=True, measureable=False), right=Junction(id='junction_0'))
+Segment(id='segment_1', left=Trap(id='trap_1', max_num_ions=6, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_0'))
+Segment(id='segment_2', left=Junction(id='junction_0'), right=Junction(id='junction_1'))
+Segment(id='segment_3', left=Trap(id='trap_2', max_num_ions=6, initial_num_ions=0, executable=True, measureable=False), right=Junction(id='junction_1'))
+Segment(id='segment_4', left=Trap(id='trap_3', max_num_ions=6, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_1'))
+Finished creating the QCCD physical machine.
+Position graph:  CouplingGraph({(3, 4), (26, 27), (12, 13), (21, 22), (22, 23), (23, 28), (8, 9), (27, 28), (25, 26), (17, 27), (13, 14), (24, 26), (18, 19), (4, 5), (14, 15), (0, 1), (9, 10), (1, 2), (10, 11), (5, 24), (19, 20), (6, 7), (15, 16), (11, 25), (24, 25), (26, 28), (20, 21), (2, 3), (7, 8), (16, 17)})
+Initial ion assignment:  {0: 20, 1: 16, 2: 3, 3: 5, 4: 4, 5: 7, 6: 19, 7: 9, 8: 21, 9: 11, 10: 14, 11: 6, 12: 22, 13: 10, 14: 12, 15: 15, 16: 2, 17: 1, 18: 13, 19: 0}
+Congestion rate:  1.0
+Scheduling QCCD: 10766.000000000005 us, costing 70.98569407593459 s to compile
