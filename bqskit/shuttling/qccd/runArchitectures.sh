@@ -2,13 +2,13 @@
 
 # Array of commands to execute
 commands=(
-    'python bqskit/shuttling/qccd/run.py "QAOA_45_compiled" "SHAPER" "H2" "4" "2" "FM" {i}'
-    'python bqskit/shuttling/qccd/run.py "QFT_45_compiled" "SHAPER" "H2" "4" "2" "FM" {i}'
-    'python bqskit/shuttling/qccd/run.py "bqskit_QuantumVolume_45" "SHAPER" "H2" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QAOA_45_compiled" "SHAPER" "H2" "5" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QFT_45_compiled" "SHAPER" "H2" "5" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "bqskit_QuantumVolume_45" "SHAPER" "H2" "5" "2" "FM" {i}'
 
-    'python bqskit/shuttling/qccd/run.py "QFT_50_compiled" "SHAPER" "H2" "4" "2" "FM" {i}'
-    'python bqskit/shuttling/qccd/run.py "QAOA_50_compiled" "SHAPER" "H2" "4" "2" "FM" {i}'
-    'python bqskit/shuttling/qccd/run.py "bqskit_QuantumVolume_50" "SHAPER" "H2" "4" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QFT_50_compiled" "SHAPER" "H2" "5" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "QAOA_50_compiled" "SHAPER" "H2" "5" "2" "FM" {i}'
+    'python bqskit/shuttling/qccd/run.py "bqskit_QuantumVolume_50" "SHAPER" "H2" "5" "2" "FM" {i}'
 )
 
 # Number of repetitions
