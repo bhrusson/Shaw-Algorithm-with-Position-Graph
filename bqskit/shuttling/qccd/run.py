@@ -85,15 +85,15 @@ print("Congestion rate: ", congestion_rate)
 gate_count_weight = 0.1
 
 qsearch_pass = QSearchSynthesisPass()
-block_size = 3
+block_size = 2
 if algo_type == "SHAW":
     workflow = [
         UnfoldPass(),
         SetModelPass(machine_model),
         UpdateDataPass(key='ion_assignment_qccd', val=ion_assignment),
         # Re-target the gate
-        QuickPartitioner(block_size),
-        ApplyPlacement(),
+        # QuickPartitioner(block_size),
+        # ApplyPlacement(),
         QCCDLayoutPass(total_passes=num_layout_passes,
                        cogestion_rate=congestion_rate),
         QCCDRoutingPass(gate_count_weight,
@@ -140,7 +140,7 @@ output_circuit.save(qasm_result_filename)
 """
 Calculating runtime
 """
-runtime = schedule_QCCD(data["instruction_list"],
+runtime, sp = schedule_QCCD(data["instruction_list"],
                         output_circuit,
                         data.initial_mapping,
                         data['initial_ion_assignment_qccd'],

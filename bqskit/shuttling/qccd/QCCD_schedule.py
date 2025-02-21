@@ -22,6 +22,8 @@ def schedule_QCCD(
     executing_blocks = []
     drop_out_duration = 0.0
     executing_duration = 0.0
+    shuttling_time = 0.0
+    execution_time = 0.0
     next_gate = None
     just_executed = False
     first_time_executed = True
@@ -73,6 +75,7 @@ def schedule_QCCD(
                 # ion_assignment = copy.copy(ion_assignment_to_be_update[-1])
                 # print("Ion assignment is updated: {}".format(ion_assignment))
                 runtime += max(serial_moves_runtime)
+                shuttling_time += max(serial_moves_runtime)
                 runtime -= 5e-6
                 parallization_moves = []
                 #print("Time stamp after parallel moves: {}".format(runtime))
@@ -89,6 +92,9 @@ def schedule_QCCD(
                     #print("Operation: ", op)
                     if op.num_qudits == 2 and not parallel:
                         runtime += qccd_machine.two_qudit_gate_time(
+                            p1=ion_assignment[initial_mapping.index(op.location[0])],
+                            p2=ion_assignment[initial_mapping.index(op.location[1])], )
+                        execution_time += qccd_machine.two_qudit_gate_time(
                             p1=ion_assignment[initial_mapping.index(op.location[0])],
                             p2=ion_assignment[initial_mapping.index(op.location[1])], )
                     elif op.num_qudits == 2 and parallel:
@@ -148,6 +154,7 @@ def schedule_QCCD(
                                 p2=ion_assignment[initial_mapping.index(op.location[1])], )
                     block_runtime.append(max(executable_dict.values()))
                 runtime += max(block_runtime)
+                execution_time += max(block_runtime)
                 executing_duration = max(block_runtime)
                 ion_assignment = copy.copy(ion_assignment_to_be_update[-1])
                 #print("Updated ion assignment: {}".format(ion_assignment))
@@ -191,11 +198,12 @@ def schedule_QCCD(
             else:
                 ion_assignment = ast.literal_eval(instruction[1])
                 runtime += cost
+                shuttling_time += cost
             num_cycles += 1
             # print("Current runtime {}".format(runtime))
         else:
             raise ValueError(f"Instruction must be 'Execute' or 'Move'. But return {instruction_parts[0]}")
-    return runtime
+    return runtime, shuttling_time/(shuttling_time+execution_time)
 
 
 if __name__ == "__main__":
@@ -232,6 +240,7 @@ if __name__ == "__main__":
                 print(f"SHAPER_{circuit_lst[circuit_idx]}_{architecture}_{param}_{num_layout}")
                 shuttling_time = []
                 runtime_lst = []
+                sp_lst = []
                 for idx in range(1, 6):
                     file_name = f"SHAPER_{circuit_lst[circuit_idx]}_idx{idx}_{architecture}_{param}_{num_layout}"
                     qasm_name = f"{circuit_lst[circuit_idx]}_idx{idx}_{architecture}_{param}_{num_layout}"
@@ -245,18 +254,20 @@ if __name__ == "__main__":
                         stored_data = data = pickle.load(input_file)
                     (runtime, compile_time, instruction_lst, output_circuit, gate_counts,
                      initial_ion_assignment, initial_mapping, final_mapping, machine_model) = stored_data
-                    # output_circuit = Circuit.from_file(f"bqskit/shuttling/qccd/new_result/{qasm_name}.qasm")
-                    # shuttlingtime = schedule_QCCD(instructions_list=instruction_lst,
-                    #                         circuit=output_circuit,
-                    #                         initial_mapping=initial_mapping,
-                    #                         initial_ion_assignment=initial_ion_assignment,
-                    #                         qccd_machine=machine_model)
-                    shuttling_time.append(runtime/1e-6)
+                    output_circuit = Circuit.from_file(f"bqskit/shuttling/qccd/new_result/{qasm_name}.qasm")
+                    shuttlingtime, sp = schedule_QCCD(instructions_list=instruction_lst,
+                                            circuit=output_circuit,
+                                            initial_mapping=initial_mapping,
+                                            initial_ion_assignment=initial_ion_assignment,
+                                            qccd_machine=machine_model)
+                    shuttling_time.append(shuttlingtime/1e-6)
+                    sp_lst.append(sp)
                     runtime_lst.append(compile_time)
                 all_runtime.append(runtime_lst[int(np.argmin(shuttling_time))])
                 all_variance.append(np.std(shuttling_time)/np.average(shuttling_time))
                 print(f"Min shuttling time {np.min(shuttling_time)} with {np.std(shuttling_time)}")
                 print(f"Runtime {runtime_lst[int(np.argmin(shuttling_time))]} with {np.std(runtime_lst)}")
+                print(f"Profiling {sp_lst[int(np.argmin(shuttling_time))]}")
     print(np.average(all_runtime))
     print(np.average(all_variance)*100)
 

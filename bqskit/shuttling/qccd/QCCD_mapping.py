@@ -179,7 +179,7 @@ class QCCDMappingAlgorithm:
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 # print("There is repetition..... !!!!!")
                 repeated_path = True
-            if self.iter_count > math.ceil(longest_path / 2):
+            if self.iter_count > math.ceil(longest_path / 4):
                 print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                 if modify_circuit:
@@ -744,7 +744,7 @@ class QCCDMappingAlgorithm:
             if len(leading_moves) > 2 and leading_moves[-1] == leading_moves[-2] and not executed_flag:
                 # print("There is repetition..... !!!!!")
                 repeated_path = True
-            if self.iter_count > math.ceil(longest_path/ 2):
+            if self.iter_count > math.ceil(longest_path/4):
                 # print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
                 leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
             # print("Current ion mapping: ", ion_assignment)

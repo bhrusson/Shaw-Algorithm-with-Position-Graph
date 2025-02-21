@@ -149,7 +149,8 @@ class Analyzer:
         print("OPCOUNTS Gate:", op_count[Schedule.Gate], "Split:", op_count[Schedule.Split], "Move:", op_count[Schedule.Move], "Merge:", op_count[Schedule.Merge])
         print("Gate:", op_times[Schedule.Gate], "Split:", op_times[Schedule.Split], "Move:", op_times[Schedule.Move], "Merge:", op_times[Schedule.Merge])
         print("Fidelity:", math.exp(log_fidelity))
+        print("Shuttling profiling:", 100*(op_times[Schedule.Split] + op_times[Schedule.Move] + op_times[Schedule.Merge])/(op_times[Schedule.Gate] + op_times[Schedule.Split] + op_times[Schedule.Move] + op_times[Schedule.Merge]))
         heating_sum = sum(self.chain_heating)
         print("Heating:", int(heating_sum))
-        self.schedule.print_events()
+        #self.schedule.print_events()
         return prog_fin_time, op_count, op_times, heating_sum, self.schedule, self.schedule.events
