@@ -16,3 +16,4 @@ build
 scratch/
 bqskit_dev
 .idea
+venv
