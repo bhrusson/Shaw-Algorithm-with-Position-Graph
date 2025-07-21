@@ -5,6 +5,20 @@ from bqskit.shuttling.qccd import Node, Segment
 from bqskit.compiler.gateset import GateSet, GateSetLike
 from bqskit.ir.gates.parameterized import RZGate, RZZGate, U1qPi2Gate, U1qPiGate
 
+from typing import NamedTuple
+
+
+class Node(NamedTuple):
+    id: str
+    max_num: int
+    executable: bool = True
+    measureable: bool = False
+
+
+class Segment(NamedTuple):
+    id: str
+    left: Node | Segment
+    right: Node | Segment
 
 class MachineModel(ABC):
     @abstractmethod
