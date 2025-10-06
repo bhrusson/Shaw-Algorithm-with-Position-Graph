@@ -1,47 +1,60 @@
 import numpy as np
 import rustworkx as rx
-from enum import Enum
+from enum import IntFlag
 from typing import Tuple, List, Sequence, Mapping, Dict, Callable, Optional
 from dataclasses import dataclass
 
-class PositionCapability(Enum):
+class PositionCapability(IntFlag):
     NONE = 0
     EXECUTE = 0b001
     MEASURE = 0b010
     STARTING = 0b100
 
-@dataclass
+@dataclass (frozen=True)
 class PositionLabel:
     capability: int
-    weights: Dict[int, float]
+    weights: Dict[PositionCapability, float]
 
-
-    def has_capability(self, capability: PositionCapability) -> bool:
-        return self.capability & capability != 0
+    def is_none(self) -> bool:
+          return self.capability == PositionCapability.NONE.value
     
+    def has_capability(self, capability: PositionCapability) -> bool:
+        if capability == PositionCapability.NONE:
+            return self.capability == PositionCapability.NONE.value
+        return bool(self.capability & capability)
+         
     def get_weight(self, capability: PositionCapability) -> float:
         if not self.has_capability(capability):
-            raise ValueError(f"Capability {capability.name} not present in this edge")
-        return self.weights.get(capability, float('inf')) 
+            raise ValueError(f"Capability {capability.name} not present in this position")
+        return self.weights.get(capability, float('inf'))
 
 # TODO (BRENT): Read dataclass documentation, update the other labels accordingly
 # Combine EdgeCapabilities into one (Execute doesn't need to be separate from moovement (in implmentation))
 #
 # Brent - I have attempted to do this.
 
-class EdgeCapability(Enum):
+class EdgeCapability(IntFlag):
     NONE = 0
     MOVE = 0b001
     SWAP = 0b010
     EXECUTE = 0b100
 
-@dataclass
+@dataclass (frozen=True)
 class EdgeLabel:
     capability: int
-    weights: Dict[int, float]
+    weights: Dict[EdgeCapability, float]   #These should match the EdgeCapability values, so 1:0.2 , 
+                                #2:0.5 , 4:0.7 would be a weight of 0.2 on MOVE, 0.5
+                                #on SWAP etc. 
 
+    def is_none(self) -> bool:
+          return self.capability == EdgeCapability.NONE.value
+    
+    #bitwise and
     def has_capability(self, capability: EdgeCapability) -> bool:
-          return self.capability & capability != 0
+        if capability == EdgeCapability.NONE:
+            return self.capability == EdgeCapability.NONE.value
+        return bool(self.capability & capability)
+
      
     def get_weight(self, capability: EdgeCapability) -> float:
         if not self.has_capability(capability):
@@ -57,11 +70,17 @@ class PositionGraph:
         ) -> None:
         self._radices = list(radices)
         self._pos_labels = list(pos_labels)
-        self._edge_labels = edge_labels
+        self._edge_labels = dict(edge_labels)
 
         self._graph = rx.PyDiGraph()
-        self._graph.add_nodes_from(pos_labels)
-        self._graph.add_edges_from(list(edge_labels.items()))
+        self._graph.add_nodes_from(self._pos_labels)
+        self._graph.add_edges_from([(u, v, lbl) for (u, v), lbl in self._edge_labels.items()])
+
+    def __str__(self) -> None:
+
+        output = "radices" + str(self._radices) + "\n" + "_pos_labels" + str(self._pos_labels)  + "\n" + "_edge_labels" + str(self._edge_labels) + "\n" 
+        return output
+
 
     def check_pos_index(self, index: int) -> None:
         if (index < 0 or index >= len(self.position_labels)):
@@ -99,9 +118,8 @@ class PositionGraph:
 
     @property
     def all_edge_labels(self) -> List[EdgeLabel]:
-            return [label for _, _, label in self.edge_labels]
-
-   
+            return list(self._edge_labels.values())
+    
     def edge_label(self, edge_index1: int, edge_index2: int) -> EdgeLabel:
             try:
                  return self.edge_labels[(edge_index1, edge_index2)]
@@ -114,10 +132,10 @@ class PositionGraph:
 
     
     def edges_with_label(self, label: EdgeLabel) -> List[Tuple[int, int]]:
-            return [(u, v) for u, v, edge_label in self.edge_labels if edge_label == label]
+            return [(u, v) for (u, v), edge_label in self.edge_labels.items() if edge_label == label]
    
     
-    def subgraph_by_position_capibility(self, position_capability: PositionCapability) -> rx.PyDiGraph:
+    def subgraph_by_position_capability(self, position_capability: PositionCapability) -> rx.PyDiGraph:
         valid_nodes = [i for i, label in enumerate(self.position_labels) if label.has_capability(position_capability)]
         return self._graph.subgraph(valid_nodes)
         
@@ -130,14 +148,13 @@ class PositionGraph:
 
         # Filter edges based on capability and optional weight filter
         for (u, v), label in self._edge_labels.items():
-            if label.has_capability(edge_capability):
-                if weight_filter is None or weight_filter(label):
-                    projected.add_edge(u,v,label)
+            if (label.has_capability(edge_capability) and (weight_filter is None or weight_filter(label))):
+                projected.add_edge(u,v,label)
         
         return projected
         
     
-    def get_valid_starting_position(self) -> list[int]:
+    def get_valid_starting_positions(self) -> list[int]:
         return[
             index
             for index, label in enumerate(self.position_labels)
@@ -147,7 +164,11 @@ class PositionGraph:
     #Trying to define an executable cluster exactly still. MOVE vs SWAP (needs both, either, directional?), fully connected, vs Strongly Connected, vs Weakly Connected
     #Edges in the cluster must be connected looking at the MOVE projected graph 
     #Positions also must have the EXECUTE label
-    def executable_clusters(self, move_weight_filter: Callable[[EdgeLabel],bool] = None, execute_weight_filter: Callable[[EdgeLabel],bool] = None) -> list[list[int]]:
+    def executable_clusters(
+            self,
+            move_weight_filter: Callable[[EdgeLabel],bool] = None,
+            execute_weight_filter: Callable[[EdgeLabel],bool] = None
+            ) -> Sequence[Sequence[int]]:
         move_graph = self.get_projected_graph(EdgeCapability.MOVE,move_weight_filter)
         execute_graph = self.get_projected_graph(EdgeCapability.EXECUTE,execute_weight_filter)
         execute_positions = [
@@ -155,43 +176,57 @@ class PositionGraph:
             if label.has_capability(PositionCapability.EXECUTE)
         ]
         clusters = []
-        for component in rx.strongly_connected_components(move_graph):    
+        for component in rx.weakly_connected_components(move_graph):    
             pos = [p for p in component if p in execute_positions]
             if not pos:
                 continue
 
             subgraph = execute_graph.subgraph(pos)
-            n = len(pos)
             # Fully connected directed subgraph: n*(n-1) edges
-            if subgraph.num_edges() == n * (n - 1):
-                clusters.append(pos)
+            exec_subclusters = list(rx.weakly_connected_components(subgraph))
+            clusters.extend(exec_subclusters)
         
         return clusters
         
-    #This is less strict on being fully connected, the direction of execute edges are ignored.
-    #I believe this will show if a position has a path to an executable cluster
-    def connected_to_executable_clusters(self, move_weight_filter: Callable[[EdgeLabel],bool] = None, execute_weight_filter: Callable[[EdgeLabel],bool] = None) -> list[list[int]]:
+    #This will return a mapping from each executable cluster to the list of positions that can reach it via MOVE edges
+    def connected_to_executable_clusters(
+            self,
+            move_weight_filter: Callable[[EdgeLabel],bool] = None,
+            execute_weight_filter: Callable[[EdgeLabel],bool] = None
+            ) -> Mapping[int,Sequence[int]]:
         move_graph = self.get_projected_graph(EdgeCapability.MOVE,move_weight_filter)
         execute_graph = self.get_projected_graph(EdgeCapability.EXECUTE,execute_weight_filter)
         execute_positions = [
             i for i, label in enumerate(self.position_labels)
             if label.has_capability(PositionCapability.EXECUTE)
         ]
-        clusters = []
+        move_components = list(rx.weakly_connected_components(move_graph))
+        cluster_map: dict[int, list[int]] = {}
+        cluster_idx = 0
+        for move_component in move_components:
+            exec_nodes = [n for n in move_component if n in execute_positions]
+            if not exec_nodes:
+                continue
+            exec_subgraph = execute_graph.subgraph(exec_nodes)
+            exec_clusters = list(rx.weakly_connected_components(exec_subgraph))
 
-        for component in rx.strongly_connected_components(move_graph):
-            pos = [n for n in component if n in execute_positions]
-            if not pos:
-                continue 
+            for exec_cluster in exec_clusters:
+                connected_nodes = set()
+                undirected_move = move_graph.to_undirected()
 
-            execute_subgraph = execute_graph.subgraph(pos)
-            if len(list(rx.weakly_connected_components(execute_subgraph))) == 1:
-                clusters.append(pos)
+                for node in move_component:
+                    for target in exec_cluster:
+                        if rx.has_path(undirected_move, node, target):
+                            connected_nodes.add(node)
+                            break  # Stop after first reachable target
 
-        return clusters
+                cluster_map[cluster_idx] = sorted(list(connected_nodes))
+                cluster_idx += 1
+        return cluster_map
     
-    def nearest_cluster(self, pos_id: int, clusters: Sequence[Sequence[int]]) -> Optional[List[int]]:
+    def nearest_cluster(self, pos_id: int, clusters: Sequence[Sequence[int]]) -> Optional[Tuple[List[int], float]]:
         move_graph = self.get_projected_graph(EdgeCapability.MOVE)
+        self.check_pos_index(pos_id)
 
         min_distance = float('inf')
         nearest = None
@@ -200,15 +235,14 @@ class PositionGraph:
             # Compute distance to the nearest node in this cluster
             for target in cluster:
                 try:
-                    distance = rx.digraph_dijkstra_shortest_path_lengths(move_graph, pos_id)[target] #Do I need to add an optional edge cost fn?
+                    distance = rx.digraph_dijkstra_shortest_path_lengths(move_graph, pos_id, edge_cost_fn=lambda edge: edge.get_weight(EdgeCapability.MOVE))[target]
                     if distance < min_distance:
                         min_distance = distance
                         nearest = cluster
                 except KeyError:
                     # No path to this target node
                     continue
-
-        return nearest
+        return nearest, min_distance
     
     #Can functions, Can move from 1 position to another, How to move from 1 pos to another, 
     # We need to be able to "reason about" clusterts of executable gates. Succcinct set of function calls that allows us to work with this concept
