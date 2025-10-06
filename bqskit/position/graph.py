@@ -75,6 +75,9 @@ class PositionGraph:
         self._graph = rx.PyDiGraph()
         self._graph.add_nodes_from(self._pos_labels)
         self._graph.add_edges_from([(u, v, lbl) for (u, v), lbl in self._edge_labels.items()])
+        #executable_clusters = self.executable_clusters()
+        #move_graph = self.get_projected_graph(EdgeCapability.MOVE)
+        #execute_graph = self.get_projected_graph(EdgeCapability.EXECUTE)
 
     def __str__(self) -> None:
 
@@ -161,39 +164,84 @@ class PositionGraph:
             if label.has_capability(PositionCapability.STARTING)
         ]
 
-    #Trying to define an executable cluster exactly still. MOVE vs SWAP (needs both, either, directional?), fully connected, vs Strongly Connected, vs Weakly Connected
-    #Edges in the cluster must be connected looking at the MOVE projected graph 
-    #Positions also must have the EXECUTE label
-    def executable_clusters(
-            self,
-            move_weight_filter: Callable[[EdgeLabel],bool] = None,
-            execute_weight_filter: Callable[[EdgeLabel],bool] = None
-            ) -> Sequence[Sequence[int]]:
-        move_graph = self.get_projected_graph(EdgeCapability.MOVE,move_weight_filter)
-        execute_graph = self.get_projected_graph(EdgeCapability.EXECUTE,execute_weight_filter)
-        execute_positions = [
-            i for i, label in enumerate(self.position_labels)
-            if label.has_capability(PositionCapability.EXECUTE)
-        ]
-        clusters = []
-        for component in rx.weakly_connected_components(move_graph):    
-            pos = [p for p in component if p in execute_positions]
-            if not pos:
-                continue
+    def executable_clusters2(
+    self,
+    move_weight_filter: Callable[[EdgeLabel], bool] = None,
+    execute_weight_filter: Callable[[EdgeLabel], bool] = None
+    ) -> Sequence[Sequence[int]]:
 
-            subgraph = execute_graph.subgraph(pos)
-            # Fully connected directed subgraph: n*(n-1) edges
-            exec_subclusters = list(rx.weakly_connected_components(subgraph))
-            clusters.extend(exec_subclusters)
-        
+        move_graph = self.get_projected_graph(EdgeCapability.MOVE, move_weight_filter)
+        exec_graph = self.get_projected_graph(EdgeCapability.EXECUTE, execute_weight_filter)
+
+        execute_nodes = [i for i, label in enumerate(self.position_labels)
+                        if label.has_capability(PositionCapability.EXECUTE)]
+
+        filtered_move_edges = [(u, v) for u, v in move_graph.edge_list()
+                            if u in execute_nodes and v in execute_nodes]
+
+        # Build adjacency map
+        adj = {i: set() for i in execute_nodes}
+        for u, v in filtered_move_edges:
+            adj[u].add(v)
+            adj[v].add(u)  # for weak connectivity
+
+        visited = set()
+        clusters = []
+
+        for node in execute_nodes:
+            if node not in visited:
+                stack = [node]
+                component = set()
+                while stack:
+                    n = stack.pop()
+                    if n not in visited:
+                        visited.add(n)
+                        component.add(n)
+                        stack.extend(adj[n] - visited)
+
+                # EXECUTE edges fully connect?
+                subgraph_exec_edges = [(u, v) for u, v in exec_graph.edge_list()
+                                    if u in component and v in component]
+                n = len(component)
+                if len(subgraph_exec_edges) == n * (n - 1):
+                    clusters.append(sorted(component))
+
         return clusters
-        
+
+    
+    def executable_clusters(
+        self,
+        move_weight_filter: Callable[[EdgeLabel], bool] = None,
+        execute_weight_filter: Callable[[EdgeLabel], bool] = None
+    ) -> Sequence[Sequence[int]]:
+    
+        move_graph = self.get_projected_graph(EdgeCapability.MOVE, move_weight_filter)
+        exec_graph = self.get_projected_graph(EdgeCapability.EXECUTE, execute_weight_filter)
+        execute_nodes = [i for i, label in enumerate(self.position_labels) 
+                     if label.has_capability(PositionCapability.EXECUTE)]
+        for g in [move_graph, exec_graph]:
+            for i, label in enumerate(self.position_labels):
+                if i not in execute_nodes:
+                    try:
+                        g.remove_node(i)
+                    except IndexError:
+                        continue
+
+        clusters = []
+        for component in rx.weakly_connected_components(move_graph):
+            # Only keep those where the EXECUTE graph is fully connected (all nodes have EXECUTE edges to each other)
+            subgraph_exec_edges = [(u, v) for u, v in exec_graph.edge_list() if u in component and v in component]
+
+            if len(subgraph_exec_edges) > 0:  # at least one EXECUTE edge between them
+                clusters.append(list(component))
+        return clusters
+
     #This will return a mapping from each executable cluster to the list of positions that can reach it via MOVE edges
     def connected_to_executable_clusters(
-            self,
-            move_weight_filter: Callable[[EdgeLabel],bool] = None,
-            execute_weight_filter: Callable[[EdgeLabel],bool] = None
-            ) -> Mapping[int,Sequence[int]]:
+        self,
+        move_weight_filter: Callable[[EdgeLabel],bool] = None,
+        execute_weight_filter: Callable[[EdgeLabel],bool] = None
+    ) -> Mapping[int,Sequence[int]]:
         move_graph = self.get_projected_graph(EdgeCapability.MOVE,move_weight_filter)
         execute_graph = self.get_projected_graph(EdgeCapability.EXECUTE,execute_weight_filter)
         execute_positions = [
@@ -223,7 +271,7 @@ class PositionGraph:
                 cluster_map[cluster_idx] = sorted(list(connected_nodes))
                 cluster_idx += 1
         return cluster_map
-    
+
     def nearest_cluster(self, pos_id: int, clusters: Sequence[Sequence[int]]) -> Optional[Tuple[List[int], float]]:
         move_graph = self.get_projected_graph(EdgeCapability.MOVE)
         self.check_pos_index(pos_id)
@@ -243,6 +291,40 @@ class PositionGraph:
                     # No path to this target node
                     continue
         return nearest, min_distance
+
+    def shortest_path(self,start: int,target: int,edge_capability: EdgeCapability = EdgeCapability.MOVE) -> Optional[Tuple[List[int], float]]:
+        self.check_pos_index(start)
+        self.check_pos_index(target)
+
+        graph = self.get_projected_graph(edge_capability)
+
+        try:
+            # Compute Dijkstra shortest path lengths and predecessors
+            lengths, predecessors = rx.digraph_dijkstra_shortest_path_lengths(
+                graph,
+                start,
+                edge_cost_fn=lambda edge: edge.get_weight(edge_capability),
+                return_predecessors=True
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to compute shortest path: {e}")
+
+        if target not in lengths:
+            # No path exists
+            return None
+
+        # Reconstruct the path from predecessors
+        path = []
+        current = target
+        while current != start:
+            path.append(current)
+            current = predecessors.get(current)
+        path.append(start)
+        path.reverse()
+
+        return path, lengths[target]
+
+        
     
     #Can functions, Can move from 1 position to another, How to move from 1 pos to another, 
     # We need to be able to "reason about" clusterts of executable gates. Succcinct set of function calls that allows us to work with this concept
