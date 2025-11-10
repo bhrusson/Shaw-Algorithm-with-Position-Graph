@@ -1,4 +1,6 @@
 import numpy as np
+import bqskit
+import pkgutil
 import rustworkx as rx
 from rustworkx.visualization import mpl_draw
 import matplotlib.pyplot as plt
@@ -6,7 +8,7 @@ from enum import Enum
 from typing import Tuple, List, Sequence, Mapping, Dict, Callable, Optional
 from enum import Enum, IntFlag
 from dataclasses import dataclass
-from bqskit.position.graph import *
+from bqskit_local.position.graph import *
 from .graph import *
 
 def testLabels() -> None:
@@ -14,7 +16,7 @@ def testLabels() -> None:
         for i in range(8):
             edgeLabel_i = EdgeLabel(i,{i:i + (i*0.27)})
             print("i:" + str(i) +" is_none() :")
-            print(edgeLabel_i.is_none())
+            #print(edgeLabel_i.is_none())
 
             for j in range(8):
                 try:
@@ -31,14 +33,42 @@ def testLabels() -> None:
             print("Thank You")
         print("You're Welcome!")   
 
+
+        print([name for _, name, _ in pkgutil.iter_modules(bqskit.__path__)])
+
+
+
+
 def testGraphs() -> None:
-    g = make_16_node_sc_graph()
-    print(g.executable_clusters())
-    print(g.executable_clusters2())
+    """g = make_16_node_sc_graph()
+    pos_graph_plot_stats(g)
+
     g = make_2_cluster_graph()
+    pos_graph_plot_stats(g)
+
+    g = make_2_cluster_graph_notFC()
+    pos_graph_plot_stats(g)
+
+    g = make_connected_loop()
+    #pos_graph_plot_stats(g)
+
+    g = make_2_connected_loop()
+    pos_graph_plot_stats(g)
+
+    g = make_2_connected_loop_limit_move()
+    pos_graph_plot_stats(g)
+
+    g = make_connected_pairs()
+    pos_graph_plot_stats(g)"""
+    
+
+
+
+def pos_graph_plot_stats(g:PositionGraph) -> None:
     #print(str(g))
     print(g.executable_clusters())
-    print(g.executable_clusters2())
+    print(g.executable_clusters2())     
+    print(g.executable_clusters3())
     print(g.connected_to_executable_clusters())
     # MOVE projected graph
     move_g = g.get_projected_graph(EdgeCapability.MOVE)
@@ -48,7 +78,7 @@ def testGraphs() -> None:
         node_color='lightblue',
     )
     plt.title("MOVE projected graph")
-    #plt.show()
+    plt.show()
 
     # EXECUTE projected graph
     exec_g = g.get_projected_graph(EdgeCapability.EXECUTE)
@@ -58,12 +88,7 @@ def testGraphs() -> None:
         node_color='orange',
     )
     plt.title("EXECUTE projected graph")
-    #plt.show()
-
-    g = make_2_cluster_graph_notFC()
-    print(g.executable_clusters())
-    print(g.executable_clusters2())
-    print(g.connected_to_executable_clusters())
+    plt.show()
 
 def make_16_node_sc_graph() -> PositionGraph:
     pos_labels = []
@@ -76,7 +101,7 @@ def make_16_node_sc_graph() -> PositionGraph:
                     EdgeCapability.MOVE | EdgeCapability.EXECUTE,
                     {EdgeCapability.MOVE: 1.0, EdgeCapability.EXECUTE: 0.5}
                 )
-    return PositionGraph(radices=[2] * len(pos_labels), pos_labels=pos_labels, edge_labels=edge_labels)
+    return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)
 
 def make_2_cluster_graph() -> PositionGraph:
     pos_labels = []
@@ -111,7 +136,152 @@ def make_2_cluster_graph() -> PositionGraph:
                     {EdgeCapability.MOVE: 1.0, EdgeCapability.EXECUTE: 0.5}
                 )
 
-    return PositionGraph(radices=[2] * len(pos_labels), pos_labels=pos_labels, edge_labels=edge_labels)
+    return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)
+
+def make_connected_loop() -> PositionGraph:
+    pos_labels = []
+    edge_labels = {}
+    size = 7
+
+    for i in range(size):
+        pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
+        edge_labels[i,(i+1)%size] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+        edge_labels[i,((i-1)%size)] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+    return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)  
+
+
+def make_2_connected_loop() -> PositionGraph:
+    pos_labels = []
+    edge_labels = {}
+    size = 5
+
+    for i in range(size):
+        pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
+        edge_labels[i,(i+1)%size] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+        edge_labels[i,((i-1)%size)] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+        print(i)
+        print((i+1)%size)
+        print(((i-1)%size))
+        
+    pos_labels.append(PositionLabel(PositionCapability.NONE, {PositionCapability.EXECUTE: 0.1}))
+
+    for i in range(size):
+        pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
+        edge_labels[i+ 1 + size,(((i+1)%size) + 1 + size)] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+        edge_labels[i+ 1 + size,((i-1)%size + 1 + size)] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+        print(i + 1 + size)
+        print(((i+1)%size) + 1 + size)
+        print(((i-1)%size + 1 + size))
+    edge_labels[size,size+1] = EdgeLabel(
+        EdgeCapability.MOVE | EdgeCapability.SWAP,
+        {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75}
+    )
+    edge_labels[size,size-1] = EdgeLabel(
+        EdgeCapability.MOVE | EdgeCapability.SWAP,
+        {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75}
+    )
+    edge_labels[size+1,size] = EdgeLabel(
+        EdgeCapability.MOVE | EdgeCapability.SWAP,
+        {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75}
+    )
+    edge_labels[size-1,size] = EdgeLabel(
+        EdgeCapability.MOVE | EdgeCapability.SWAP,
+        {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75}
+    )
+
+    return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)  
+
+
+def make_connected_pairs() -> PositionGraph:
+    pos_labels = []
+    edge_labels = {}
+    size = 12
+
+    for i in range(size):
+        pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
+
+        if (i%2):
+            edge_labels[i,(i+1)%size] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+            edge_labels[(i+1)%size,i] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+
+
+
+def make_2_connected_loop_limit_move() -> PositionGraph:
+    pos_labels = []
+    edge_labels = {}
+    size = 5
+
+    for i in range(size):
+        pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
+        edge_labels[i,(i+1)%size] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+        edge_labels[i,((i-1)%size)] = EdgeLabel(
+                     EdgeCapability.EXECUTE, 
+                    {EdgeCapability.EXECUTE: 0.5}
+                )
+        print(i)
+        print((i+1)%size)
+        print(((i-1)%size))
+        
+    pos_labels.append(PositionLabel(PositionCapability.NONE, {PositionCapability.EXECUTE: 0.1}))
+
+    for i in range(size):
+        pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
+        edge_labels[i+ 1 + size,(((i+1)%size) + 1 + size)] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+        edge_labels[i+ 1 + size,((i-1)%size + 1 + size)] = EdgeLabel(
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE | EdgeCapability.SWAP,
+                    {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75, EdgeCapability.EXECUTE: 0.5}
+                )
+        print(i + 1 + size)
+        print(((i+1)%size) + 1 + size)
+        print(((i-1)%size + 1 + size))
+    edge_labels[size,size+1] = EdgeLabel(
+        EdgeCapability.MOVE | EdgeCapability.SWAP,
+        {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75}
+    )
+    edge_labels[size,size-1] = EdgeLabel(
+        EdgeCapability.MOVE | EdgeCapability.SWAP,
+        {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75}
+    )
+    edge_labels[size+1,size] = EdgeLabel(
+        EdgeCapability.MOVE | EdgeCapability.SWAP,
+        {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75}
+    )
+    edge_labels[size-1,size] = EdgeLabel(
+        EdgeCapability.MOVE | EdgeCapability.SWAP,
+        {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 0.75}
+    )
+
+    return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)  
 
 
 
@@ -123,17 +293,17 @@ def make_2_cluster_graph_notFC() -> PositionGraph:
     for i in range(1 , 4):
         pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
         edge_labels[0,i] = EdgeLabel(
-                    EdgeCapability.MOVE,
-                    {EdgeCapability.MOVE: 1.0}
-                )
+            EdgeCapability.MOVE,
+            {EdgeCapability.MOVE: 1.0}
+        )
         edge_labels[i,0] = EdgeLabel(
-                    EdgeCapability.MOVE,
-                    {EdgeCapability.MOVE: 1.0}
-                )        
+            EdgeCapability.MOVE,
+            {EdgeCapability.MOVE: 1.0}
+        )        
         for j in range(1,4):
             if i != j:
                 edge_labels[i,j] = EdgeLabel(
-                    EdgeCapability.MOVE | EdgeCapability.EXECUTE,
+                    EdgeCapability.MOVE | EdgeCapability.EXECUTE ,
                     {EdgeCapability.MOVE: 1.0, EdgeCapability.EXECUTE: 0.5}
                 )
     pos_labels.append(PositionLabel(PositionCapability.NONE,{}))
@@ -158,7 +328,7 @@ def make_2_cluster_graph_notFC() -> PositionGraph:
                     {EdgeCapability.MOVE: 1.0, EdgeCapability.EXECUTE: 0.5}
                 )
 
-    return PositionGraph(radices=[2] * len(pos_labels), pos_labels=pos_labels, edge_labels=edge_labels)
+    return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)
 
 
     
