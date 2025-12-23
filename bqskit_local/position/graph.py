@@ -69,7 +69,7 @@ class PositionGraph:
         self._graph.add_nodes_from(self._pos_labels)
         self._graph.add_edges_from([(u, v, lbl) for (u, v), lbl in self._edge_labels.items()])
 
-        self._executable_clusters = self.executable_clusters()
+        self._executable_clusters = self.executable_clusters2()
         self._dijkstra_shortest_path_lengths = self.digraph_all_pairs_dijkstra_path_lengths(edge_capability=EdgeCapability.MOVE)
         self._dijkstra_shortest_paths = self.all_pairs_dijkstra_shortest_paths(edge_capability=EdgeCapability.MOVE)
         #move_graph = self.get_projected_graph(EdgeCapability.MOVE)
@@ -162,9 +162,28 @@ class PositionGraph:
             if label.has_capability(PositionCapability.STARTING)
         ]
     
-    def in_cluster(self, pos: Sequence[int]):
-        set_pos = set(pos)
-        return any(set_pos.issubset(set(s)) for s in self._executable_clusters)
+    def in_cluster(self, pos: Sequence[int]) -> bool:
+        if not pos:
+            return False
+
+        cluster_idx = None
+
+        for p in pos:
+            found = None
+            for i, cluster in enumerate(self._executable_clusters):
+                if p in cluster:
+                    found = i
+                    break
+
+            if found is None:
+                return False  # position not in any cluster
+
+            if cluster_idx is None:
+                cluster_idx = found
+            elif found != cluster_idx:
+                return False  # positions span multiple clusters
+
+        return True
     
     def executable_clusters3(self) -> Sequence[Sequence[int]]:
         clusters = []
@@ -241,6 +260,8 @@ class PositionGraph:
         return clusters
     
     
+    #Every position in a cluster can execute a gate with every/any other position.
+    # 
     def executable_clusters2(
     self,
     move_weight_filter: Callable[[EdgeLabel], bool] = None,

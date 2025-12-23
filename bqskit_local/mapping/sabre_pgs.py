@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import logging
+import random
 from typing import Iterator
 from typing import Sequence
 
@@ -15,14 +16,18 @@ from bqskit.ir.gates.constant.swap import SwapGate
 from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
 from bqskit.qis.graph import CouplingGraph
-from bqskit_local.position.state import PositionGraphState
+
+from bqskit_local.position.graph import EdgeCapability
+from ..position.state import PositionGraphState
 
 
 
+logging.basicConfig(level=logging.WARNING)
 _logger = logging.getLogger(__name__)
 
 
-class GeneralizedSabreAlgorithmPGS:
+
+class GeneralizedSabreAlgorithmPGS():
     """
     Implements methods for Sabre-based layout and routing algorithms using a
     modified heuristic to accommodate larger than 2-qudit gates.
@@ -120,17 +125,15 @@ class GeneralizedSabreAlgorithmPGS:
         circuit: Circuit,        
         pgs: PositionGraphState,
         modify_circuit: bool = False,
-        max_total_swaps: int = 500  # safety cap
     ) -> None:
         """
-        Forward pass of the Sabre algorithm with cycle detection and swap limits.
+        Forward pass of the Sabre algorithm 
         """
         F = set(circuit.front)
-        decay = [1.0 for _ in range(circuit.num_qudits)]
+        decay = [1.0 for _ in range(pgs.num_qudits)]
         iter_count = 0
         prev_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
         leading_swaps: list[tuple[int,int]] = []
-        recent_swaps: list[tuple[int,int]] = []
 
         _logger.debug(f'Starting forward sabre pass with pgs: {pgs}.')
 
@@ -140,7 +143,7 @@ class GeneralizedSabreAlgorithmPGS:
 
         D = pgs.position_graph.shortest_path_lengths
 
-        total_swaps = 0
+
 
         while len(F) > 0:
             # Get executable gates
@@ -177,38 +180,40 @@ class GeneralizedSabreAlgorithmPGS:
             E = self._calc_extended_set(circuit, F)
             best_swap = self._get_best_swap(circuit, F, E, D, pgs, decay)
 
-            # Cycle detection: skip repeated swaps
-            if best_swap in recent_swaps:
-                _logger.debug(f"Swap {best_swap} repeated, picking alternative.")
-                swaps = list(self._obtain_swaps(circuit, F, pgs))
-                swaps = [s for s in swaps if s not in recent_swaps]
-                if swaps:
-                    best_swap = swaps[0]
-                else:
-                    _logger.warning("All swaps recently applied, breaking loop to prevent infinite cycle.")
-                    break
+    
 
             # Apply swap
             self._apply_swap(best_swap, pgs, decay)
             leading_swaps.append(best_swap)
-            recent_swaps.append(best_swap)
-            if len(recent_swaps) > 10:  # keep only last 10 swaps
-                recent_swaps.pop(0)
 
             if modify_circuit:
-                mapped_circuit.append_gate(SwapGate(radix), best_swap)
+                pos0, pos1 = best_swap
+                q0 = pgs.get_logical_qudit_at_position(pos0)
+                q1 = pgs.get_logical_qudit_at_position(pos1)
+
+                if (q0 != -1 and q1 != -1):
+                    # Both qudits exist → swap
+                    _logger.warning(f"swap phys=({pos0},{pos1}) logical=({q0},{q1})")
+                    _logger.warning("\physical_to_logical:" + str(pgs.physical_to_logical))
+                    _logger.warning("\logical_to_physical:" + str(pgs.logical_to_physical))
+
+                    if (q0 <= mapped_circuit.num_qudits - 1):
+                        if (q1 <= mapped_circuit.num_qudits - 1):
+                            mapped_circuit.append_gate(SwapGate(radix), (q0 , q1 ))
+                        else:
+                            mapped_circuit.append_gate(BarrierPlaceholder(1), (q0,))
+                    elif (q1 <= mapped_circuit.num_qudits - 1):
+                        mapped_circuit.append_gate(BarrierPlaceholder(1), (q1,))
+                elif (q0 != -1) and (q1 <= mapped_circuit.num_qudits - 1) and (q1>=0):
+                    mapped_circuit.append_gate(BarrierPlaceholder(1), (q1,))
+                elif (q1 != -1)  and (q0 <= mapped_circuit.num_qudits - 1) and (q0>=0):
+                    mapped_circuit.append_gate(BarrierPlaceholder(1), (q0,))
 
             # Update counters
             iter_count += 1
-            total_swaps += 1
             if iter_count % self.decay_reset_interval == 0:
                 for i in range(circuit.num_qudits):
                     decay[i] = 1.0
-
-            # Safety cap to prevent infinite loops
-            if total_swaps > max_total_swaps:
-                _logger.warning(f"Reached max_total_swaps={max_total_swaps}, terminating forward pass.")
-                break
 
         if modify_circuit:
             circuit.become(mapped_circuit)
@@ -218,7 +223,7 @@ class GeneralizedSabreAlgorithmPGS:
         circuit: Circuit,        
         pgs: PositionGraphState
         #pi: list[int],
-        #cg: CouplingGraph
+        #cg: CouplingGraph        
     ) -> None:
         """
         Apply a backward pass of the Sabre algorithm to `pi`.
@@ -235,7 +240,7 @@ class GeneralizedSabreAlgorithmPGS:
         # Preprocessing
         D = pgs.position_graph.shortest_path_lengths #Might not need this here.
         F = circuit.rear
-        decay = [1.0 for i in range(circuit.num_qudits)]
+        decay = [1.0 for i in range(pgs.num_qudits)]
         iter_count = 0
         leading_swaps: list[tuple[int, int]] = []
         next_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
@@ -297,7 +302,8 @@ class GeneralizedSabreAlgorithmPGS:
 
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
-            best_swap = self._get_best_swap(circuit, F, E, D, pgs, decay)
+            best_swap = self._get_best_swap(circuit, F, E, D, pgs, decay)     
+
             self._apply_swap(best_swap, pgs, decay)
             leading_swaps.append(best_swap)
 
@@ -310,13 +316,16 @@ class GeneralizedSabreAlgorithmPGS:
     def _can_exe(self, op: Operation, pgs: PositionGraphState) -> bool:
         """Return true if `op` is executable given the current pgs."""
         if isinstance(op.gate, BarrierPlaceholder):
+            _logger.debug("op is executable given the current pgs")
             return True
 
         if isinstance(op.gate, CircuitGate):
             if all(g.num_qudits == 1 for g in op.gate._circuit.gate_set):
+                _logger.debug("true - isinstance(op.gate, CircuitGate): - true, - if all(g.num_qudits == 1 for g in op.gate._circuit.gate_set):")
                 return True
 
         if op.num_qudits == 1:
+            _logger.debug("1 qudit = true")
             return True        
 
         # Here I was thinking maybe it would be cool to support the CouplingGraph
@@ -327,6 +336,12 @@ class GeneralizedSabreAlgorithmPGS:
         #return cg.get_subgraph(physical_qudits).is_fully_connected()
 
         positions = set([pgs.logical_to_physical[i] for i in op.location])
+        is_in_cluster = pgs.position_graph.in_cluster(positions)
+        _logger.debug(
+            "op.location: " + str(op.location) 
+            + "\n positions" + str(positions) 
+            + "\n is_in_cluster = pgs.position_graph.in_cluster(positions) :" + str(is_in_cluster) 
+            + "\n pgs.position_graph._executable_clusters: " + str(pgs.position_graph._executable_clusters))
         return pgs.position_graph.in_cluster(positions)
             
         
@@ -363,8 +378,7 @@ class GeneralizedSabreAlgorithmPGS:
 
         # Gather all considerable swaps
         swap_candidate_list = self._obtain_swaps(circuit, F, pgs)
-
-        # Score them, tracking the best one
+          # Score them, tracking the best one
         for swap in swap_candidate_list:
             score = self._score_swap(circuit, F, pgs, D, swap, decay, E)
             if score < best_score:
@@ -373,7 +387,8 @@ class GeneralizedSabreAlgorithmPGS:
 
         if best_swap is None:
             raise RuntimeError('Unable to find best swap.')
-
+            #_logger.error("Unable to find best swap.")
+            #best_swap = random.choice(list(swap_candidate_list))
         return best_swap
 
     def _obtain_swaps(
@@ -383,22 +398,28 @@ class GeneralizedSabreAlgorithmPGS:
         pgs: PositionGraphState,
     ) -> set[tuple[int, int]]:
         """Produce all physical swaps with at least one qudit in F."""
-        all_qudits: set[int] = set()
+        qudits_in_F: set[int] = set()
         for n in F:
-            all_qudits.update(circuit[n].location)
+            qudits_in_F.update(circuit[n].location)
 
-        physical_qudits = [pgs.logical_to_physical[i] for i in all_qudits]
+        physical_qudits = [pgs.logical_to_physical[i] for i in qudits_in_F]
         swaps = set()
 
         for physical_qudit in physical_qudits:
             neighbors = pgs.position_graph.graph.neighbors_undirected(physical_qudit)
             for neighbor in neighbors:
-                # Only include valid qubits
-                if 0 <= neighbor < circuit.num_qudits:
-                    a, b = sorted((physical_qudit, neighbor))
-                    if a < circuit.num_qudits and b < circuit.num_qudits:
-                        swaps.add((a, b))
+                # check edge label for MOVE or SWAP capability
+                edge_label = pgs.position_graph.edge_labels.get((physical_qudit, neighbor))
+                if edge_label is None:
+                    continue  # no edge here, skip
+                if not (edge_label.has_capability(EdgeCapability.MOVE) or edge_label.has_capability(EdgeCapability.SWAP)):
+                    continue  # edge does not allow move or swap, skip
 
+                # valid swap, add sorted tuple to avoid duplicates
+                a, b = sorted((physical_qudit, neighbor))
+                swaps.add((a, b))
+
+        _logger.warning(f"swaps for frontier F: {swaps}")
         return swaps
 
 
@@ -453,7 +474,8 @@ class GeneralizedSabreAlgorithmPGS:
 
 
         # Combine distance with decay
-        score = front / (decay_factor + 1e-8)
+        score = front / ( decay_factor + 1e-8)
+        _logger.warning("\nswap: " + str(swap) + "\nscore:" + str(score))
         return score
 
 
@@ -475,7 +497,7 @@ class GeneralizedSabreAlgorithmPGS:
             decay[q1] += self.decay_delta
 
         # Swap logical qudits in PGS if both are assigned
-        if q0 != -1 and q1 != -1:
+        if (q0 != -1 and q1 != -1):
             pgs.swap_positions(q0, q1)
         elif q0 != -1:
             # Move q0 to pos1
@@ -562,4 +584,4 @@ class GeneralizedSabreAlgorithmPGS:
         """
         pos1 = pgs.logical_to_physical[q1]
         pos2 = pgs.logical_to_physical[q2]
-        return pgs.position_graph.graph.distance(pos1, pos2)
+        return pgs.position_graph.shortest_path(pos1, pos2)

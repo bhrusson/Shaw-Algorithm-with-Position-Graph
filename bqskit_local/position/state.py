@@ -35,13 +35,35 @@ class PositionGraphState:
             raise IndexError("Invalid qudit index")
         if pos_id < 0 or pos_id >= self.num_pos:
             raise IndexError("Invalid position index")
+
+        current_owner = self.physical_to_logical[pos_id]
+        if current_owner != -1 and current_owner != qudit_id:
+            raise RuntimeError(
+                f"Position {pos_id} already occupied by qudit {current_owner}"
+            )
+
         old_position = self.logical_to_physical[qudit_id]
         if old_position != -1:
             self.physical_to_logical[old_position] = -1
+
         self.logical_to_physical[qudit_id] = pos_id
         self.physical_to_logical[pos_id] = qudit_id
 
-    
+
+    def assert_consistent(self) -> None:
+        for q, p in enumerate(self.logical_to_physical):
+            if p == -1:
+                continue
+            if self.physical_to_logical[p] != q:
+                raise RuntimeError(
+                    f"Inconsistent mapping: logical {q} → physical {p}, "
+                    f"but physical {p} → logical {self.physical_to_logical[p]}"
+                )
+
+        if len([p for p in self.logical_to_physical if p != -1]) != \
+        len(set(p for p in self.logical_to_physical if p != -1)):
+            raise RuntimeError("Duplicate physical occupancy detected")
+
     def move_qudit(self, qudit_id: int, target_pos: int) -> None:
         self.set_qudit_position(qudit_id, target_pos)
     
@@ -55,8 +77,17 @@ class PositionGraphState:
         pos_1 = self.logical_to_physical[qudit_1]
         pos_2 = self.logical_to_physical[qudit_2]
                 
+        if pos_1 == -1 or pos_2 == -1:
+            raise RuntimeError("Cannot swap unplaced qudits")
+
+        if qudit_1 == qudit_2:
+            raise RuntimeError("Attempted to swap qudit with itself")
+
+        # swap logical → physical
         self.logical_to_physical[qudit_1], self.logical_to_physical[qudit_2] = pos_2, pos_1
-        self.physical_to_logical[pos_1], self.physical_to_logical[pos_2] = qudit_1, qudit_2
+
+        # swap physical → logical (THIS was wrong before)
+        self.physical_to_logical[pos_1], self.physical_to_logical[pos_2] = qudit_2, qudit_1
 
 
     

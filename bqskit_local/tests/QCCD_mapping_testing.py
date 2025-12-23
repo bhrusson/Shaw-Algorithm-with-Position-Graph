@@ -1,6 +1,9 @@
-from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
-from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
-from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+#from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
+#from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
+#from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+from ..old.QCCD_util import create_testing_physical_machine
+from ..old.QCCD_mapping import QCCDMappingAlgorithm
+from ..old.QCCD_machine import QCCDMachineModel
 from bqskit.ir.gates import CCXGate, CXGate
 from bqskit.ir import Operation
 

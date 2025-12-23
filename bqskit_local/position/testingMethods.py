@@ -38,9 +38,18 @@ def testLabels() -> None:
 
 
 
-
 def testGraphs() -> None:
-    """g = make_16_node_sc_graph()
+    """
+    g = make_32_node_sparse_graph()
+    
+    pos_graph_plot_stats(g)
+    print(str(g._executable_clusters))
+
+    g = make_2_cluster_graph()
+    pos_graph_plot_stats(g)
+    print(str(g._executable_clusters))
+
+   g = make_16_node_sc_graph()
     pos_graph_plot_stats(g)
 
     g = make_2_cluster_graph()
@@ -103,12 +112,65 @@ def make_16_node_sc_graph() -> PositionGraph:
                 )
     return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)
 
-def make_2_cluster_graph() -> PositionGraph:
+
+def make_32_node_ring_position_graph() -> PositionGraph:
+    num_nodes = 32
     pos_labels = []
     edge_labels = {}
-    for i in range(4):
+    for i in range(num_nodes):
+        pos_labels.append(PositionLabel(
+            PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING,
+            {PositionCapability.EXECUTE: 0.1}
+        ))
+
+    edge_labels = {}
+    for i in range(num_nodes):
+        edge_labels[(i,(i+1) % (num_nodes-1) )] = EdgeLabel(
+            EdgeCapability.MOVE | EdgeCapability.EXECUTE,
+            {EdgeCapability.MOVE: 1.0, EdgeCapability.EXECUTE: 0.5}
+        )
+        return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)
+    
+def make_32_node_sparse_graph() -> PositionGraph:
+    pos_labels = []
+    edge_labels = {}
+
+    num_nodes = 12
+    for i in range(num_nodes):
+        pos_labels.append(PositionLabel(
+            PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING,
+            {PositionCapability.EXECUTE: 0.1}
+        ))
+
+    # Connect neighbors in a sparse linear fashion
+    
+    for i in range(num_nodes - 1):
+        edge_labels[i, i+1] = EdgeLabel(
+            EdgeCapability.SWAP | EdgeCapability.EXECUTE,
+            {EdgeCapability.SWAP: 1.0, EdgeCapability.EXECUTE: 0.5}
+        )
+        edge_labels[i+1, i] = EdgeLabel(
+            EdgeCapability.SWAP | EdgeCapability.EXECUTE,
+            {EdgeCapability.SWAP: 1.0, EdgeCapability.EXECUTE: 0.5}
+    )
+    edge_labels[0,num_nodes-1] = EdgeLabel(
+        EdgeCapability.SWAP | EdgeCapability.EXECUTE,
+        {EdgeCapability.SWAP: 1.0, EdgeCapability.EXECUTE: 0.5}
+    )
+    edge_labels[num_nodes-1,0] = EdgeLabel(
+        EdgeCapability.SWAP | EdgeCapability.EXECUTE,
+        {EdgeCapability.SWAP: 1.0, EdgeCapability.EXECUTE: 0.5}
+    )
+    
+    return PositionGraph(pos_labels=pos_labels, edge_labels=edge_labels)
+
+def make_2_cluster_graph() -> PositionGraph:
+    num_nodes_per_cluster = 13
+    pos_labels = []
+    edge_labels = {}
+    for i in range(num_nodes_per_cluster):
         pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
-        for j in range(4):
+        for j in range(num_nodes_per_cluster):
             if i != j:
                 edge_labels[i,j] = EdgeLabel(
                     EdgeCapability.MOVE | EdgeCapability.EXECUTE,
@@ -118,20 +180,22 @@ def make_2_cluster_graph() -> PositionGraph:
     pos_labels.append(PositionLabel(PositionCapability.NONE,{}))   
     pos_labels.append(PositionLabel(PositionCapability.NONE,{}))
 
-    edge_labels[3,4] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
-    edge_labels[4,3] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
-    edge_labels[4,5] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
-    edge_labels[5,4] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
-    edge_labels[5,6] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
-    edge_labels[6,5] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
-    edge_labels[6,7] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
-    edge_labels[7,6] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    
+    edge_labels[num_nodes_per_cluster - 1, num_nodes_per_cluster] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    edge_labels[num_nodes_per_cluster, num_nodes_per_cluster - 1] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    edge_labels[num_nodes_per_cluster , num_nodes_per_cluster + 1] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    edge_labels[num_nodes_per_cluster + 1 ,num_nodes_per_cluster] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    edge_labels[num_nodes_per_cluster + 1, num_nodes_per_cluster + 2] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    edge_labels[num_nodes_per_cluster + 2, num_nodes_per_cluster + 1] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    edge_labels[num_nodes_per_cluster + 2, num_nodes_per_cluster + 3] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    edge_labels[num_nodes_per_cluster + 3, num_nodes_per_cluster + 2] = EdgeLabel(EdgeCapability.MOVE | EdgeCapability.SWAP, {EdgeCapability.MOVE: 1.0, EdgeCapability.SWAP: 1.5})
+    
 
-    for i in range(4):
+    for i in range(num_nodes_per_cluster):
         pos_labels.append(PositionLabel(PositionCapability.EXECUTE | PositionCapability.MEASURE | PositionCapability.STARTING, {PositionCapability.EXECUTE: 0.1}))
-        for j in range(4):
+        for j in range(num_nodes_per_cluster):
             if i != j:
-                edge_labels[i+7,j+7] = EdgeLabel(
+                edge_labels[i+num_nodes_per_cluster + 3,j+num_nodes_per_cluster + 3] = EdgeLabel(
                     EdgeCapability.MOVE | EdgeCapability.EXECUTE,
                     {EdgeCapability.MOVE: 1.0, EdgeCapability.EXECUTE: 0.5}
                 )
@@ -333,6 +397,6 @@ def make_2_cluster_graph_notFC() -> PositionGraph:
 
     
 
-testLabels()
+#testLabels()
 testGraphs()
 

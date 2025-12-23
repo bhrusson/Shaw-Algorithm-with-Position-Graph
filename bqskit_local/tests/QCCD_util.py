@@ -1,7 +1,8 @@
 import math
 from bqskit.ir import Circuit
 from bqskit.ir.gates import CNOTGate, XGate
-from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
+#from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
+from ..old.QCCD_physical_components import QCCD_physical_machine
 
 
 def create_testing_physical_machine(

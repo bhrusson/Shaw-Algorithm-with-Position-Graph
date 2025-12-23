@@ -15,7 +15,8 @@ from bqskit.compiler import MachineModel
 from bqskit.compiler.gateset import GateSet
 from bqskit.compiler.gateset import GateSetLike
 from bqskit.qis.graph import CouplingGraph
-from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
+#from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
+from ..old.QCCD_physical_components import QCCD_physical_machine
 
 if TYPE_CHECKING:
     from bqskit.ir.circuit import Circuit
@@ -431,7 +432,9 @@ class QCCDMachineModel(MachineModel):
 
 
 if __name__ == '__main__':
-    from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
+    #from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
+    from ..old.QCCD_util import create_testing_physical_machine
+
     type = 'Helios'
     trap_capacity = 6
     physical_model = create_testing_physical_machine(type=type,

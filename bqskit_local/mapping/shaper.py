@@ -11,7 +11,7 @@ from typing import Dict
 from typing import Literal
 from typing import overload
 from typing import Sequence
-from typing import Tuple
+from typing import Tuple   
 from typing import TypedDict
 
 import numpy as np
@@ -22,9 +22,10 @@ from bqskit.ir.gates.constant.swap import SwapGate
 from bqskit.ir.point import CircuitPoint
 from bqskit.qis.graph import CouplingGraph
 from bqskit.qis.unitary.unitarymatrix import UnitaryMatrix
-
-from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
-from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+#from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
+#from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+from ..old.QCCD_mapping import QCCDMappingAlgorithm
+from ..old.QCCD_machine import QCCDMachineModel
 
 _logger = logging.getLogger(__name__)
 
