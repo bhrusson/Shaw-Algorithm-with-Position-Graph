@@ -5,7 +5,7 @@ from utils import *
 from route import *
 from schedule import *
 from machine import Trap, Segment, Junction
-
+from timeit import default_timer as timer
 class RebalanceTraps:
     def __init__(self, machine, system_state):
         self.machine = machine
@@ -42,9 +42,11 @@ class RebalanceTraps:
             capacity[(u,v)] = 100
         nx.set_edge_attributes(graph, weight, 'weight')
         nx.set_edge_attributes(graph, capacity, 'capacity')
-
-        flowCost, flowDict = nx.network_simplex(graph) 
-        return flowDict
+        try:
+            flowCost, flowDict = nx.network_simplex(graph)
+            return flowDict
+        except:
+            print(f"Fail to execute after running at {timer()}")
 
     def clear_route(self, trap_list, route):
         #Set up node demands

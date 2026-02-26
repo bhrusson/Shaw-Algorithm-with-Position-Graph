@@ -1,0 +1,167 @@
+Trying to solve brute-force congestion at gate [0, 3] with {0: 6, 1: 0, 2: 4, 3: 1, 4: 5, 5: 3, 6: 7, 7: 2}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 6, 1: 0, 2: 4, 3: 1, 4: 5, 5: 3, 6: 7, 7: 2}
+Clearing endpoint 1.........
+Gate position gate updated to [0 3]--------------c
+Trying to moving ion 3... to 1
+Ion assignment after moving ion 3: {0: 6, 1: 0, 2: 4, 3: 10, 4: 5, 5: 1, 6: 7, 7: 2}
+Executing gate at point (0, 1).
+Trying to solve brute-force congestion at gate [4, 1] with {0: 6, 1: 0, 2: 4, 3: 10, 4: 5, 5: 1, 6: 7, 7: 2}
+Trying to moving ion 4... to 4
+Ion assignment after moving ion 4: {0: 6, 1: 0, 2: 4, 3: 10, 4: 5, 5: 1, 6: 7, 7: 2}
+Clearing endpoint 5.........
+Gate position gate updated to [4 1]--------------c
+Trying to moving ion 1... to 5
+Ion assignment after moving ion 1: {0: 6, 1: 0, 2: 4, 3: 9, 4: 12, 5: 5, 6: 7, 7: 2}
+Executing gate at point (1, 2).
+Trying to solve brute-force congestion at gate [6, 2] with {0: 6, 1: 0, 2: 4, 3: 9, 4: 12, 5: 5, 6: 7, 7: 2}
+Trying to moving ion 2... to 2
+Ion assignment after moving ion 2: {0: 6, 1: 0, 2: 4, 3: 9, 4: 12, 5: 5, 6: 7, 7: 2}
+Gate position gate updated to [2 6]--------------c
+Trying to moving ion 6... to 3
+Ion assignment after moving ion 6: {0: 3, 1: 0, 2: 4, 3: 8, 4: 1, 5: 5, 6: 6, 7: 2}
+Executing gate at point (0, 0).
+Trying to solve brute-force congestion at gate [0, 2] with {0: 3, 1: 0, 2: 4, 3: 8, 4: 1, 5: 5, 6: 6, 7: 2}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 3, 1: 0, 2: 4, 3: 8, 4: 1, 5: 5, 6: 6, 7: 2}
+Clearing endpoint 1.........
+Gate position gate updated to [0 2]--------------c
+Trying to moving ion 2... to 1
+Ion assignment after moving ion 2: {0: 2, 1: 0, 2: 4, 3: 12, 4: 10, 5: 5, 6: 6, 7: 1}
+Executing gate at point (1, 1).
+Trying to solve brute-force congestion at gate [12, 6] with {0: 2, 1: 0, 2: 4, 3: 12, 4: 10, 5: 5, 6: 6, 7: 1}
+Trying to moving ion 6... to 6
+Ion assignment after moving ion 6: {0: 2, 1: 0, 2: 4, 3: 12, 4: 10, 5: 5, 6: 6, 7: 1}
+Gate position gate updated to [ 6 12]--------------c
+Trying to moving ion 12... to 7
+Ion assignment after moving ion 12: {0: 2, 1: 0, 2: 4, 3: 7, 4: 10, 5: 5, 6: 6, 7: 1}
+Executing gate at point (0, 3).
+Trying to solve brute-force congestion at gate [7, 1] with {0: 2, 1: 0, 2: 4, 3: 7, 4: 10, 5: 5, 6: 6, 7: 1}
+Trying to moving ion 1... to 0
+Ion assignment after moving ion 1: {0: 2, 1: 1, 2: 4, 3: 7, 4: 10, 5: 5, 6: 6, 7: 0}
+Clearing endpoint 1.........
+Gate position gate updated to [0 7]--------------c
+Trying to moving ion 7... to 1
+Ion assignment after moving ion 7: {0: 2, 1: 9, 2: 4, 3: 1, 4: 3, 5: 5, 6: 6, 7: 0}
+Executing gate at point (2, 3).
+Trying to solve brute-force congestion at gate [3, 6] with {0: 2, 1: 9, 2: 4, 3: 1, 4: 3, 5: 5, 6: 6, 7: 0}
+Trying to moving ion 6... to 6
+Ion assignment after moving ion 6: {0: 2, 1: 9, 2: 4, 3: 1, 4: 3, 5: 5, 6: 6, 7: 0}
+Gate position gate updated to [6 3]--------------c
+Trying to moving ion 3... to 7
+Ion assignment after moving ion 3: {0: 2, 1: 11, 2: 4, 3: 1, 4: 7, 5: 5, 6: 6, 7: 0}
+Executing gate at point (1, 4).
+Trying to solve brute-force congestion at gate [7, 0] with {0: 2, 1: 11, 2: 4, 3: 1, 4: 7, 5: 5, 6: 6, 7: 0}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 2, 1: 11, 2: 4, 3: 1, 4: 7, 5: 5, 6: 6, 7: 0}
+Clearing endpoint 1.........
+Gate position gate updated to [0 7]--------------c
+Trying to moving ion 7... to 1
+Ion assignment after moving ion 7: {0: 2, 1: 11, 2: 4, 3: 9, 4: 1, 5: 5, 6: 6, 7: 0}
+Executing gate at point (3, 4).
+Trying to solve brute-force congestion at gate [5, 0] with {0: 2, 1: 11, 2: 4, 3: 9, 4: 1, 5: 5, 6: 6, 7: 0}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 2, 1: 11, 2: 4, 3: 9, 4: 1, 5: 5, 6: 6, 7: 0}
+Clearing endpoint 1.........
+Gate position gate updated to [0 5]--------------c
+Trying to moving ion 5... to 1
+Ion assignment after moving ion 5: {0: 2, 1: 12, 2: 4, 3: 3, 4: 9, 5: 1, 6: 6, 7: 0}
+Executing gate at point (4, 5).
+Trying to solve brute-force congestion at gate [4, 5] with {0: 2, 1: 12, 2: 4, 3: 3, 4: 8, 5: 5, 6: 6, 7: 0}
+Trying to moving ion 4... to 4
+Ion assignment after moving ion 4: {0: 2, 1: 12, 2: 4, 3: 3, 4: 8, 5: 5, 6: 6, 7: 0}
+Gate position gate updated to [4 5]--------------c
+Trying to moving ion 5... to 5
+Ion assignment after moving ion 5: {0: 2, 1: 12, 2: 4, 3: 3, 4: 8, 5: 5, 6: 6, 7: 0}
+Trying to solve brute-force congestion at gate [8, 0] with {0: 2, 1: 12, 2: 4, 3: 3, 4: 8, 5: 5, 6: 6, 7: 0}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 2, 1: 12, 2: 4, 3: 3, 4: 8, 5: 5, 6: 6, 7: 0}
+Gate position gate updated to [0 8]--------------c
+Trying to moving ion 8... to 1
+Ion assignment after moving ion 8: {0: 2, 1: 12, 2: 4, 3: 3, 4: 1, 5: 5, 6: 6, 7: 0}
+Trying to solve brute-force congestion at gate [3, 0] with {0: 2, 1: 12, 2: 4, 3: 3, 4: 1, 5: 5, 6: 6, 7: 0}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 2, 1: 12, 2: 4, 3: 3, 4: 1, 5: 5, 6: 6, 7: 0}
+Clearing endpoint 1.........
+Gate position gate updated to [0 3]--------------c
+Trying to moving ion 3... to 1
+Ion assignment after moving ion 3: {0: 2, 1: 12, 2: 4, 3: 1, 4: 10, 5: 5, 6: 6, 7: 0}
+Trying to solve brute-force congestion at gate [12, 0] with {0: 2, 1: 12, 2: 4, 3: 1, 4: 10, 5: 5, 6: 6, 7: 0}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 2, 1: 12, 2: 4, 3: 1, 4: 10, 5: 5, 6: 6, 7: 0}
+Clearing endpoint 1.........
+Gate position gate updated to [ 0 12]--------------c
+Trying to moving ion 12... to 1
+Ion assignment after moving ion 12: {0: 2, 1: 1, 2: 4, 3: 9, 4: 3, 5: 5, 6: 6, 7: 0}
+Trying to solve brute-force congestion at gate [1, 5] with {0: 2, 1: 1, 2: 4, 3: 9, 4: 3, 5: 5, 6: 6, 7: 0}
+Trying to moving ion 1... to 0
+Ion assignment after moving ion 1: {0: 2, 1: 0, 2: 4, 3: 9, 4: 3, 5: 5, 6: 6, 7: 1}
+Clearing endpoint 1.........
+Gate position gate updated to [0 5]--------------c
+Trying to moving ion 5... to 1
+Ion assignment after moving ion 5: {0: 2, 1: 0, 2: 4, 3: 9, 4: 3, 5: 1, 6: 6, 7: 11}
+Trying to solve brute-force congestion at gate [3, 6] with {0: 2, 1: 0, 2: 4, 3: 9, 4: 3, 5: 1, 6: 6, 7: 11}
+Trying to moving ion 6... to 6
+Ion assignment after moving ion 6: {0: 2, 1: 0, 2: 4, 3: 9, 4: 3, 5: 1, 6: 6, 7: 11}
+Gate position gate updated to [6 3]--------------c
+Trying to moving ion 3... to 7
+Ion assignment after moving ion 3: {0: 2, 1: 0, 2: 4, 3: 8, 4: 7, 5: 1, 6: 6, 7: 11}
+Trying to solve brute-force congestion at gate [8, 6] with {0: 2, 1: 0, 2: 4, 3: 8, 4: 7, 5: 1, 6: 6, 7: 11}
+Trying to moving ion 6... to 6
+Ion assignment after moving ion 6: {0: 2, 1: 0, 2: 4, 3: 8, 4: 7, 5: 1, 6: 6, 7: 11}
+Clearing endpoint 7.........
+Gate position gate updated to [6 8]--------------c
+Trying to moving ion 8... to 7
+Ion assignment after moving ion 8: {0: 2, 1: 0, 2: 4, 3: 7, 4: 11, 5: 1, 6: 6, 7: 5}
+Trying to solve brute-force congestion at gate [2, 5] with {0: 2, 1: 0, 2: 4, 3: 7, 4: 11, 5: 1, 6: 6, 7: 5}
+Trying to moving ion 2... to 2
+Ion assignment after moving ion 2: {0: 2, 1: 0, 2: 4, 3: 7, 4: 11, 5: 1, 6: 6, 7: 5}
+Gate position gate updated to [2 5]--------------c
+Trying to moving ion 5... to 3
+Ion assignment after moving ion 5: {0: 2, 1: 0, 2: 4, 3: 7, 4: 8, 5: 1, 6: 6, 7: 3}
+Executing gate at point (0, 1).
+Executing gate at point (0, 3).
+Executing gate at point (0, 0).
+Trying to solve brute-force congestion at gate [4, 1] with {0: 2, 1: 0, 2: 4, 3: 7, 4: 8, 5: 1, 6: 6, 7: 3}
+Trying to moving ion 4... to 4
+Ion assignment after moving ion 4: {0: 2, 1: 0, 2: 4, 3: 7, 4: 8, 5: 1, 6: 6, 7: 3}
+Gate position gate updated to [4 1]--------------c
+Trying to moving ion 1... to 5
+Ion assignment after moving ion 1: {0: 2, 1: 0, 2: 4, 3: 7, 4: 12, 5: 5, 6: 6, 7: 3}
+Executing gate at point (1, 2).
+Trying to solve brute-force congestion at gate [0, 3] with {0: 2, 1: 0, 2: 4, 3: 7, 4: 12, 5: 5, 6: 6, 7: 3}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 2, 1: 0, 2: 4, 3: 7, 4: 12, 5: 5, 6: 6, 7: 3}
+Gate position gate updated to [0 3]--------------c
+Trying to moving ion 3... to 1Input filename:  QAOA_8_compiled
+Algorithm:  SHAPER
+Trap type:  H
+Trap capacity:  2
+Num layout passes:  2
+Gate type:  FM
+Run index:  5
+Creating a QCCD machine ...
+QCCD physical machine:
+### Traps ### 
+Trap(id='trap_0', max_num_ions=2, initial_num_ions=0, executable=True, measureable=False)
+Trap(id='trap_1', max_num_ions=2, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_2', max_num_ions=2, initial_num_ions=0, executable=True, measureable=False)
+Trap(id='trap_3', max_num_ions=2, initial_num_ions=0, executable=True, measureable=True)
+### Junctions ### 
+Junction(id='junction_0')
+Junction(id='junction_1')
+### Segments ### 
+Segment(id='segment_0', left=Trap(id='trap_0', max_num_ions=2, initial_num_ions=0, executable=True, measureable=False), right=Junction(id='junction_0'))
+Segment(id='segment_1', left=Trap(id='trap_1', max_num_ions=2, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_0'))
+Segment(id='segment_2', left=Junction(id='junction_0'), right=Junction(id='junction_1'))
+Segment(id='segment_3', left=Trap(id='trap_2', max_num_ions=2, initial_num_ions=0, executable=True, measureable=False), right=Junction(id='junction_1'))
+Segment(id='segment_4', left=Trap(id='trap_3', max_num_ions=2, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_1'))
+Finished creating the QCCD physical machine.
+Position graph:  CouplingGraph({(0, 1), (9, 10), (10, 11), (5, 11), (1, 8), (8, 10), (2, 3), (6, 7), (4, 5), (8, 9), (3, 9), (7, 12), (11, 12), (10, 12)})
+Initial ion assignment:  {0: 6, 1: 0, 2: 4, 3: 1, 4: 5, 5: 3, 6: 7, 7: 2}
+Congestion rate:  0.5
+Scheduling QCCD: 480002120.0 us, costing 6.050379000022076 s to compile
+480.00212
+6.050379000022076
+{0: 2, 1: 0, 2: 4, 3: 7, 4: 8, 5: 1, 6: 6, 7: 3}
+[0, 1, 2, 3, 4, 5, 6, 7]

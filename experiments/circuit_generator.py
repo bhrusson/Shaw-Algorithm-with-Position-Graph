@@ -74,7 +74,7 @@ def circuit_generate(circuit_type: str = "Toffoli", num_qubits: int = 3,
 
     elif circuit_type == "QAOA":
         if QAOA_graph is None:
-            graph = nx.erdos_renyi_graph(n=num_qubits, p=0.2, seed=seed)
+            graph = nx.erdos_renyi_graph(n=num_qubits, p=0.1, seed=seed)
         else:
             graph = QAOA_graph
         qc = Circuit(num_qubits)
@@ -114,9 +114,9 @@ def circuit_generate(circuit_type: str = "Toffoli", num_qubits: int = 3,
 
 
 if __name__ == "__main__":
-    num_qubits = 50
+    num_qubits = 98
     seed = 11
-    circuit_type = "QuantumVolume"
+    circuit_type = "QAOA"
     cir = circuit_generate(circuit_type=circuit_type,
                            num_qubits=num_qubits,
                            seed=seed)

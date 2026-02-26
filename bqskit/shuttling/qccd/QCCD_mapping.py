@@ -54,7 +54,7 @@ class QCCDMappingAlgorithm:
             extended_set_size: int = 5,
             extended_set_weight: float = 0.5,
             qccd_machine: QCCDMachineModel = None,
-            cogestion_rate: float = 0.6
+            cogestion_rate: float = 0.85
     ) -> None:
         """
         Construct a GeneralizedSabreAlgorithm.
@@ -258,7 +258,7 @@ class QCCDMappingAlgorithm:
                     # print(f"Front is modified to {F}.")
             E = self._calc_extended_set(circuit, F)
             # print(f"Extended set: {[circuit[n] for n in E]}")
-            best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay, heuristic_move)
+            best_move = None#self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay, heuristic_move)
             if best_move is None:
                 brute_force_moves = self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                 if modify_circuit:
@@ -320,7 +320,7 @@ class QCCDMappingAlgorithm:
                 Only need to calculate unoccupied spaces (the one near the endpoints) if exits or only the endpoints...  
             """
             num_available_trap_space = len(available_trap_space)
-            relative_dis_to_trap -= num_available_trap_space * 100e-6
+            relative_dis_to_trap -= num_available_trap_space * 120e-6
             # print(f"Considering trap: {trap.id} with distance {relative_dis_to_trap} and number of available space :{num_available_trap_space}")
             if relative_dis_to_trap < relative_distance:
                 selected_trap_space = all_trap_space
@@ -378,35 +378,35 @@ class QCCDMappingAlgorithm:
             """
                 If too many ions are in the segment, move them back to trap. (Disable when trying H2 architecture)
             """
-            # number_of_segment = len(self.qccd_machine.physical_to_position["segment_space"])
-            # ion_at_segment = []
-            # for ion in ion_assignment.keys():
-            #     if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
-            #         ion_at_segment.append(ion)
-            # if len(ion_at_segment) / number_of_segment >= self.cogestion_segment_rate:
-            #     print("As there are many ions outside the traps, move them to the trap...")
-            #     available_spaces = []
-            #     for trap in self.qccd_machine.physical_graph.trap_list:
-            #         _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
-            #         available_spaces += available_space
-            #     while ion_at_segment:
-            #         leading_moves += self._brute_force_move(
-            #             int(ion_assignment[ion_at_segment[0]]),
-            #             int(available_spaces[0]), ion_assignment
-            #         )
-            #         available_spaces = []
-            #         for trap in self.qccd_machine.physical_graph.trap_list:
-            #             _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
-            #             available_spaces += available_space
-            #         ion_at_segment = []
-            #         for ion in ion_assignment.keys():
-            #             if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
-            #                 ion_at_segment.append(ion)
-            #         # print("Ion at segment: ", ion_at_segment)
-            #         # print("Available trap space: ", available_spaces)
-            #         # print(f"Trying to solve brute-force congestion at gate {gate_pos} with {ion_assignment}")
-            #     for ion_index in range(len(ion_order)):
-            #         gate_pos[ion_index] = ion_assignment[ion_order[ion_index]]
+            number_of_segment = len(self.qccd_machine.physical_to_position["segment_space"])
+            ion_at_segment = []
+            for ion in ion_assignment.keys():
+                if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
+                    ion_at_segment.append(ion)
+            if len(ion_at_segment) / number_of_segment >= self.cogestion_segment_rate:
+                print("As there are many ions outside the traps, move them to the trap...")
+                available_spaces = []
+                for trap in self.qccd_machine.physical_graph.trap_list:
+                    _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
+                    available_spaces += available_space
+                while ion_at_segment:
+                    leading_moves += self._brute_force_move(
+                        int(ion_assignment[ion_at_segment[0]]),
+                        int(available_spaces[0]), ion_assignment
+                    )
+                    available_spaces = []
+                    for trap in self.qccd_machine.physical_graph.trap_list:
+                        _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
+                        available_spaces += available_space
+                    ion_at_segment = []
+                    for ion in ion_assignment.keys():
+                        if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
+                            ion_at_segment.append(ion)
+                    # print("Ion at segment: ", ion_at_segment)
+                    # print("Available trap space: ", available_spaces)
+                    # print(f"Trying to solve brute-force congestion at gate {gate_pos} with {ion_assignment}")
+                for ion_index in range(len(ion_order)):
+                    gate_pos[ion_index] = ion_assignment[ion_order[ion_index]]
             """
                 Clearing the end-point of the selected trap
             """
@@ -802,7 +802,7 @@ class QCCDMappingAlgorithm:
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
             #print(f"Extended set: {[circuit[n] for n in E]}")
-            best_move = self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay, heuristic_move)
+            best_move = None#self._get_best_move(circuit, F, E, D, pi, ion_assignment, decay, heuristic_move)
             if best_move is None:
                 leading_moves += self._brute_force_congestion(circuit[list(F)[0]], D, pi, ion_assignment)
                 continue
@@ -898,7 +898,8 @@ class QCCDMappingAlgorithm:
         position_graph = self.qccd_machine.position_graph
         position_to_physical = self.qccd_machine.position_to_physical
         physical_qudit_positions = []
-        for location in F:
+        print("Number of considering gates: ", len(F))
+        for location in list(F)[:1]:
             block = circuit[location]
             for qudit in block.location:
                 physical_qudit_positions.append(ion_assignment[pi[qudit]])
@@ -969,18 +970,18 @@ class QCCDMappingAlgorithm:
         # print("Ion assignment after moved: ", pi)
         # Calculate front set term
         front = 0.0
-        for n in F:
+        for n in list(F):
             logical_qudits = circuit[n].location
             front += self._get_distance(logical_qudits, pi, ion_assignment, D)
         front /= len(F)
 
         # Calculate extended set term
         extend = 0.0
-        if len(E) > 0:
-            for n in E:
-                extend += self._get_distance(circuit[n].location, pi, ion_assignment, D)
-            extend /= len(E)
-            extend *= self.extended_set_weight
+        # if len(E) > 0:
+        #     for n in E:
+        #         extend += self._get_distance(circuit[n].location, pi, ion_assignment, D)
+        #     extend /= len(E)
+        #     extend *= self.extended_set_weight
 
         # Calculate decay factor
         # decay_factor = max(decay[move[0]], decay[move[1]])
@@ -1207,38 +1208,6 @@ class QCCDMappingAlgorithm:
         _logger.debug('ion assignment after move %s' % str(ion_assignment))
         # decay[move[0]] += self.decay_delta
         # decay[move[1]] += self.decay_delta
-
-    # def _uphill_swaps(
-    #     self,
-    #     logical_qudits: Sequence[int],
-    #     cg: CouplingGraph,
-    #     pi: list[int],
-    #     D: list[list[int]],
-    # ) -> Iterator[tuple[int, int]]:
-    #     """Yield the swaps necessary to bring some of the qudits together."""
-    #     center_qudit = min(
-    #         logical_qudits,
-    #         key=lambda q: sum(
-    #             D[pi[q]][pi[p]]
-    #             for p in logical_qudits
-    #             if p != q
-    #         ),
-    #     )
-    #
-    #     for q in logical_qudits:
-    #         if q == center_qudit:
-    #             continue
-    #
-    #         # TODO: Do not need to calculate entire tree
-    #         spt = cg.get_shortest_path_tree(pi[center_qudit])
-    #         path = list(reversed(spt[pi[q]]))
-    #
-    #         _logger.debug(f'Moving {q} to {center_qudit} via {path}.')
-    #
-    #         for p1, p2 in zip(path, path[1:]):
-    #             if pi[center_qudit] == p1 or pi[center_qudit] == p2:
-    #                 continue
-    #             yield (p1, p2)
 
     def _apply_perm(self, perm: Sequence[int], pi: list[int], ion_assignment: dict) -> None:
         """Apply the `perm` permutation to the current mapping `pi`."""

@@ -1,0 +1,363 @@
+Executing gate at point (0, 10).
+Executing gate at point (1, 10).
+Executing gate at point (2, 10).
+Best move: (8, 36)
+Best move: (35, 40)
+Best move: (17, 37)
+Best move: (26, 39)
+Best move: (24, 25)
+Best move: (31, 32)
+Best move: (19, 20)
+Best move: (20, 21)
+Best move: (21, 22)
+Best move: (22, 23)
+Best move: (23, 24)
+Best move: (11, 12)
+Try bruteforce due to multiple steps (12) to solve one gate
+Trying to solve brute-force congestion at gate [24, 0] with {0: 25, 1: 31, 2: 32, 3: 3, 4: 33, 5: 1, 6: 28, 7: 37, 8: 18, 9: 40, 10: 5, 11: 13, 12: 39, 13: 24, 14: 4, 15: 12, 16: 2, 17: 15, 18: 6, 19: 0, 20: 34, 21: 30, 22: 21, 23: 27, 24: 11, 25: 23, 26: 7, 27: 16, 28: 36, 29: 29, 30: 14, 31: 22}
+Trying to moving ion 0... to 0
+Ion assignment after moving ion 0: {0: 25, 1: 31, 2: 32, 3: 3, 4: 33, 5: 1, 6: 28, 7: 37, 8: 18, 9: 40, 10: 5, 11: 13, 12: 39, 13: 24, 14: 4, 15: 12, 16: 2, 17: 15, 18: 6, 19: 0, 20: 34, 21: 30, 22: 21, 23: 27, 24: 11, 25: 23, 26: 7, 27: 16, 28: 36, 29: 29, 30: 14, 31: 22}
+Gate position gate updated to [ 0 24]--------------c
+Trying to moving ion 24... to 1
+Ion assignment after moving ion 24: {0: 24, 1: 31, 2: 32, 3: 4, 4: 33, 5: 2, 6: 28, 7: 17, 8: 18, 9: 35, 10: 6, 11: 13, 12: 40, 13: 1, 14: 5, 15: 12, 16: 3, 17: 15, 18: 7, 19: 0, 20: 34, 21: 30, 22: 21, 23: 27, 24: 11, 25: 23, 26: 8, 27: 16, 28: 37, 29: 29, 30: 14, 31: 22}
+Executing gate at point (0, 13).
+Executing gate at point (1, 13).
+Executing gate at point (2, 13).
+Best move: (8, 36)
+Best move: (37, 38)
+Best move: (17, 37)
+Best move: (28, 29)
+Best move: (27, 28)
+Best move: (29, 30)
+Best move: (28, 29)
+Best move: (30, 31)
+Best move: (29, 30)
+Best move: (31, 32)
+Best move: (30, 31)
+Best move: (32, 33)
+Try bruteforce due to multiple steps (12) to solve one gate
+Trying to solve brute-force congestion at gate [36, 31] with {0: 24, 1: 29, 2: 30, 3: 4, 4: 32, 5: 2, 6: 33, 7: 37, 8: 18, 9: 35, 10: 6, 11: 13, 12: 40, 13: 1, 14: 5, 15: 12, 16: 3, 17: 15, 18: 7, 19: 0, 20: 34, 21: 28, 22: 21, 23: 31, 24: 11, 25: 23, 26: 36, 27: 16, 28: 38, 29: 27, 30: 14, 31: 22}
+Trying to moving ion 31... to 27
+Ion assignment after moving ion 31: {0: 24, 1: 30, 2: 31, 3: 4, 4: 32, 5: 2, 6: 33, 7: 37, 8: 18, 9: 35, 10: 6, 11: 13, 12: 40, 13: 1, 14: 5, 15: 12, 16: 3, 17: 15, 18: 7, 19: 0, 20: 34, 21: 29, 22: 21, 23: 27, 24: 11, 25: 23, 26: 36, 27: 16, 28: 38, 29: 28, 30: 14, 31: 22}
+Clearing endpoint 35.........
+Gate position gate updated to [27 36]--------------c
+Trying to moving ion 36... to 28
+Ion assignment after moving ion 36: {0: 24, 1: 31, 2: 32, 3: 4, 4: 33, 5: 2, 6: 34, 7: 37, 8: 18, 9: 39, 10: 6, 11: 13, 12: 25, 13: 1, 14: 5, 15: 12, 16: 3, 17: 15, 18: 7, 19: 0, 20: 35, 21: 30, 22: 21, 23: 27, 24: 11, 25: 23, 26: 28, 27: 16, 28: 26, 29: 29, 30: 14, 31: 22}
+Executing gate at point (0, 26).
+Executing gate at point (1, 26).
+Executing gate at point (2, 26).
+Best move: (35, 40)
+Best move: (36, 37)
+Best move: (38, 39)
+Best move: (26, 39)
+Best move: (33, 34)
+Best move: (24, 25)
+Best move: (15, 16)
+Best move: (14, 15)
+Best move: (13, 14)
+Best move: (32, 33)
+Best move: (4, 5)
+Best move: (5, 6)
+Try bruteforce due to multiple steps (12) to solve one gate
+Trying to solve brute-force congestion at gate [25, 12] with {0: 25, 1: 31, 2: 33, 3: 6, 4: 34, 5: 2, 6: 32, 7: 36, 8: 18, 9: 38, 10: 5, 11: 14, 12: 24, 13: 1, 14: 4, 15: 12, 16: 3, 17: 16, 18: 7, 19: 0, 20: 40, 21: 30, 22: 21, 23: 27, 24: 11, 25: 23, 26: 28, 27: 13, 28: 39, 29: 29, 30: 15, 31: 22}
+Trying to moving ion 12... to 9
+Ion assignment after moving ion 12: {0: 25, 1: 31, 2: 33, 3: 6, 4: 34, 5: 2, 6: 32, 7: 36, 8: 18, 9: 38, 10: 5, 11: 14, 12: 24, 13: 1, 14: 4, 15: 9, 16: 3, 17: 16, 18: 7, 19: 0, 20: 40, 21: 30, 22: 21, 23: 27, 24: 12, 25: 23, 26: 28, 27: 13, 28: 39, 29: 29, 30: 15, 31: 22}
+Gate position gate updated to [ 9 25]--------------c
+Trying to moving ion 25... to 10
+Ion assignment after moving ion 25: {0: 10, 1: 31, 2: 33, 3: 6, 4: 34, 5: 2, 6: 32, 7: 8, 8: 18, 9: 36, 10: 5, 11: 15, 12: 24, 13: 1, 14: 4, 15: 9, 16: 3, 17: 17, 18: 7, 19: 0, 20: 35, 21: 30, 22: 21, 23: 27, 24: 13, 25: 23, 26: 28, 27: 14, 28: 40, 29: 29, 30: 16, 31: 22}
+Executing gate at point (0, 0).
+Executing gate at point (0, 3).
+Executing gate at point (1, 0).
+Executing gate at point (1, 3).
+Executing gate at point (2, 0).
+Executing gate at point (2, 3).
+Best move: (17, 37)
+Best move: (2, 3)
+Best move: (30, 31)
+Best move: (3, 4)
+Best move: (4, 5)
+Best move: (5, 6)
+Best move: (3, 4)
+Best move: (4, 5)
+Best move: (32, 33)
+Best move: (31, 32)
+Best move: (6, 7)
+Best move: (7, 8)
+Try bruteforce due to multiple steps (12) to solve one gate
+Trying to solve brute-force congestion at gate [21, 35] with {0: 10, 1: 30, 2: 31, 3: 4, 4: 34, 5: 8, 6: 33, 7: 7, 8: 18, 9: 36, 10: 3, 11: 15, 12: 24, 13: 1, 14: 5, 15: 9, 16: 2, 17: 37, 18: 6, 19: 0, 20: 35, 21: 32, 22: 21, 23: 27, 24: 13, 25: 23, 26: 28, 27: 14, 28: 40, 29: 29, 30: 16, 31: 22}
+Trying to moving ion 21... to 18
+Ion assignment after moving ion 21: {0: 10, 1: 30, 2: 31, 3: 4, 4: 34, 5: 8, 6: 33, 7: 7, 8: 19, 9: 36, 10: 3, 11: 15, 12: 24, 13: 1, 14: 5, 15: 9, 16: 2, 17: 37, 18: 6, 19: 0, 20: 35, 21: 32, 22: 18, 23: 27, 24: 13, 25: 23, 26: 28, 27: 14, 28: 40, 29: 29, 30: 16, 31: 22}
+Gate position gate updated to [18 35]--------------c
+Trying to moving ion 35... to 19
+Ion assignment after moving ion 35: {0: 10, 1: 30, 2: 31, 3: 4, 4: 34, 5: 8, 6: 33, 7: 7, 8: 20, 9: 36, 10: 3, 11: 15, 12: 25, 13: 1, 14: 5, 15: 9, 16: 2, 17: 37, 18: 6, 19: 0, 20: 19, 21: 32, 22: 18, 23: 27, 24: 13, 25: 24, 26: 28, 27: 14, 28: 38, 29: 29, 30: 16, 31: 23}
+Executing gate at point (0, 22).
+Executing gate at point (1, 22).
+Executing gate at point (2, 22).
+Best move: (38, 40)
+Best move: (37, 38)
+Best move: (12, 13)
+Best move: (13, 14)
+Best move: (6, 7)
+Best move: (24, 25)
+Best move: (14, 15)
+Best move: (5, 6)
+Best move: (31, 32)
+Best move: (15, 16)
+Best move: (32, 33)
+Best move: (20, 21)
+Try bruteforce due to multiple steps (12) to solve one gate
+Trying to solve brute-force congestion at gate [32, 40] with {0: 10, 1: 30, 2: 33, 3: 4, 4: 34, 5: 8, 6: 32, 7: 5, 8: 21, 9: 36, 10: 3, 11: 14, 12: 24, 13: 1, 14: 6, 15: 9, 16: 2, 17: 38, 18: 7, 19: 0, 20: 19, 21: 31, 22: 18, 23: 27, 24: 12, 25: 25, 26: 28, 27: 13, 28: 40, 29: 29, 30: 15, 31: 23}
+Trying to moving ion 32... to 27
+Ion assignment after moving ion 32: {0: 10, 1: 31, 2: 33, 3: 4, 4: 34, 5: 8, 6: 27, 7: 5, 8: 21, 9: 36, 10: 3, 11: 14, 12: 24, 13: 1, 14: 6, 15: 9, 16: 2, 17: 38, 18: 7, 19: 0, 20: 19, 21: 32, 22: 18, 23: 28, 24: 12, 25: 25, 26: 29, 27: 13, 28: 40, 29: 30, 30: 15, 31: 23}
+Gate position gate updated to [27 40]--------------c
+Trying to moving ion 40... to 28
+Ion assignment after moving ion 40: {0: 10, 1: 32, 2: 34, 3: 4, 4: 35, 5: 8, 6: 27, 7: 5, 8: 21, 9: 36, 10: 3, 11: 14, 12: 24, 13: 1, 14: 6, 15: 9, 16: 2, 17: 38, 18: 7, 19: 0, 20: 19, 21: 33, 22: 18, 23: 29, 24: 12, 25: 25, 26: 30, 27: 13, 28: 28, 29: 31, 30: 15, 31: 23}
+Executing gate at point (0, 6).
+Executing gate at point (1, 6).
+Executing gate at point (2, 6).
+Best move: (35, 40)
+Best move: (39, 40)
+Best move: (38, 40)
+Best move: (21, 22)
+Best move: (23, 24)
+Best move: (31, 32)
+Best move: (32, 33)
+Best move: (13, 14)
+Best move: (12, 13)
+Best move: (22, 23)
+Best move: (22, 23)
+Best move: (26, 39)
+Try bruteforce due to multiple steps (12) to solve one gate
+Trying to solve brute-force congestion at gate [24, 26] with {0: 10, 1: 31, 2: 34, 3: 4, 4: 26, 5: 8, 6: 27, 7: 5, 8: 22, 9: 36, 10: 3, 11: 12, 12: 23, 13: 1, 14: 6, 15: 9, 16: 2, 17: 40, 18: 7, 19: 0, 20: 19, 21: 32, 22: 18, 23: 29, 24: 13, 25: 25, 26: 30, 27: 14, 28: 28, 29: 33, 30: 15, 31: 24}
+Trying to moving ion 24... to 18
+Ion assignment after moving ion 24: {0: 10, 1: 31, 2: 34, 3: 4, 4: 26, 5: 8, 6: 27, 7: 5, 8: 23, 9: 36, 10: 3, 11: 12, 12: 24, 13: 1, 14: 6, 15: 9, 16: 2, 17: 40, 18: 7, 19: 0, 20: 20, 21: 32, 22: 19, 23: 29, 24: 13, 25: 25, 26: 30, 27: 14, 28: 28, 29: 33, 30: 15, 31: 18}
+Gate position gate updated to [18 26]--------------c
+Trying to moving ion 26... to 19
+Ion assignment after moving ion 26: {0: 10, 1: 31, 2: 34, 3: 4, 4: 19, 5: 8, 6: 27, 7: 5, 8: 24, 9: 36, 10: 3, 11: 12, 12: 25, 13: 1, 14: 6, 15: 9, 16: 2, 17: 40, 18: 7, 19: 0, 20: 21, 21: 32, 22: 20, 23: 29, 24: 13, 25: 26, 26: 30, 27: 14, 28: 28, 29: 33, 30: 15, 31: 18}
+Executing gate at point (0, 31).
+Executing gate at point (1, 31).
+Executing gate at point (2, 31).
+Best move: (26, 39)
+Best move: (24, 25)
+Best move: (25, 26)
+Best move: (14, 15)
+Best move: (14, 15)
+Best move: (7, 8)
+Best move: (14, 15)
+Best move: (15, 16)
+Best move: (15, 16)
+Best move: (15, 16)
+Try bruteforce due to repeated pattern...
+Trying to solve brute-force congestion at gate [8, 16] with {0: 10, 1: 31, 2: 34, 3: 4, 4: 19, 5: 7, 6: 27, 7: 5, 8: 26, 9: 36, 10: 3, 11: 12, 12: 24, 13: 1, 14: 6, 15: 9, 16: 2, 17: 40, 18: 8, 19: 0, 20: 21, 21: 32, 22: 20, 23: 29, 24: 13, 25: 39, 26: 30, 27: 16, 28: 28, 29: 33, 30: 14, 31: 18}
+Trying to moving ion 16... to 9
+Ion assignment after moving ion 16: {0: 11, 1: 31, 2: 34, 3: 4, 4: 19, 5: 7, 6: 27, 7: 5, 8: 26, 9: 36, 10: 3, 11: 13, 12: 24, 13: 1, 14: 6, 15: 10, 16: 2, 17: 40, 18: 8, 19: 0, 20: 21, 21: 32, 22: 20, 23: 29, 24: 14, 25: 39, 26: 30, 27: 9, 28: 28, 29: 33, 30: 15, 31: 18}
+Gate position gate updated to [9 8]--------------c
+Trying to moving ion 8... to 10
+Ion assignment after moving ion 8: {0: 12, 1: 31, 2: 34, 3: 4, 4: 19, 5: 7, 6: 27, 7: 5, 8: 26, 9: 38, 10: 3, 11: 14, 12: 24, 13: 1, 14: 6, 15: 11, 16: 2, 17: 40, 18: 10, 19: 0, 20: 21, 21: 32, 22: 20, 23: 29, 24: 15, 25: 39, 26: 30, 27: 9, 28: 28, 29: 33, 30: 16, 31: 18}
+Executing gate at point (0, 18).
+Executing gate at point (1, 18).
+Executing gate at point (2, 18).
+Best move: (36, 38)
+Best move: (8, 36)
+Executing gate at point (0, 5).
+Executing gate at point (1, 5).
+Executing gate at point (2, 5).
+Best move: (6, 7)
+Best move: (7, 8)
+Best move: (8, 36)
+Best move: (25, 26)
+Best move: (33, 34)
+Best move: (15, 16)
+Best move: (14, 15)
+Best move: (14, 15)
+Best move: (32, 33)
+Best move: (33, 34)
+Best move: (38, 39)
+Best move: (38, 39)
+Try bruteforce due to multiple steps (12) to solve one gate
+Trying to solve brute-force congestion at gate [34, 39] with {0: 12, 1: 31, 2: 32, 3: 4, 4: 19, 5: 6, 6: 27, 7: 5, 8: 25, 9: 7, 10: 3, 11: 14, 12: 24, 13: 1, 14: 36, 15: 11, 16: 2, 17: 40, 18: 10, 19: 0, 20: 21, 21: 34, 22: 20, 23: 29, 24: 16, 25: 39, 26: 30, 27: 9, 28: 28, 29: 33, 30: 15, 31: 18}
+Trying to moving ion 34... to 27
+Ion assignment after moving ion 34: {0: 12, 1: 32, 2: 33, 3: 4, 4: 19, 5: 6, 6: 28, 7: 5, 8: 25, 9: 7, 10: 3, 11: 14, 12: 24, 13: 1, 14: 36, 15: 11, 16: 2, 17: 40, 18: 10, 19: 0, 20: 21, 21: 27, 22: 20, 23: 30, 24: 16, 25: 39, 26: 31, 27: 9, 28: 29, 29: 34, 30: 15, 31: 18}
+Gate position gate updated to [27 39]--------------c
+Trying to moving ion 39... to 28
+Ion assignment after moving ion 39: {0: 12, 1: 33, 2: 34, 3: 4, 4: 19, 5: 6, 6: 29, 7: 5, 8: 25, 9: 7, 10: 3, 11: 14, 12: 24, 13: 1, 14: 36, 15: 11, 16: 2, 17: 38, 18: 10, 19: 0, 20: 21, 21: 27, 22: 20, 23: 31, 24: 16, 25: 28, 26: 32, 27: 9, 28: 30, 29: 35, 30: 15, 31: 18}
+Executing gate at point (0, 21).
+Executing gate at point (1, 21).
+Executing gate at point (2, 21).
+Best move: (33, 34)
+Best move: (34, 35)
+Best move: (35, 40)
+Best move: (39, 40)
+Best move: (26, 39)
+Best move: (38, 39)
+Best move: (25, 26)
+Best move: (25, 26)
+Best move: (25, 26)
+Try bruteforce due to repeated pattern...
+Trying to solve brute-force congestion at gate [39, 25] with {0: 12, 1: 25, 2: 33, 3: 4, 4: 19, 5: 6, 6: 29, 7: 5, 8: 26, 9: 7, 10: 3, 11: 14, 12: 24, 13: 1, 14: 36, 15: 11, 16: 2, 17: 39, 18: 10, 19: 0, 20: 21, 21: 27, 22: 20, 23: 31, 24: 16, 25: 28, 26: 32, 27: 9, 28: 30, 29: 34, 30: 15, 31: 18}
+Trying to moving ion 25... to 18
+Ion assignment after moving ion 25: {0: 12, 1: 18, 2: 33, 3: 4, 4: 20, 5: 6, 6: 29, 7: 5, 8: 26, 9: 7, 10: 3, 11: 14, 12: 25, 13: 1, 14: 36, 15: 11, 16: 2, 17: 39, 18: 10, 19: 0, 20: 22, 21: 27, 22: 21, 23: 31, 24: 16, 25: 28, 26: 32, 27: 9, 28: 30, 29: 34, 30: 15, 31: 19}
+Clearing endpoint 26.........
+Gate position gate updated to [18 40]--------------c
+Trying to moving ion 40... to 19
+Ion assignment after moving ion 40: {0: 12, 1: 18, 2: 33, 3: 4, 4: 21, 5: 6, 6: 29, 7: 5, 8: 38, 9: 7, 10: 3, 11: 14, 12: 26, 13: 1, 14: 36, 15: 11, 16: 2, 17: 19, 18: 10, 19: 0, 20: 23, 21: 27, 22: 22, 23: 31, 24: 16, 25: 28, 26: 32, 27: 9, 28: 30, 29: 34, 30: 15, 31: 20}
+Executing gate at point (0, 17).
+Executing gate at point (1, 17).
+Executing gate at point (2, 17).
+Best move: (37, 38)
+Best move: (25, 26)
+Best move: (36, 38)
+Best move: (38, 39)
+Best move: (26, 39)
+Executing gate at point (0, 14).
+Executing gate at point (1, 14).
+Executing gate at point (2, 14).
+Best move: (17, 37)
+Executing gate at point (0, 8).
+Executing gate at point (1, 8).
+Executing gate at point (2, 8).
+Best move: (14, 15)
+Best move: (16, 17)
+Best move: (17, 37)
+Best move: (37, 38)
+Best move: (38, 40)
+Best move: (35, 40)
+Executing gate at point (0, 24).
+Executing gate at point (1, 24).
+Executing gate at point (2, 24).
+Best move: (34, 35)
+Best move: (35, 40)
+Best move: (38, 40)
+Best move: (37, 38)
+Best move: (17, 37)
+Executing gate at point (0, 11).
+Executing gate at point (1, 11).
+Executing gate at point (2, 11).
+Executing gate at point (0, 26).
+Executing gate at point (0, 10).
+Executing gate at point (0, 0).
+Executing gate at point (0, 13).
+Executing gate at point (0, 3).
+Executing gate at point (0, 22).
+Executing gate at point (0, 6).
+Executing gate at point (0, 31).
+Executing gate at point (0, 21).
+Executing gate at point (0, 5).
+Executing gate at point (0, 18).
+Executing gate at point (0, 24).
+Executing gate at point (0, 8).
+Executing gate at point (0, 14).
+Executing gate at point (0, 11).
+Executing gate at point (0, 17).
+Executing gate at point (1, 31).
+Executing gate at point (1, 5).
+Executing gate at point (1, 11).
+Executing gate at point (1, 8).
+Executing gate at point (1, 14).
+Executing gate at point (1, 17).
+Executing gate at point (1, 26).
+Executing gate at point (1, 0).
+Executing gate at point (1, 6).
+Executing gate at point (1, 3).
+Executing gate at point (1, 18).
+Executing gate at point (1, 21).
+Executing gate at point (1, 24).
+Executing gate at point (1, 13).
+Executing gate at point (1, 10).
+Executing gate at point (1, 22).
+Executing gate at point (2, 10).
+Executing gate at point (2, 13).
+Executing gate at point (2, 22).
+Executing gate at point (2, 31).
+Executing gate at point (2, 5).
+Executing gate at point (2, 11).
+Executing gate at point (2, 8).
+Executing gate at point (2, 14).
+Executing gate at point (2, 17).
+Executing gate at point (2, 26).
+Executing gate at point (2, 0).
+Executing gate at point (2, 3).
+Executing gate at point (2, 6).
+Executing gate at point (2, 18).
+Executing gate at point (2, 21).
+Executing gate at point (2, 24).
+Executing gate at point (0, 26).
+Executing gate at point (0, 10).
+Executing gate at point (0, 0).
+Executing gate at point (0, 13).
+Executing gate at point (0, 3).
+Executing gate at point (0, 22).
+Executing gate at point (0, 6).
+Executing gate at point (0, 31).
+Executing gate at point (0, 21).
+Executing gate at point (0, 5).
+Executing gate at point (0, 18).
+Executing gate at point (0, 24).
+Executing gate at point (0, 8).
+Executing gate at point (0, 14).
+Executing gate at point (0, 11).
+Executing gate at point (0, 17).
+Executing gate at point (1, 31).
+Executing gate at point (1, 5).
+Executing gate at point (1, 11).
+Executing gate at point (1, 8).
+Executing gate at point (1, 14).
+Executing gate at point (1, 17).
+Executing gate at point (1, 26).
+Executing gate at point (1, 0).
+Executing gate at point (1, 6).
+Executing gate at point (1, 3).
+Executing gate at point (1, 18).
+Executing gate at point (1, 21).
+Executing gate at point (1, 24).
+Executing gate at point (1, 13).
+Executing gate at point (1, 10).
+Executing gate at point (1, 22).
+Executing gate at point (2, 10).
+Executing gate at point (2, 13).
+Executing gate at point (2, 22).
+Executing gate at point (2, 31).
+Executing gate at point (2, 5).
+Executing gate at point (2, 11).
+Executing gate at point (2, 8).
+Executing gate at point (2, 14).
+Executing gate at point (2, 17).
+Executing gate at point (2, 26).
+Executing gate at point (2, 0).
+Executing gate at point (2, 3).
+Executing gate at point (2, 6).
+Executing gate at point (2, 18).Input filename:  QuantumVolume_wsq_32
+Algorithm:  SHAW
+Trap type:  H
+Trap capacity:  9
+Num layout passes:  2
+Gate type:  FM
+Run index:  5
+Creating a QCCD machine ...
+QCCD physical machine:
+### Traps ### 
+Trap(id='trap_0', max_num_ions=9, initial_num_ions=0, executable=True, measureable=False)
+Trap(id='trap_1', max_num_ions=9, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_2', max_num_ions=9, initial_num_ions=0, executable=True, measureable=False)
+Trap(id='trap_3', max_num_ions=9, initial_num_ions=0, executable=True, measureable=True)
+### Junctions ### 
+Junction(id='junction_0')
+Junction(id='junction_1')
+### Segments ### 
+Segment(id='segment_0', left=Trap(id='trap_0', max_num_ions=9, initial_num_ions=0, executable=True, measureable=False), right=Junction(id='junction_0'))
+Segment(id='segment_1', left=Trap(id='trap_1', max_num_ions=9, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_0'))
+Segment(id='segment_2', left=Junction(id='junction_0'), right=Junction(id='junction_1'))
+Segment(id='segment_3', left=Trap(id='trap_2', max_num_ions=9, initial_num_ions=0, executable=True, measureable=False), right=Junction(id='junction_1'))
+Segment(id='segment_4', left=Trap(id='trap_3', max_num_ions=9, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_1'))
+Finished creating the QCCD physical machine.
+Position graph:  CouplingGraph({(3, 4), (26, 39), (12, 13), (21, 22), (22, 23), (31, 32), (27, 28), (25, 26), (36, 37), (13, 14), (8, 36), (32, 33), (18, 19), (4, 5), (5, 6), (38, 40), (14, 15), (23, 24), (0, 1), (9, 10), (1, 2), (10, 11), (19, 20), (28, 29), (37, 38), (6, 7), (15, 16), (24, 25), (33, 34), (35, 40), (20, 21), (29, 30), (38, 39), (39, 40), (34, 35), (2, 3), (11, 12), (7, 8), (17, 37), (36, 38), (30, 31), (16, 17)})
+Initial ion assignment:  {0: 24, 1: 32, 2: 31, 3: 3, 4: 33, 5: 1, 6: 28, 7: 17, 8: 18, 9: 35, 10: 5, 11: 13, 12: 26, 13: 19, 14: 4, 15: 11, 16: 2, 17: 15, 18: 6, 19: 0, 20: 34, 21: 30, 22: 22, 23: 27, 24: 12, 25: 25, 26: 7, 27: 16, 28: 8, 29: 29, 30: 14, 31: 23}
+Congestion rate:  1.0
+Traceback (most recent call last):
+  File "C:\Users\PC\Documents\GitHub\bqskit-shuttling\bqskit\shuttling\qccd\run.py", line 150, in <module>
+    runtime, sp = schedule_QCCD(data["instruction_list"],
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\GitHub\bqskit-shuttling\bqskit\shuttling\qccd\QCCD_schedule.py", line 206, in schedule_QCCD
+    return runtime, shuttling_time/(shuttling_time+execution_time)
+                    ~~~~~~~~~~~~~~^^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ZeroDivisionError: float division by zero

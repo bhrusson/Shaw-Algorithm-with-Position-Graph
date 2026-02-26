@@ -130,7 +130,7 @@ class QCCDMachineModel(MachineModel):
             return (160 + 5 * ion_distance) * 1e-6
         elif self.gate_type == "FM":
             trap_capacity = self.physical_graph.get_trap(self.get_trap_id(p1)).max_num_ions
-            return max(100, 13.33 * trap_capacity - 54) * 1e-6
+            return max(100, 13.33 * trap_capacity - 54) * 1e-6 #40e-6
 
     def generate_position_graph(self) -> (CouplingGraph,
                                           dict,
@@ -353,11 +353,9 @@ class QCCDMachineModel(MachineModel):
             ion_assignment: physical to position
         """
         trap_id_lst = [self.get_trap_id(ion_assignment[pi[qudit]]) for qudit in current_gate.location]
-        # print("Trap id list: ", trap_id_lst)
         if None in trap_id_lst:
             return False
         trap_is_executable = [self.physical_graph.get_trap(trap_id).executable for trap_id in trap_id_lst]
-        # print("Trap is_executable: ", trap_is_executable)
         if any(tid is None for tid in trap_id_lst) or any(excutable is False for excutable in trap_is_executable):
             return False
         return all(tid == trap_id_lst[0] for tid in trap_id_lst)

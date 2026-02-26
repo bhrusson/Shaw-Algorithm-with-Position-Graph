@@ -76,7 +76,7 @@ def schedule_QCCD(
                 # print("Ion assignment is updated: {}".format(ion_assignment))
                 runtime += max(serial_moves_runtime)
                 shuttling_time += max(serial_moves_runtime)
-                runtime -= 5e-6
+                runtime -= 40e-6
                 parallization_moves = []
                 #print("Time stamp after parallel moves: {}".format(runtime))
             if num_cycles != 0:
@@ -144,9 +144,9 @@ def schedule_QCCD(
                             #print(f"More than one trap id....{trap_id_op}")
                             trap = trap_id_op.pop()
                             if trap is not None:
-                                executable_dict[trap] += 100e-6
+                                executable_dict[trap] += 120e-6
                             else:
-                                executable_dict[trap_id_op.pop()] += 100e-6
+                                executable_dict[trap_id_op.pop()] += 120e-6
                             #raise ValueError(f"More than one trap id....{trap_id_op}")
                         else:
                             executable_dict[trap_id_op.pop()] += qccd_machine.two_qudit_gate_time(

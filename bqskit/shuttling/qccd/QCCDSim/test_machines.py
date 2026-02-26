@@ -4,6 +4,43 @@ import math
 
 #ISCA Test machines Begin
 
+def test_grid(num_cols, num_rows, capacity, mparams):
+    if num_cols <= 0 or num_rows <= 0:
+        raise ValueError("num_cols and num_rows must be greater than zero")
+    m = Machine(mparams)
+    num_traps = (num_rows + 1) * (num_cols + 1)
+    num_junctions = num_rows * (num_cols + 1)
+    trap_idx = 0
+    traps = []
+    for i in range(num_rows + 1):
+        t_inner = []
+        for j in range(num_cols + 1):
+            t_inner.append(m.add_trap(trap_idx, capacity))
+            trap_idx += 1
+        traps.append(t_inner)
+    assert trap_idx == num_traps, "Final trap idx is not the same with number of traps!"
+    junctions = []
+    junction_idx = 0
+    for i in range(num_rows):
+        j_inner = []
+        for j in range(num_cols + 1):
+            j_inner.append(m.add_junction(junction_idx))
+            junction_idx += 1
+        junctions.append(j_inner)
+    assert junction_idx == num_junctions, "Final junction idx is not the same with number of junctions!"
+    segment_idx = 0
+    for row_idx in range(num_rows + 1):
+        for col_idx in range(num_cols + 1):
+            if row_idx != num_rows:
+                m.add_segment(segment_idx, traps[row_idx][col_idx], junctions[row_idx][col_idx], 'R')
+                segment_idx += 1
+            if row_idx != 0:
+                m.add_segment(segment_idx, traps[row_idx][col_idx], junctions[row_idx-1][col_idx], 'L')
+                segment_idx += 1
+    for row_idx in range(num_rows):
+        for col_idx in range(num_cols):
+            m.add_segment(segment_idx, junctions[row_idx][col_idx], junctions[row_idx][col_idx+1])
+    return m
 def test_enchilada(capacity, mparams):
     m = Machine(mparams)
     t = [m.add_trap(i, capacity) if i % 2 == 0 else m.add_trap(i, math.ceil(capacity / 2)) for i in range(9)]
@@ -223,3 +260,25 @@ def make_9trap(capacity):
     m.add_segment(19, j[2], j[5])
     m.add_segment(20, j[5], j[8])
     return m
+
+if __name__ == '__main__':
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    mpar_model3 = MachineParams()
+    mpar_model3.alpha = 0.003680029
+    mpar_model3.beta = 39.996319971
+    mpar_model3.split_merge_time = 80
+    mpar_model3.shuttle_time = 40
+    mpar_model3.junction2_cross_time = 40
+    mpar_model3.junction3_cross_time = 120
+    mpar_model3.junction4_cross_time = 120
+    mpar_model3.gate_type = "FM"
+    mpar_model3.swap_type = "GateSwap"
+    mpar_model3.ion_swap_time = 40
+    machine_model = "MPar3"
+    m = test_grid(2, 3, 3, mpar_model3)
+    print("Number of traps: ", len(m.traps))
+    print("Number of edges: ", len(m.graph.edges))
+    nx.draw_spring(m.graph)
+    plt.show()

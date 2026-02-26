@@ -4,6 +4,7 @@ Machine class definition
 import networkx as nx
 import numpy as np
 
+
 class Trap:
     def __init__(self, idx, capacity):
         self.id = idx
@@ -12,7 +13,8 @@ class Trap:
         self.orientation = {}
 
     def show(self):
-        return "T"+str(self.id)
+        return "T" + str(self.id)
+
 
 class Segment:
     def __init__(self, idx, capacity, length):
@@ -21,22 +23,26 @@ class Segment:
         self.length = length
         self.ions = []
 
+
 class Junction:
     def __init__(self, idx):
         self.id = idx
         self.objs = []
 
     def show(self):
-        return "J"+str(self.id)
+        return "J" + str(self.id)
+
 
 '''
 Machine has a set of traps, segmenents and junctions
 graph object represents the machine topology
 '''
 
+
 class MachineParams:
     def __init__(self):
         return
+
 
 class Machine:
     def __init__(self, mparams):
@@ -66,7 +72,7 @@ class Machine:
             #Note: orientation is indexed by the segment object, not junction
         if type(obj1) == Junction and type(obj2) == Trap:
             print("Unsupported API: add_segment junction,trap not allowed")
-            assert(0)
+            assert (0)
         self.graph.add_edge(obj1, obj2, seg=new_seg)
 
     def add_comm_capacity(self, val):
@@ -82,17 +88,17 @@ class Machine:
         mp = self.mparams
         p1 = sys_state.trap_ions[trap_id].index(ion1)
         p2 = sys_state.trap_ions[trap_id].index(ion2)
-        d_const = 1 #um
-        ion_dist = abs(p1-p2)*d_const
+        d_const = 1  #um
+        ion_dist = abs(p1 - p2) * d_const
         if mp.gate_type == "Duan":
-            t = -22 + 100*ion_dist
+            t = -22 + 100 * ion_dist
         elif mp.gate_type == "Trout":
-            t = 10 + 38*ion_dist
+            t = 10 + 38 * ion_dist
         elif mp.gate_type == "FM":
             trap_capacity = self.traps[0].capacity
             t = max(100, 13.33*trap_capacity-54)
         elif mp.gate_type == "PM":
-            t = 160 + 5*ion_dist
+            t = 160 + 5 * ion_dist
         else:
             assert 0
         t = max(t, 1)
@@ -107,9 +113,9 @@ class Machine:
         i1 = 0
         i2 = 0
         if t.orientation[seg_id] == 'L':
-            ion2 = sys_state.trap_ions[trap_id][0] #Swap to left end
+            ion2 = sys_state.trap_ions[trap_id][0]  #Swap to left end
         else:
-            ion2 = sys_state.trap_ions[trap_id][-1] #Swap to right end
+            ion2 = sys_state.trap_ions[trap_id][-1]  #Swap to right end
         if ion1 == ion2:
             split_estimate = self.mparams.split_merge_time
             split_swap_count = 0
@@ -120,18 +126,18 @@ class Machine:
                 p1 = sys_state.trap_ions[trap_id].index(ion1)
                 p2 = sys_state.trap_ions[trap_id].index(ion2)
                 split_swap_count = 1
-                split_swap_hops = abs(p1-p2)
-                swap_est = 42*split_swap_hops # 3 * self.gate_time(sys_state, trap_id, ion1, ion2)
+                split_swap_hops = abs(p1 - p2)
+                swap_est = self.mparams.ion_swap_time * split_swap_hops  # 3 * self.gate_time(sys_state, trap_id, ion1, ion2)
                 split_estimate = swap_est + self.mparams.split_merge_time
                 i1 = ion1
                 i2 = ion2
             elif mp.swap_type == "IonSwap":
                 p1 = sys_state.trap_ions[trap_id].index(ion1)
                 p2 = sys_state.trap_ions[trap_id].index(ion2)
-                num_hops = abs(p1-p2)
-                swap_est = num_hops*self.mparams.split_merge_time #n splits
-                swap_est += (num_hops-1)*self.mparams.split_merge_time #n-1 merges
-                swap_est += self.mparams.ion_swap_time*num_hops #n moves
+                num_hops = abs(p1 - p2)
+                swap_est = num_hops * self.mparams.split_merge_time  #n splits
+                swap_est += (num_hops - 1) * self.mparams.split_merge_time  #n-1 merges
+                swap_est += self.mparams.ion_swap_time * num_hops  #n moves
                 split_estimate = swap_est
                 ion_swap_hops = num_hops
         #print("SWAP", trap_id, seg_id, sys_state.trap_ions[trap_id], ion1, ion2, t.orientation, swap_est)
@@ -139,7 +145,7 @@ class Machine:
 
     def merge_time(self, trap_id, sys_state):
         num_ions = len(sys_state.trap_ions[trap_id])
-        return int(self.mparams.split_merge_time) + 42*num_ions
+        return int(self.mparams.split_merge_time) + self.mparams.ion_swap_time * num_ions
 
     def move_time(self, seg1, seg2):
         return int(self.mparams.shuttle_time)

@@ -9,9 +9,8 @@ from bqskit.ir.gates import CXGate
 from bqskit import enable_logging
 from bqskit.ir.opt import ScipyMinimizer, HilbertSchmidtCostGenerator
 from bqskit.shuttling.qccd.mapping import QCCDPAMLayoutPass, QCCDPAMRoutingPass, QCCDLayoutPass, QCCDRoutingPass
-from bqskit.shuttling.qccd import (QCCDMachineModel, QCCDSubtopologySelectionPass,
-                                   QCCDMappingAlgorithm, create_testing_physical_machine, schedule_QCCD
-                                  )
+from bqskit.shuttling.qccd import (QCCDMachineModel, QCCDSubtopologySelectionPass, create_grid_physical_machine,
+                                   QCCDMappingAlgorithm, create_testing_physical_machine, schedule_QCCD)
 import sys
 import pickle
 #enable_logging(True)
@@ -36,9 +35,13 @@ print("Gate type: ", str(gate_type))
 print("Run index: ", str(run_index))
 # print("QASM output filename: ", str(qasm_result_filename))
 # print("Output filename: ", str(result_filename))
-
-physical_model = create_testing_physical_machine(type=trap_type,
-                                                 trap_capacity=int(trap_capacity))
+if trap_type == "grid":
+    physical_model = create_grid_physical_machine(num_cols = 5,
+                                                  num_rows = 5,
+                                                  trap_capacity = trap_capacity)
+else:
+    physical_model = create_testing_physical_machine(type=trap_type,
+                                                     trap_capacity=int(trap_capacity))
 timing_data = {'sq_timings': 30e-6,
                'tq_timings': 40e-6,
                'segment': 5e-6,
@@ -47,6 +50,14 @@ timing_data = {'sq_timings': 30e-6,
                'merge': 80e-6,
                'junction_Y': 100e-6,
                'junction_X': 120e-6}
+# timing_data = {'sq_timings': 40e-6,
+#                'tq_timings': 40e-6,
+#                'segment': 40e-6,
+#                'inner_swap': 40e-6,
+#                'split': 80e-6,
+#                'merge': 80e-6,
+#                'junction_Y': 120e-6,
+#                'junction_X': 120e-6}
 gate_set = GateSet({U3Gate(), CXGate()})
 machine_model = QCCDMachineModel(gate_set=gate_set,
                                  physical_graph=physical_model,
@@ -60,11 +71,39 @@ num_qudits = cir.num_qudits
 """
     Define ion assignment
 """
+# initial_assignment = {0: [13, 14, 15, 16, 17], 1: [12, 11, 10, 9, 8],
+#     2: [], 3: [18, 19, 20, 21, 22], 4: [7, 28, 6, 5, 4],
+#     5: [31, 0], 6: [23, 24, 25, 26, 27], 7: [29, 3, 30, 2, 1], 8: []}
+
+"""
+QFT_wsq_32
+    {0: [21, 10, 30, 26, 1], 1: [28, 3, 27, 4, 25],
+    2: [22, 9, 20, 11, 19], 3: [5, 31, 0, 29, 2],
+    4: [6, 24, 7, 23, 8], 5: [12, 18, 13, 17, 14],
+    6: [], 7: [16, 15], 8: []}
+TFIM_wsq_n32_s100
+   {0: [12, 13, 14, 15, 16],
+   1: [11, 10, 9, 8, 7], 2: [],
+   3: [17, 18, 19, 20, 21], 4: [27, 28, 6, 5, 29],
+   5: [1, 0], 6: [22, 23, 24, 25, 26],
+   7: [4, 3, 30, 2, 31], 8: []}
+TFXY_wsq_n32_s100
+    {0: [13, 14, 15, 16, 17], 1: [12, 11, 10, 9, 8],
+    2: [], 3: [18, 19, 20, 21, 22], 4: [7, 28, 6, 5, 4],
+    5: [31, 0], 6: [23, 24, 25, 26, 27], 7: [29, 3, 30, 2, 1], 8: []}
+"""
+
 ion_assignment = {}
+# trap_idx = 0
+# for trap in machine_model.physical_graph.trap_list:
+#     trap_space = machine_model.physical_to_position[trap.id]
+#     for space_idx, ion in enumerate(initial_assignment[trap_idx]):
+#         ion_assignment[ion] = trap_space[space_idx]
+#     trap_idx += 1
+####
 all_available_trap_space = []
 for trap in machine_model.physical_graph.trap_list:
     all_available_trap_space += machine_model.physical_to_position[trap.id]
-
 trap_seq = random.sample(all_available_trap_space, num_qudits)
 for i in range(num_qudits):
     ion_assignment[i] = trap_seq[i]
@@ -77,23 +116,23 @@ executable_spaces = 0
 for trap in machine_model.physical_graph.executable_trap_list:
     executable_spaces += trap.max_num_ions
 if cir.num_qudits == executable_spaces:
-    congestion_rate = 0.5
-else:
     congestion_rate = 1.0
+else:
+    congestion_rate = 0.5
 print("Congestion rate: ", congestion_rate)
 
 gate_count_weight = 0.1
 
 qsearch_pass = QSearchSynthesisPass()
-block_size = 2
+block_size = 3
 if algo_type == "SHAW":
     workflow = [
         UnfoldPass(),
         SetModelPass(machine_model),
         UpdateDataPass(key='ion_assignment_qccd', val=ion_assignment),
         # Re-target the gate
-        # QuickPartitioner(block_size),
-        # ApplyPlacement(),
+        QuickPartitioner(block_size),
+        ApplyPlacement(),
         QCCDLayoutPass(total_passes=num_layout_passes,
                        cogestion_rate=congestion_rate),
         QCCDRoutingPass(gate_count_weight,
@@ -134,7 +173,7 @@ with Compiler() as compiler:
 """
 Save qasm file
 """
-qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
+qasm_result_filename = f"bqskit/shuttling/qccd/paper_result_grid/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
 output_circuit.save(qasm_result_filename)
 
 """
@@ -144,7 +183,7 @@ runtime, sp = schedule_QCCD(data["instruction_list"],
                         output_circuit,
                         data.initial_mapping,
                         data['initial_ion_assignment_qccd'],
-                        data.model,
+                        machine_model,
                         parallel=True)
 print(f"Scheduling QCCD: {runtime / 1e-6} us, costing {compile_time} s to compile")
 
@@ -160,7 +199,10 @@ result = [
           data['final_mapping'],
           machine_model
           ]
-
-result_filename = f"bqskit/shuttling/qccd/rebuttal_result/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
+print(runtime)
+print(compile_time)
+print(data['initial_ion_assignment_qccd'])
+print(data['initial_mapping'])
+result_filename = f"bqskit/shuttling/qccd/paper_result_grid/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)

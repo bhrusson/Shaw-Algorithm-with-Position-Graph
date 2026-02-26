@@ -1,0 +1,12 @@
+Input filename:  QAOA_wsq_32_compiled
+Algorithm:  SHAW
+Trap type:  grid
+Trap capacity:  3
+Num layout passes:  2
+Gate type:  FM
+Run index:  4
+Traceback (most recent call last):
+  File "C:\Users\PC\Documents\GitHub\bqskit-shuttling\bqskit\shuttling\qccd\run.py", line 39, in <module>
+    physical_model = create_grid_physical_machine(num_cols = 2,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'create_grid_physical_machine' is not defined. Did you mean: 'create_testing_physical_machine'?
