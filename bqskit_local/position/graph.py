@@ -5,6 +5,7 @@ from enum import IntFlag
 from typing import Tuple, List, Sequence, Mapping, Dict, Callable, Optional
 from dataclasses import dataclass
 
+
 #First I am defining classes for the labels
 
 class PositionCapability(IntFlag):
@@ -15,12 +16,13 @@ class PositionCapability(IntFlag):
 
 @dataclass (frozen=True)
 class PositionLabel:
-    capability: int
+    capability: PositionCapability
     weights: Dict[PositionCapability, float]
     
     def has_capability(self, capability: PositionCapability) -> bool:
+        assert isinstance(capability, PositionCapability)
         if capability == PositionCapability.NONE:
-            return self.capability == PositionCapability.NONE.value
+            return self.capability == PositionCapability.NONE
         return bool(self.capability & capability)
          
     def get_weight(self, capability: PositionCapability) -> float:
@@ -36,15 +38,16 @@ class EdgeCapability(IntFlag):
 
 @dataclass (frozen=True)
 class EdgeLabel:
-    capability: int
+    capability: EdgeCapability
     weights: Dict[EdgeCapability, float]    #These should match the EdgeCapability values, so 1:0.2 , 
                                             #2:0.5 , 4:0.7 would be a weight of 0.2 on MOVE, 0.5
                                             #on SWAP etc. 
     
     #bitwise and
     def has_capability(self, capability: EdgeCapability) -> bool:
+        assert isinstance(capability, EdgeCapability)
         if capability == EdgeCapability.NONE:
-            return self.capability == EdgeCapability.NONE.value
+            return self.capability == EdgeCapability.NONE
         return bool(self.capability & capability)
 
      
@@ -60,8 +63,9 @@ class PositionGraph:
     def __init__(
             self,
             pos_labels: Sequence[PositionLabel], #Length of this is the number of Positions availble for qudits
-            edge_labels: Mapping[Tuple[int, int], EdgeLabel] #Key value type of information, use as a dictionary
+            edge_labels: Mapping[Tuple[int, int], EdgeLabel], #Key value type of information, use as a dictionary
         ) -> None:
+
         self._pos_labels = list(pos_labels)
         self._edge_labels = dict(edge_labels)
 
@@ -69,11 +73,18 @@ class PositionGraph:
         self._graph.add_nodes_from(self._pos_labels)
         self._graph.add_edges_from([(u, v, lbl) for (u, v), lbl in self._edge_labels.items()])
 
-        self._executable_clusters = self.executable_clusters2()
+
+        
+        self._move_graph = self.get_projected_graph(EdgeCapability.MOVE)
+        self._execute_graph = self.get_projected_graph(EdgeCapability.EXECUTE)
+        self._executable_clusters = self.fully_executable_clusters()
         self._dijkstra_shortest_path_lengths = self.digraph_all_pairs_dijkstra_path_lengths(edge_capability=EdgeCapability.MOVE)
         self._dijkstra_shortest_paths = self.all_pairs_dijkstra_shortest_paths(edge_capability=EdgeCapability.MOVE)
-        #move_graph = self.get_projected_graph(EdgeCapability.MOVE)
-        #execute_graph = self.get_projected_graph(EdgeCapability.EXECUTE)
+        self._move_cost_matrix = self.build_move_cost_matrix()
+        self._cluster_distance_maps = self.build_cluster_distance_map()
+        self._move_gradient = self.build_move_gradient()
+        self._swap_neighbors = self._build_swap_neighbors()
+
 
     def __str__(self) -> str:
 
@@ -82,9 +93,25 @@ class PositionGraph:
 
 
     def check_pos_index(self, index: int) -> None:
-        if (index < 0 or index >= len(self.position_labels)):
-            raise ValueError(f"Invalid index: {index} \nValid range: 0 to {len(self.position_labels)-1}")
+        if (index < 0 or index >= len(self._pos_labels)):
+            raise ValueError(f"Invalid index: {index} \nValid range: 0 to {len(self._pos_labels)-1}")
     
+    @property
+    def move_cost_matrix(self) -> np.ndarray:
+        return self._move_cost_matrix
+    
+    @property
+    def execute_graph(self) -> rx.PyDiGraph:
+        return self._execute_graph
+    
+    @property
+    def swap_neighbors(self) -> dict[int, tuple[int, ...]]:
+        return self._swap_neighbors
+    
+    @property
+    def move_graph(self) -> rx.PyDiGraph:
+        return self._move_graph
+
     @property
     def graph(self) -> rx.PyDiGraph:
         return self._graph
@@ -106,7 +133,7 @@ class PositionGraph:
         return self._dijkstra_shortest_paths
     
     @property
-    def clusters(self) -> AllPairsPathMapping:
+    def clusters(self) -> Sequence[Sequence[int]]:
         return self._executable_clusters
 
     def position_label(self, pos_index: int) -> PositionLabel:
@@ -116,17 +143,16 @@ class PositionGraph:
     def position_has_capability(self, pos_index: int, capability: PositionCapability) -> bool:
         self.check_pos_index(pos_index)
         return self.position_labels[pos_index].has_capability(capability)
+    
 
     @property
     def all_edge_labels(self) -> List[EdgeLabel]:
             return list(self._edge_labels.values())
     
-    def edge_label(self, edge_index1: int, edge_index2: int) -> EdgeLabel:
-            try:
-                 return self.edge_labels[(edge_index1, edge_index2)]
-            except KeyError:
-                 raise KeyError(f"Edge ({edge_index1} -> {edge_index2}) not found.")           
-
+    def edge_label(self, u: int, v: int) -> EdgeLabel:
+        if (u, v) in self.edge_labels:
+            return self.edge_labels[(u, v)]
+        raise KeyError(f"Edge ({u}->{v}) not found.")
     
     def positions_with_label(self, label: PositionLabel) -> List[int]:
             return [i for i, node_label in enumerate(self.position_labels) if node_label == label]
@@ -153,7 +179,9 @@ class PositionGraph:
                 projected.add_edge(u,v,label)
         
         return projected
-        
+    
+    def get_swap_neighbors(self, pos: int) -> tuple[int, ...]:
+        return self._swap_neighbors[pos]
     
     def get_valid_starting_positions(self) -> list[int]:
         return[
@@ -185,7 +213,7 @@ class PositionGraph:
 
         return True
     
-    def executable_clusters3(self) -> Sequence[Sequence[int]]:
+    def locally_executable_regions(self) -> Sequence[Sequence[int]]:
         clusters = []
         visited = set()
 
@@ -223,7 +251,7 @@ class PositionGraph:
 
             # check all position labels in cluster have EXECUTE
             if all(
-                self.position_labels[node].has_capability(EdgeCapability.EXECUTE)
+                self.position_labels[node].has_capability(PositionCapability.EXECUTE)
                 for node in cluster
             ):
                 clusters.append(cluster)
@@ -232,7 +260,7 @@ class PositionGraph:
     
 
 
-    def executable_clusters(
+    def move_connected_exec_components(
         self,
         move_weight_filter: Callable[[EdgeLabel], bool] = None,
         execute_weight_filter: Callable[[EdgeLabel], bool] = None
@@ -262,7 +290,7 @@ class PositionGraph:
     
     #Every position in a cluster can execute a gate with every/any other position.
     # 
-    def executable_clusters2(
+    def fully_executable_clusters(
     self,
     move_weight_filter: Callable[[EdgeLabel], bool] = None,
     execute_weight_filter: Callable[[EdgeLabel], bool] = None
@@ -297,11 +325,16 @@ class PositionGraph:
                         component.add(n)
                         stack.extend(adj[n] - visited)
 
-                # EXECUTE edges fully connect?
-                subgraph_exec_edges = [(u, v) for u, v in exec_graph.edge_list()
-                                    if u in component and v in component]
-                n = len(component)
-                if len(subgraph_exec_edges) == n * (n - 1):
+                fully_connected = True
+                for u in component:
+                    for v in component:
+                        if u != v and not exec_graph.has_edge(u, v):
+                            fully_connected = False
+                            break
+                    if not fully_connected:
+                        break
+
+                if fully_connected:
                     clusters.append(sorted(component))
 
         return clusters
@@ -402,7 +435,7 @@ class PositionGraph:
 
 
     def nearest_cluster(self, pos_id: int, clusters: Sequence[Sequence[int]]) -> Optional[Tuple[List[int], float]]:
-        move_graph = self.get_projected_graph(EdgeCapability.MOVE)
+        move_graph = self.move_graph
         self.check_pos_index(pos_id)
 
         min_distance = float("inf")
@@ -412,8 +445,12 @@ class PositionGraph:
         distances = rx.digraph_dijkstra_shortest_path_lengths(
             move_graph,
             pos_id,
-            edge_cost_fn=lambda edge: edge.get_weight(EdgeCapability.MOVE),
-        )
+            edge_cost_fn=lambda edge: (
+            edge.get_weight(EdgeCapability.MOVE)
+            if edge and edge.has_capability(EdgeCapability.MOVE)
+            else float("inf")
+            )    
+         )
 
         for cluster in clusters:
             # Find the closest reachable node in this cluster
@@ -427,20 +464,38 @@ class PositionGraph:
         if nearest is None:
             return None  # no reachable cluster
         return nearest, min_distance
+    
 
+    def is_adjacent(self, a: int, b: int) -> bool:
+        lbl = self.edge_labels.get((a, b))
+        return lbl is not None and lbl.has_capability(EdgeCapability.MOVE)
+    
+    def distance(self, a: int, b: int) -> float:
+        self.check_pos_index(a)
+        self.check_pos_index(b)
+        return float(self._move_cost_matrix[a, b])
 
     def shortest_path(self,start: int,target: int,edge_capability: EdgeCapability = EdgeCapability.MOVE) -> Optional[Tuple[List[int], float]]:
         self.check_pos_index(start)
         self.check_pos_index(target)
 
-        graph = self.get_projected_graph(edge_capability)
+        if edge_capability == EdgeCapability.MOVE:
+            graph = self._move_graph
+        elif edge_capability == EdgeCapability.EXECUTE:
+            graph = self._execute_graph
+        else:
+            graph = self.get_projected_graph(edge_capability)
 
         try:
             # Compute Dijkstra shortest path lengths and predecessors
             lengths, predecessors = rx.digraph_dijkstra_shortest_path_lengths(
                 graph,
                 start,
-                edge_cost_fn=lambda edge: edge.get_weight(edge_capability),
+                edge_cost_fn=lambda edge: (
+                    edge.get_weight(edge_capability)
+                    if edge and edge.has_capability(edge_capability)
+                    else float("inf")
+                ),
                 return_predecessors=True
             )
         except Exception as e:
@@ -455,82 +510,135 @@ class PositionGraph:
         current = target
         while current != start:
             path.append(current)
-            current = predecessors.get(current)
+            pred = predecessors[current]
+            if isinstance(pred, list):
+                pred = pred[0]
+            current = pred
         path.append(start)
         path.reverse()
 
         return path, lengths[target]
     
-    from typing import Dict, Tuple, List, Optional
+    def build_move_cost_matrix(self) -> np.ndarray:
+        """
+        Build a dense matrix of shortest MOVE costs between all positions.
+        """
+        n = len(self.position_labels)
+        D = np.full((n, n), np.inf)
+
+        for src, targets in self.shortest_path_lengths.items():
+            for dst, cost in targets.items():
+                D[src, dst] = cost
+
+        np.fill_diagonal(D, 0.0)
+
+        return D
+    def build_cluster_distance_map(self) -> Dict[int, np.ndarray]:
+        """
+        Precompute distance from every position to each executable cluster.
+        Returns:
+            {cluster_id : distance_vector}
+        """
+        n = len(self.position_labels)
+        D = self.move_cost_matrix
+
+        cluster_maps = {}
+
+        for cid, cluster in enumerate(self.clusters):
+            dist = np.full(n, np.inf)
+
+            for p in range(n):
+                dist[p] = min(D[p, c] for c in cluster)
+
+            cluster_maps[cid] = dist
+
+        return cluster_maps
+    
+    def build_move_gradient(self) -> Dict[int, Dict[int, List[int]]]:
+        """
+        For each cluster and position, give best neighbor moves.
+        
+        Returns:
+            cluster_id → position → list of improving neighbors
+        """
+        gradients = {}
+
+        for cid, dist in self._cluster_distance_maps.items():
+
+            cluster_grad = {}
+
+            for p in range(len(self.position_labels)):
+
+                neighbors = list(self.graph.neighbors(p))
+                best = []
+
+                for n in neighbors:
+                    if dist[n] < dist[p]:
+                        best.append(n)
+
+                cluster_grad[p] = best
+
+            gradients[cid] = cluster_grad
+
+        return gradients
+
+    def _build_swap_neighbors(self) -> dict[int, tuple[int, ...]]:
+        """
+        Build a cache of neighbors reachable by MOVE or SWAP edges.
+        """
+        neighbors: dict[int, set[int]] = {i: set() for i in range(len(self._pos_labels))}
+
+        for (u, v), label in self._edge_labels.items():
+            if label.has_capability(EdgeCapability.MOVE) or \
+            label.has_capability(EdgeCapability.SWAP):
+                neighbors[u].add(v)
+                neighbors[v].add(u)  # treat as undirected for swap candidate generation
+
+        return {k: tuple(sorted(vs)) for k, vs in neighbors.items()}
 
     def get_shortest_path_tree(
         self,
         qudit_pos: int,
-        edge_capability: EdgeCapability = EdgeCapability.MOVE
+        edge_capability: EdgeCapability = EdgeCapability.MOVE,
     ) -> List[Tuple[int, ...]]:
         """
-        Compute the shortest-path tree from a given qudit position.
+        Compute shortest paths from qudit_pos to every reachable position.
 
         Returns:
-            A list of tuples, where each tuple is the path from qudit_pos
-            to a reachable position in the graph. The index in the list
-            corresponds to the position index.
-            - If a position is unreachable, the tuple is empty.
+            A list of tuples, where index i contains the shortest path
+            from qudit_pos to i. If i is unreachable, the tuple is empty.
         """
         self.check_pos_index(qudit_pos)
-        graph = self.get_projected_graph(edge_capability)
 
-        # Dijkstra shortest paths with predecessors
-        lengths, predecessors = rx.digraph_dijkstra_shortest_path_lengths(
+        if edge_capability == EdgeCapability.MOVE:
+            graph = self.move_graph
+        elif edge_capability == EdgeCapability.EXECUTE:
+            graph = self.execute_graph
+        else:
+            graph = self.get_projected_graph(edge_capability)
+
+        paths_dict = rx.digraph_dijkstra_shortest_paths(
             graph,
             qudit_pos,
-            edge_cost_fn=lambda edge: edge.get_weight(edge_capability),
-            return_predecessors=True
+            weight_fn=lambda edge: (
+                edge.get_weight(edge_capability)
+                if edge and edge.has_capability(edge_capability)
+                else float("inf")
+            ),
         )
 
         paths: List[Tuple[int, ...]] = []
-
         for node_index in range(len(self.position_labels)):
-            if node_index not in lengths:
-                # Unreachable
+            if node_index in paths_dict:
+                paths.append(tuple(paths_dict[node_index]))
+            else:
                 paths.append(())
-                continue
-
-            # Reconstruct path from predecessors
-            path = []
-            current = node_index
-            while current != qudit_pos:
-                path.append(current)
-                current = predecessors[current]
-            path.append(qudit_pos)
-            path.reverse()
-            paths.append(tuple(path))
 
         return paths
 
 
         
-    
-    #Can functions, Can move from 1 position to another, How to move from 1 pos to another, 
-    # We need to be able to "reason about" clusterts of executable gates. Succcinct set of function calls that allows us to work with this concept
-    # i.e. the concept of a trap in ions is a cluster of nodes with the executable label. 
-    # We want to find those clusters, find the nearest, etc. findnearestfrom(index) vs findNearestEmpty()(state)
-    # Potentially have the postiongraphState to have an instance of the positionGraph. 
 
-    # A set of nodes, all connected, Also fully connected in the execution projected_grpah/subgraph. 
-    # Movement projected grpah looks at only edges that allow move/swap. The sets of nodes must be connected in that graph
-
-    #If I look at only the nodes with execute edges, this set of nodes also needs to be conencted. 
-
-    #The node also needs to have the executable position label
-
-
-
-# For this PositionGraphState I want to show the current state of the mapping of qudits to their available positions.
-# I want to return the specific position of any specific qudit
-# I want to to return the state of any specific position
-
-#key value, logicial qubits to physical positions
-#
-#
      
+
+
