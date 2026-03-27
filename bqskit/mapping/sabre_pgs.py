@@ -15,11 +15,11 @@ from bqskit.ir.gates.constant.swap import SwapGate
 from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
 from bqskit.qis.graph import CouplingGraph
+from bqskit.position.state import PositionGraphState
+
 
 
 _logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
 
 
 class GeneralizedSabreAlgorithm():
@@ -116,34 +116,37 @@ class GeneralizedSabreAlgorithm():
 
     def forward_pass(
         self,
-        circuit: Circuit,
-        pi: list[int],
-        cg: CouplingGraph,
+        circuit: Circuit,        
+        pgs: PositionGraphState,
+        #pi: list[int],
+        #cg: CouplingGraph,
         modify_circuit: bool = False,
     ) -> None:
         """
-        Apply a forward pass of the Sabre algorithm to `pi`.
+        I have adjusted this from using the Sabre algorithm 'pi' and 
+        a Coupling Graph to using a PositionGraphState Class, to do
+        a forward pass
+
+        Apply a forward pass of the Sabre algorithm to `pgs`.
 
         Args:
             circuit (Circuit): The circuit to pass over.
 
-            pi (list[int]): The input logical-to-physical mapping. This
-                maps logical qudits to physical qudits. So, `pi[l] == p`
-                implies logical qudit `l` is sitting on physical qudit `p`.
-
-            cg (CouplingGraph): The connectivity of the hardware.
+            pgs (PositionGraphState)
 
             modfiy_circuit (bool): Whether to modify the circuit as the
                 pass is applied or not. (Default: False)
         """
         # Preprocessing
-        D = cg.all_pairs_shortest_path()
+        #pg = pgs.position_graph
+        D = pgs.position_graph.all_pairs_dijkstra_shortest_paths() #Might not need this here.
+
         F = circuit.front
         decay = [1.0 for i in range(circuit.num_qudits)]
         iter_count = 0
         prev_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
         leading_swaps: list[tuple[int, int]] = []
-        _logger.debug(f'Starting forward sabre pass with pi: {pi}.')
+        _logger.debug(f'Starting forward sabre pass with pgs: {pgs}.')
 
         if not all(r == circuit.radixes[0] for r in circuit.radixes):
             raise RuntimeError('Cannot currently map to hybrid-level systems.')
@@ -156,7 +159,7 @@ class GeneralizedSabreAlgorithm():
         while len(F) > 0:
 
             # Retrieve executable gates giving the current mapping `pi`
-            execute_list = [n for n in F if self._can_exe(circuit[n], pi, cg)]
+            execute_list = [n for n in F if self._can_exe(circuit[n], pgs)]
 
             # Execute the gates and update F
             if len(execute_list) > 0:
@@ -169,7 +172,7 @@ class GeneralizedSabreAlgorithm():
 
                     if modify_circuit:
                         op = circuit[n]
-                        physical_location = [pi[q] for q in op.location]
+                        physical_location = [pgs.get_position(q) for q in op.location]
                         mapped_circuit.append_gate(
                             op.gate,
                             physical_location,
@@ -195,12 +198,12 @@ class GeneralizedSabreAlgorithm():
                 continue  # Restart main loop if we executed at least one gate
 
             # If execute list is empty, check for local-minima
-            elif len(leading_swaps) > 5 * cg.num_qudits:
+            elif len(leading_swaps) > 5 * pgs.num_qudits:
                 _logger.debug('Sabre stuck in local minima, backtracking...')
 
                 # Backtrack by removing leading swaps
                 for swap in reversed(leading_swaps):
-                    self._apply_swap(swap, pi, decay)
+                    self._apply_swap(swap, pgs, decay)
                     if modify_circuit:
                         point = mapped_circuit._rear[swap[0]]
                         mapped_circuit.pop(point)
@@ -211,10 +214,10 @@ class GeneralizedSabreAlgorithm():
                 all_logical_qudits = [circuit[n].location for n in F]
                 qudits = min(
                     all_logical_qudits,
-                    key=lambda qs: self._get_distance(qs, pi, D),
+                    key=lambda qs: self._get_distance(qs,pgs, D),
                 )
-                for swap in self._uphill_swaps(qudits, cg, pi, D):
-                    self._apply_swap(swap, pi, decay)
+                for swap in self._uphill_swaps(qudits, pgs, D):
+                    self._apply_swap(swap, pgs, decay)
                     if modify_circuit:
                         mapped_circuit.append_gate(SwapGate(radix), swap)
                 _logger.debug('Stopping override.')
@@ -223,7 +226,7 @@ class GeneralizedSabreAlgorithm():
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
             best_swap = self._get_best_swap(circuit, F, E, D, cg, pi, decay)
-            self._apply_swap(best_swap, pi, decay)
+            self._apply_swap(best_swap, pgs, decay)
             leading_swaps.append(best_swap)
 
             if modify_circuit:
@@ -331,8 +334,8 @@ class GeneralizedSabreAlgorithm():
                 for i in range(circuit.num_qudits):
                     decay[i] = 1.0
 
-    def _can_exe(self, op: Operation, pi: list[int], cg: CouplingGraph) -> bool:
-        """Return true if `op` is executable given the current mapping `pi`."""
+    def _can_exe(self, op: Operation, pgs: PositionGraphState) -> bool:
+        """Return true if `op` is executable given the current pgs."""
         if isinstance(op.gate, BarrierPlaceholder):
             return True
 
@@ -341,10 +344,19 @@ class GeneralizedSabreAlgorithm():
                 return True
 
         if op.num_qudits == 1:
-            return True
+            return True        
 
-        physical_qudits = [pi[i] for i in op.location]
-        return cg.get_subgraph(physical_qudits).is_fully_connected()
+        # Here I was thinking maybe it would be cool to support the CouplingGraph
+        # and the PositionGraph as possible inputs. Maybe on a refactor
+        # if that seems worthwhile.
+
+        #physical_qudits = [pi[i] for i in op.location]
+        #return cg.get_subgraph(physical_qudits).is_fully_connected()
+
+        positions = set([pgs.positions[i] for i in op.location])
+        return pgs.position_graph.in_cluster(positions)
+            
+        
 
     def _calc_extended_set(
         self,
@@ -378,19 +390,12 @@ class GeneralizedSabreAlgorithm():
         # Gather all considerable swaps
         swap_candidate_list = self._obtain_swaps(circuit, F, pi, cg)
 
-        _logger.debug("Front layer F: %s", sorted(F))
-        _logger.debug("Extended set E: %s", sorted(E) if E is not None else None)
-        _logger.debug("Candidate swaps: %s", sorted(swap_candidate_list))
-            _logger.debug("Swap candidate %s score=%f with pi=%s", swap, score, pi)
-
-
         # Score them, tracking the best one
-        for swap in sorted(swap_candidate_list):
+        for swap in swap_candidate_list:
             score = self._score_swap(circuit, F, pi, D, swap, decay, E)
             if score < best_score:
                 best_score = score
                 best_swap = swap
-            _logger.debug("Swap candidate %s score=%f with pi=%s", swap, score, pi)
 
         if best_swap is None:
             raise RuntimeError('Unable to find best swap.')
@@ -469,13 +474,12 @@ class GeneralizedSabreAlgorithm():
     def _apply_swap(
         self,
         swap: tuple[int, int],
-        pi: list[int],
+        pgs: PositionGraphState,
         decay: list[float],
     ) -> None:
-        """Apply the swap to `pi` and update `decay`."""
+        """Apply the swap to `pgs` and update `decay`."""
         _logger.debug('applying swap %s' % str(swap))
-        l1, l2 = pi.index(swap[0]), pi.index(swap[1])
-        pi[l1], pi[l2] = pi[l2], pi[l1]
+        pgs.swap_positions(swap[0],swap[1])
 
         decay[swap[0]] += self.decay_delta
         decay[swap[1]] += self.decay_delta
@@ -483,32 +487,53 @@ class GeneralizedSabreAlgorithm():
     def _get_distance(
         self,
         logical_qudits: Sequence[int],
-        pi: list[int],
+        pgs: PositionGraphState,
         D: list[list[float]],
     ) -> float:
         """Calculate the expected number of swaps to connect logical qudits."""
+
+        # I am thinking I get the shortest paths from positionGraph
+        #then use PositionGraphState's knowledge of physical qudits
+        #to determine if the move or swap filter is needed
+
+        ##have one for congestion one without.
+
+        ## Sum of All Pairs is at least a good starting point
+
+        ## Issue: Would a less congested, longer path, be faster but not considered
+        # uding all_pairs_dijkstra_shortest_paths?
+
+        ## or use rustworkx.floyd_warshall_successor_and_distance
+        ##
+
+        ## And then finally I'd like to only focus on clusters big enough
+        ## for the # of logical_qudits
+
+
         min_term = np.inf
         for q in logical_qudits:
             term = 0.0
             for p in logical_qudits:
                 if p == q:
                     continue
-                term += D[pi[q]][pi[p]]
+                term += D[pgs.positions[q]][pgs.positions[p]]
             min_term = min(term, min_term)
         return min_term
 
     def _uphill_swaps(
         self,
         logical_qudits: Sequence[int],
+        pgs: PositionGraphState,
         cg: CouplingGraph,
         pi: list[int],
         D: list[list[float]],
     ) -> Iterator[tuple[int, int]]:
         """Yield the swaps necessary to bring some of the qudits together."""
+
         center_qudit = min(
             logical_qudits,
             key=lambda q: sum(
-                D[pi[q]][pi[p]]
+                D[pgs.positions[q]][pgs.positions[p]]
                 for p in logical_qudits
                 if p != q
             ),

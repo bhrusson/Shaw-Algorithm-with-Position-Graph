@@ -15,7 +15,9 @@ from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
 #from ..old.QCCD_machine import QCCDMachineModel
 #from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
-from bqskit.ir.gates.barrier import BarrierPlaceholder
+from bqskit.ir.gates.barrier import BarrierPlaceholder  
+\
+ 
 from bqskit_local.position.graph import *
 
 _logger = logging.getLogger(__name__)

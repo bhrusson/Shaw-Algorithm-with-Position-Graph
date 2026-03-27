@@ -12,7 +12,8 @@ from bqskit_local.routing.sabreRoutingPGS import GeneralizedSabreRoutingPassPGS
 from bqskit_local.position.state import PositionGraphState
 from bqskit_local.position.testingMethods import *
 
-
+#2922 w decay_delta
+#2393 w/o decay_delta
 # Build circuit
 num_qudits = 100
 circ = Circuit(num_qudits)

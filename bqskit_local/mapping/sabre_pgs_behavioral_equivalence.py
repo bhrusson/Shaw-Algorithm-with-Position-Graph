@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import Iterator
-from typing import Sequence
+import random
+from typing import Iterator, Sequence, Tuple, Optional
 
-import numpy as np
+#import numpy as np
 
 from bqskit.ir.circuit import Circuit
 from bqskit.ir.gates.barrier import BarrierPlaceholder
@@ -14,15 +14,19 @@ from bqskit.ir.gates.circuitgate import CircuitGate
 from bqskit.ir.gates.constant.swap import SwapGate
 from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
-from bqskit.qis.graph import CouplingGraph
+#from bqskit.qis.graph import CouplingGraph
+
+from bqskit_local.position.graph import EdgeCapability
+from bqskit_local.position.state import PositionGraphState
 
 
+
+#logging.basicConfig(level=logging.DEBUG)
 _logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 
-class GeneralizedSabreAlgorithm():
+class GeneralizedSabreAlgorithmPGS():
     """
     Implements methods for Sabre-based layout and routing algorithms using a
     modified heuristic to accommodate larger than 2-qudit gates.
@@ -51,6 +55,7 @@ class GeneralizedSabreAlgorithm():
         decay_reset_on_gate: bool = True,
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
+        
     ) -> None:
         """
         Construct a GeneralizedSabreAlgorithm.
@@ -116,66 +121,56 @@ class GeneralizedSabreAlgorithm():
 
     def forward_pass(
         self,
-        circuit: Circuit,
-        pi: list[int],
-        cg: CouplingGraph,
+        circuit: Circuit,        
+        pgs: PositionGraphState,
         modify_circuit: bool = False,
     ) -> None:
         """
-        Apply a forward pass of the Sabre algorithm to `pi`.
-
-        Args:
-            circuit (Circuit): The circuit to pass over.
-
-            pi (list[int]): The input logical-to-physical mapping. This
-                maps logical qudits to physical qudits. So, `pi[l] == p`
-                implies logical qudit `l` is sitting on physical qudit `p`.
-
-            cg (CouplingGraph): The connectivity of the hardware.
-
-            modfiy_circuit (bool): Whether to modify the circuit as the
-                pass is applied or not. (Default: False)
+        Forward pass of the Sabre algorithm 
         """
-        # Preprocessing
-        D = cg.all_pairs_shortest_path()
-        F = circuit.front
-        decay = [1.0 for i in range(circuit.num_qudits)]
+        D = pgs.position_graph.move_cost_matrix
+        F = set(circuit.front)
+        decay = [1.0 for i in range(pgs.num_qudits)]
         iter_count = 0
         prev_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
-        leading_swaps: list[tuple[int, int]] = []
-        _logger.debug(f'Starting forward sabre pass with pi: {pi}.')
+        leading_swaps: list[tuple[int,int]] = []
 
-        if not all(r == circuit.radixes[0] for r in circuit.radixes):
-            raise RuntimeError('Cannot currently map to hybrid-level systems.')
+        _logger.debug(f'Starting forward sabre pass with pgs: {pgs}.')
+
         radix = circuit.radixes[0]
-
         if modify_circuit:
             mapped_circuit = Circuit(circuit.num_qudits, circuit.radixes)
 
-        # Main Loop
         while len(F) > 0:
+            # Get executable gates
+            execute_list = [n for n in F if self._can_exe(circuit[n], pgs)]
 
-            # Retrieve executable gates giving the current mapping `pi`
-            execute_list = [n for n in F if self._can_exe(circuit[n], pi, cg)]
-
-            # Execute the gates and update F
             if len(execute_list) > 0:
+                # Execute gates
                 leading_swaps = []
-
                 for n in execute_list:
                     F.remove(n)
                     prev_executed_counts.pop(n)
                     _logger.debug(f'Executing gate at point {n}.')
-
+                    
                     if modify_circuit:
                         op = circuit[n]
-                        physical_location = [pi[q] for q in op.location]
-                        mapped_circuit.append_gate(
-                            op.gate,
-                            physical_location,
-                            op.params,
+
+                        # physical positions
+                        op_positions = [int(pgs.logical_to_position[q]) for q in op.location]
+
+                        # logical qudits for debug
+                        logicals = list(op.location)
+
+                        # debug print
+                        _logger.debug(
+                            f"Executing {op.gate.name} "
+                            f"logical{tuple(logicals)} -> physical{tuple(op_positions)}"
                         )
 
+                        mapped_circuit.append_gate(op.gate, op_positions, op.params)
+
+                    # Update successors
                     for successor in circuit.next(n):
                         if successor not in prev_executed_counts:
                             prev_executed_counts[successor] = 1
@@ -186,21 +181,20 @@ class GeneralizedSabreAlgorithm():
                         if num_prev_executed == total_num_prev:
                             F.add(successor)
 
-                # Reset decay if necessary
+                # Reset decay
                 if self.decay_reset_on_gate:
                     iter_count = 0
                     for i in range(circuit.num_qudits):
                         decay[i] = 1.0
 
-                continue  # Restart main loop if we executed at least one gate
+                continue
 
-            # If execute list is empty, check for local-minima
-            elif len(leading_swaps) > 5 * cg.num_qudits:
+            elif len(leading_swaps) > 5 *pgs.num_qudits:
                 _logger.debug('Sabre stuck in local minima, backtracking...')
 
                 # Backtrack by removing leading swaps
                 for swap in reversed(leading_swaps):
-                    self._apply_swap(swap, pi, decay)
+                    self._apply_swap(swap, pgs, decay)
                     if modify_circuit:
                         point = mapped_circuit._rear[swap[0]]
                         mapped_circuit.pop(point)
@@ -211,25 +205,28 @@ class GeneralizedSabreAlgorithm():
                 all_logical_qudits = [circuit[n].location for n in F]
                 qudits = min(
                     all_logical_qudits,
-                    key=lambda qs: self._get_distance(qs, pi, D),
+                    key=lambda qs: self._get_distance(qs, pgs, D),
                 )
-                for swap in self._uphill_swaps(qudits, cg, pi, D):
-                    self._apply_swap(swap, pi, decay)
+                for swap in self._uphill_swaps(qudits, pgs, D):
+                    self._apply_swap(swap, pgs, decay)
                     if modify_circuit:
                         mapped_circuit.append_gate(SwapGate(radix), swap)
                 _logger.debug('Stopping override.')
                 continue
 
-            # Pick and apply a swap
+            # If no gates executable, pick a swap
             E = self._calc_extended_set(circuit, F)
-            best_swap = self._get_best_swap(circuit, F, E, D, cg, pi, decay)
-            self._apply_swap(best_swap, pi, decay)
+            best_swap = self._get_best_swap(circuit, F, E, D, pgs, decay)
+
+            # Apply swap
+            self._apply_swap(best_swap, pgs, decay)
             leading_swaps.append(best_swap)
 
-            if modify_circuit:
+            if modify_circuit: 
                 mapped_circuit.append_gate(SwapGate(radix), best_swap)
 
-            # Update loop counter and reset decay if necessary
+
+            # Update counters
             iter_count += 1
             if iter_count % self.decay_reset_interval == 0:
                 for i in range(circuit.num_qudits):
@@ -241,98 +238,94 @@ class GeneralizedSabreAlgorithm():
     def backward_pass(
         self,
         circuit: Circuit,
-        pi: list[int],
-        cg: CouplingGraph,
+        pgs: PositionGraphState,
     ) -> None:
-        """
-        Apply a backward pass of the Sabre algorithm to `pi`.
-
-        Args:
-            circuit (Circuit): The circuit to pass over.
-
-            pi (list[int]): The input logical-to-physical mapping. This
-                maps logical qudits to physical qudits. So, `pi[l] == p`
-                implies logical qudit `l` is sitting on physical qudit `p`.
-
-            cg (CouplingGraph): The connectivity of the hardware.
-        """
-        # Preprocessing
-        D = cg.all_pairs_shortest_path()
-        F = circuit.rear
-        decay = [1.0 for i in range(circuit.num_qudits)]
+        D = pgs.position_graph.move_cost_matrix
+        F = set(circuit.rear)
+        decay = [1.0 for _ in range(pgs.num_qudits)]
         iter_count = 0
         leading_swaps: list[tuple[int, int]] = []
         next_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
-        _logger.debug(f'Starting backward sabre pass with pi: {pi}.')
 
-        # Main Loop
+        _logger.debug(f'Starting backward sabre pass with pgs: {pgs}.')
+
         while len(F) > 0:
+            _logger.debug(f'Backward front before drain: {sorted(F)}')
 
-            # Retrieve executable gates giving the current mapping: pi
-            execute_list = [n for n in F if self._can_exe(circuit[n], pi, cg)]
+            executed_any = False
+            while True:
+                n = next((pt for pt in F if self._can_exe(circuit[pt], pgs)), None)
+                if n is None:
+                    break
 
-            # Execute the gates and update F
-            if len(execute_list) > 0:
+                executed_any = True
                 leading_swaps = []
+                F.remove(n)
+                next_executed_counts.pop(n, None)
 
-                for n in execute_list:
-                    F.remove(n)
-                    next_executed_counts.pop(n)
-                    _logger.debug(f'Executing gate at point {n}.')
+                _logger.debug(f'Executing backward gate at point {n}.')
 
-                    for predessor in circuit.prev(n):
-                        if predessor not in next_executed_counts:
-                            next_executed_counts[predessor] = 1
-                        else:
-                            next_executed_counts[predessor] += 1
-                        num_next_executed = next_executed_counts[predessor]
-                        total_num_next = len(circuit.next(predessor))
-                        if num_next_executed == total_num_next:
-                            F.add(predessor)
+                for predecessor in circuit.prev(n):
+                    next_executed_counts[predecessor] = (
+                        next_executed_counts.get(predecessor, 0) + 1
+                    )
 
-                # Reset decay if necessary
+                    num_next_executed = next_executed_counts[predecessor]
+                    successors = list(circuit.next(predecessor))
+                    total_num_next = len(successors)
+
+                    _logger.debug(
+                        'Backward update pred=%s successors=%s executed=%d/%d',
+                        predecessor,
+                        successors,
+                        num_next_executed,
+                        total_num_next,
+                    )
+
+                    if num_next_executed == total_num_next:
+                        F.add(predecessor)
+                        _logger.debug(
+                            f'Backward adding predecessor to front: {predecessor}'
+                        )
+
+            if executed_any:
+                _logger.debug(f'Backward front after drain: {sorted(F)}')
                 if self.decay_reset_on_gate:
                     iter_count = 0
                     for i in range(circuit.num_qudits):
                         decay[i] = 1.0
+                continue
 
-                continue  # Restart main loop if we executed at least one gate
-
-            # If execute list is empty, check for local-minima
-            elif len(leading_swaps) > 5 * cg.num_qudits:
+            if len(leading_swaps) > 5 * pgs.num_qudits:
                 _logger.debug('Sabre stuck in local minima, backtracking...')
-
-                # Backtrack by removing leading swaps
                 for swap in reversed(leading_swaps):
-                    self._apply_swap(swap, pi, decay)
+                    self._apply_swap(swap, pgs, decay)
                 leading_swaps = []
 
-                # Override heuristic search to progress
                 _logger.debug('Overriding sabre search...')
                 all_logical_qudits = [circuit[n].location for n in F]
                 qudits = min(
                     all_logical_qudits,
-                    key=lambda qs: self._get_distance(qs, pi, D),
+                    key=lambda qs: self._get_distance(qs, pgs, D),
                 )
-                for swap in self._uphill_swaps(qudits, cg, pi, D):
-                    self._apply_swap(swap, pi, decay)
+                for swap in self._uphill_swaps(qudits, pgs, D):
+                    self._apply_swap(swap, pgs, decay)
                 _logger.debug('Stopping override.')
                 continue
 
-            # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
-            best_swap = self._get_best_swap(circuit, F, E, D, cg, pi, decay)
-            self._apply_swap(best_swap, pi, decay)
+            best_swap = self._get_best_swap(circuit, F, E, D, pgs, decay)
+
+            self._apply_swap(best_swap, pgs, decay)
             leading_swaps.append(best_swap)
 
-            # Update loop counter and reset decay if necessary
             iter_count += 1
             if iter_count % self.decay_reset_interval == 0:
                 for i in range(circuit.num_qudits):
                     decay[i] = 1.0
 
-    def _can_exe(self, op: Operation, pi: list[int], cg: CouplingGraph) -> bool:
-        """Return true if `op` is executable given the current mapping `pi`."""
+    def _can_exe(self, op: Operation, pgs: PositionGraphState) -> bool:
+        """Return true if `op` is executable given the current mapping in `pgs`."""
         if isinstance(op.gate, BarrierPlaceholder):
             return True
 
@@ -343,8 +336,27 @@ class GeneralizedSabreAlgorithm():
         if op.num_qudits == 1:
             return True
 
-        physical_qudits = [pi[i] for i in op.location]
-        return cg.get_subgraph(physical_qudits).is_fully_connected()
+        physical_positions = [int(pgs.logical_to_position[i]) for i in op.location]
+
+        # Guard against partially unplaced mappings.
+        if any(p < 0 for p in physical_positions):
+            return False
+
+        # Match CouplingGraph behavior:
+        # cg.get_subgraph(physical_qudits).is_fully_connected()
+        #
+        # For a 2-qudit gate, this reduces to checking the execute edge.
+        # For larger gates, every pair must be connected.
+        for i in range(len(physical_positions)):
+            for j in range(i + 1, len(physical_positions)):
+                p = physical_positions[i]
+                q = physical_positions[j]
+                if not pgs.position_graph.execute_graph.has_edge(p, q):
+                    return False
+
+        return True
+            
+        
 
     def _calc_extended_set(
         self,
@@ -353,11 +365,16 @@ class GeneralizedSabreAlgorithm():
     ) -> set[CircuitPoint]:
         """Calculate the Extended Set for look-ahead capabilities."""
         extended_set: set[CircuitPoint] = set()
+
+        # Use deterministic ordering for debugging/comparison.
         frontier = list(copy.copy(F))
+
         while len(frontier) > 0 and len(extended_set) < self.extended_set_size:
             n = frontier.pop(0)
-            extended_set.update(circuit.next(n))
-            frontier.extend(circuit.next(n))
+            next_nodes = circuit.next(n)
+            extended_set.update(next_nodes)
+            frontier.extend(next_nodes)
+
         return extended_set
 
     def _get_best_swap(
@@ -366,172 +383,229 @@ class GeneralizedSabreAlgorithm():
         F: set[CircuitPoint],
         E: set[CircuitPoint],
         D: list[list[float]],
-        cg: CouplingGraph,
-        pi: list[int],
+        pgs: PositionGraphState,
         decay: list[float],
     ) -> tuple[int, int]:
         """Return the best swap given the current algorithm state."""
-        # Track best one
-        best_score = np.inf
-        best_swap = None
+        best_score = float('inf')
+        best_swap: tuple[int, int] | None = None
 
-        # Gather all considerable swaps
-        swap_candidate_list = self._obtain_swaps(circuit, F, pi, cg)
+        swap_candidate_list = self._obtain_swaps(circuit, F, pgs)
 
-        _logger.debug("Front layer F: %s", sorted(F))
-        _logger.debug("Extended set E: %s", sorted(E) if E is not None else None)
-        _logger.debug("Candidate swaps: %s", sorted(swap_candidate_list))
-            _logger.debug("Swap candidate %s score=%f with pi=%s", swap, score, pi)
+        _logger.debug("Front layer F: %s", F)
+        _logger.debug("Extended set E: %s", E if E is not None else None)
+        _logger.debug("Candidate swaps: %s", swap_candidate_list)
 
-
-        # Score them, tracking the best one
-        for swap in sorted(swap_candidate_list):
-            score = self._score_swap(circuit, F, pi, D, swap, decay, E)
+        for swap in swap_candidate_list:
+            score = self._score_swap(circuit, F, pgs, D, swap, decay, E)
             if score < best_score:
                 best_score = score
                 best_swap = swap
-            _logger.debug("Swap candidate %s score=%f with pi=%s", swap, score, pi)
+            l1, l2 = swap
+            p1 = int(pgs.logical_to_position[l1])
+            p2 = int(pgs.logical_to_position[l2])
+            _logger.debug(
+                "Swap candidate logical(%d,%d) physical(%d,%d) score=%f map=%s",
+                l1, l2, p1, p2, score, pgs.logical_to_position.tolist(),
+            )
 
         if best_swap is None:
             raise RuntimeError('Unable to find best swap.')
 
         return best_swap
-
+    
     def _obtain_swaps(
         self,
         circuit: Circuit,
         F: set[CircuitPoint],
-        pi: list[int],
-        cg: CouplingGraph,
+        pgs: PositionGraphState,
     ) -> set[tuple[int, int]]:
         """Produce all physical swaps with at least one qudit in F."""
         all_qudits: set[int] = set()
         for n in F:
             all_qudits.update(circuit[n].location)
-        physical_qudits = [pi[i] for i in all_qudits]
 
-        swaps = set()
-        for physical_qudit in physical_qudits:
-            neighbors = cg.get_neighbors_of(physical_qudit)
-            for neighbor in neighbors:
-                a = min(neighbor, physical_qudit)
-                b = max(neighbor, physical_qudit)
+        physical_positions = [int(pgs.logical_to_position[q]) for q in all_qudits]
+
+        swaps: set[tuple[int, int]] = set()
+        for pos in physical_positions:
+            if pos < 0:
+                continue
+            for neighbor in pgs.position_graph.swap_neighbors[pos]:
+                a = min(pos, neighbor)
+                b = max(pos, neighbor)
                 swaps.add((a, b))
 
         return swaps
+
 
     def _score_swap(
         self,
         circuit: Circuit,
         F: set[CircuitPoint],
-        pi: list[int],
+        pgs: PositionGraphState,
         D: list[list[float]],
         swap: tuple[int, int],
         decay: list[float],
         E: set[CircuitPoint],
     ) -> float:
         """Score the candidate swap given the current algorithm state."""
-        # Apply potential swap
-        l1, l2 = pi.index(swap[0]), pi.index(swap[1])
-        pi[l1], pi[l2] = pi[l2], pi[l1]
+        pos1, pos2 = swap
 
-        # Calculate front set term
+        # Find which logical qudits occupy the swapped physical positions.
+        l1 = int(pgs.position_to_logical[pos1])
+        l2 = int(pgs.position_to_logical[pos2])
+
+        # Full permutation and both positions are occupied.
+        temp_logical_to_pos = pgs.logical_to_position.copy()
+        temp_pos_to_logical = pgs.position_to_logical.copy()
+
+        # Apply potential swap.
+        temp_pos_to_logical[pos1], temp_pos_to_logical[pos2] = (
+            temp_pos_to_logical[pos2],
+            temp_pos_to_logical[pos1],
+        )
+
+        if l1 != -1:
+            temp_logical_to_pos[l1] = pos2
+        if l2 != -1:
+            temp_logical_to_pos[l2] = pos1
+
+        # Calculate front set term: average of _get_distance over frontier.
         front = 0.0
         for n in F:
             logical_qudits = circuit[n].location
 
-            # Disallow meaningless swaps
-            physical_qudits = [pi[i] for i in logical_qudits]
-            if swap[0] in physical_qudits and swap[1] in physical_qudits:
-                pi[l1], pi[l2] = pi[l2], pi[l1]
-                return np.inf
+            # disallow meaningless swaps
+            physical_qudits = [int(temp_logical_to_pos[i]) for i in logical_qudits]
+            if pos1 in physical_qudits and pos2 in physical_qudits:
+                return float('inf')
 
-            front += self._get_distance(logical_qudits, pi, D)
+            front += self._get_distance_from_mapping(logical_qudits, temp_logical_to_pos, D)
+
         front /= len(F)
 
-        # Calculate extended set term
+        # Calculate extended set term exactly like CG version:
         extend = 0.0
         if len(E) > 0:
             for n in E:
-                extend += self._get_distance(circuit[n].location, pi, D)
+                extend += self._get_distance_from_mapping(
+                    circuit[n].location,
+                    temp_logical_to_pos,
+                    D,
+                )
             extend /= len(E)
             extend *= self.extended_set_weight
 
-        # Calculate decay factor
-        decay_factor = max(decay[swap[0]], decay[swap[1]])
+        # Match CG decay logic exactly.
+        decay_factor = max(decay[pos1], decay[pos2])
 
-        # Undo potential swap
-        pi[l1], pi[l2] = pi[l2], pi[l1]
-
-        # Return final score
         return decay_factor * (front + extend)
-
+    
     def _apply_swap(
         self,
         swap: tuple[int, int],
-        pi: list[int],
-        decay: list[float],
+        pgs: PositionGraphState,
+        decay: list[float] | None = None,
     ) -> None:
-        """Apply the swap to `pi` and update `decay`."""
-        _logger.debug('applying swap %s' % str(swap))
-        l1, l2 = pi.index(swap[0]), pi.index(swap[1])
-        pi[l1], pi[l2] = pi[l2], pi[l1]
+        """Apply the swap to `pgs` and update `decay`."""
+        pos1, pos2 = swap
+        l1 = int(pgs.position_to_logical[pos1])
+        l2 = int(pgs.position_to_logical[pos2])
 
-        decay[swap[0]] += self.decay_delta
-        decay[swap[1]] += self.decay_delta
+        _logger.debug(f'Applying swap physical{swap} logical({l1},{l2})')
+
+        pgs.position_to_logical[pos1], pgs.position_to_logical[pos2] = (
+            pgs.position_to_logical[pos2],
+            pgs.position_to_logical[pos1],
+        )
+
+        if l1 != -1:
+            pgs.logical_to_position[l1] = pos2
+        if l2 != -1:
+            pgs.logical_to_position[l2] = pos1
+
+        if decay is not None:
+            decay[pos1] += self.decay_delta
+            decay[pos2] += self.decay_delta
 
     def _get_distance(
         self,
         logical_qudits: Sequence[int],
-        pi: list[int],
+        pgs: PositionGraphState,
         D: list[list[float]],
     ) -> float:
-        """Calculate the expected number of swaps to connect logical qudits."""
-        min_term = np.inf
+        """Calculate the expected number of swaps to connect logical qudits.
+
+        This matches the CouplingGraph SABRE version exactly.
+        """
+        mapping = pgs.logical_to_position
+        return self._get_distance_from_mapping(logical_qudits, mapping, D)
+    
+    def _get_distance_from_mapping(
+        self,
+        logical_qudits: Sequence[int],
+        logical_to_position: Sequence[int],
+        D: list[list[float]],
+    ) -> float:
+        """CG-equivalent distance heuristic from an explicit mapping."""
+        min_term = float('inf')
+
         for q in logical_qudits:
+            q_pos = int(logical_to_position[q])
+            if q_pos < 0:
+                return float('inf')
+
             term = 0.0
             for p in logical_qudits:
                 if p == q:
                     continue
-                term += D[pi[q]][pi[p]]
+                p_pos = int(logical_to_position[p])
+                if p_pos < 0:
+                    return float('inf')
+                term += D[q_pos][p_pos]
+
             min_term = min(term, min_term)
+
         return min_term
 
     def _uphill_swaps(
         self,
         logical_qudits: Sequence[int],
-        cg: CouplingGraph,
-        pi: list[int],
+        pgs: PositionGraphState,
         D: list[list[float]],
     ) -> Iterator[tuple[int, int]]:
         """Yield the swaps necessary to bring some of the qudits together."""
         center_qudit = min(
             logical_qudits,
             key=lambda q: sum(
-                D[pi[q]][pi[p]]
+                D[int(pgs.logical_to_position[q])][int(pgs.logical_to_position[p])]
                 for p in logical_qudits
                 if p != q
             ),
         )
 
+        center_pos = int(pgs.logical_to_position[center_qudit])
+        spt = pgs.position_graph.get_shortest_path_tree(center_pos)
+
         for q in logical_qudits:
             if q == center_qudit:
                 continue
 
-            # TODO: Do not need to calculate entire tree
-            spt = cg.get_shortest_path_tree(pi[center_qudit])
-            path = list(reversed(spt[pi[q]]))
+            q_pos = int(pgs.logical_to_position[q])
+            path = list(reversed(spt[q_pos]))
 
             _logger.debug(f'Moving {q} to {center_qudit} via {path}.')
 
             for p1, p2 in zip(path, path[1:]):
-                if pi[center_qudit] == p1 or pi[center_qudit] == p2:
+                # Match CG behavior: do not move the center qudit itself.
+                if center_pos == p1 or center_pos == p2:
                     continue
                 yield (p1, p2)
 
-    def _apply_perm(self, perm: Sequence[int], pi: list[int]) -> None:
-        """Apply the `perm` permutation to the current mapping `pi`."""
-        _logger.debug('applying permutation %s' % str(perm))
-        pi_c = {q: pi[perm[i]] for i, q in enumerate(sorted(perm))}
+    def _apply_perm(self, perm: Sequence[int], mapping: list[int]) -> None:
+        _logger.debug(f'applying permutation {perm}')
+
+        mapping_c = {q: mapping[perm[i]] for i, q in enumerate(sorted(perm))}
         for q in perm:
-            pi[q] = pi_c[q]
+            mapping[q] = mapping_c[q]

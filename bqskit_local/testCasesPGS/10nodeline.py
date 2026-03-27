@@ -3,8 +3,6 @@ from bqskit.ir.circuit import Circuit
 from bqskit.ir.gates import HGate, CNOTGate
 from bqskit.compiler.passdata import PassData
 
-
-from bqskit_local.compiler.passDataPGS import PassDataPGS
 from bqskit_local.mapping.setPGSPass import SetPGSPass
 from bqskit_local.layout.sabrePassPGS import GeneralizedSabreLayoutPassPGS
 from bqskit_local.routing.sabreRoutingPGS import GeneralizedSabreRoutingPassPGS
@@ -30,7 +28,7 @@ data = PassData(circ)
 
 passes = [
     SetPGSPass(pgs, placement=list(range(10))),
-    GeneralizedSabreLayoutPassPGS(total_passes=6),
+    GeneralizedSabreLayoutPassPGS(total_passes=1),
     GeneralizedSabreRoutingPassPGS(decay_delta=0.5),
 ]
 

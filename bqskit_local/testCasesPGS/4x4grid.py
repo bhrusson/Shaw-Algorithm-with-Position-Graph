@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from bqskit.compiler import Compiler, CompilationTask
+from bqskit.compiler import CompilationTask, Compiler
 from bqskit.ir.circuit import Circuit
 from bqskit.ir.gates import CNOTGate
 
@@ -22,23 +22,37 @@ _logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-n = 64
-circ = Circuit(n)
-
-for control in range(n):
-    for target in range(control + 1, n):
-        circ.append_gate(CNOTGate(), (control, target))
-
-print("Number of qudits:", circ.num_qudits)
-print("Number of CNOTs:", circ.num_operations)
-
-rows = 8
-cols = 8
+rows = 4
+cols = 4
+n = rows * cols
 
 
 def idx(r: int, c: int) -> int:
     return r * cols + c
 
+
+circ = Circuit(n)
+
+# A compact nonlocal pattern that is easier to inspect by eye than all-pairs.
+gate_pairs = [
+    (0, 3),
+    (0, 5),
+    (0, 10),
+    (0, 12),
+    (0, 15),
+    (15, 3),
+    (15, 5),
+    (15, 10),
+    (15, 12),
+    (1, 14),
+    (6, 9),
+]
+
+for control, target in gate_pairs:
+    circ.append_gate(CNOTGate(), (control, target))
+
+print("Number of qudits:", circ.num_qudits)
+print("Number of CNOTs:", circ.num_operations)
 
 default_pos_label = PositionLabel(
     capability=(
@@ -53,8 +67,6 @@ default_pos_label = PositionLabel(
     },
 )
 
-pos_labels = [default_pos_label for _ in range(rows * cols)]
-
 default_edge_label = EdgeLabel(
     capability=(
         EdgeCapability.MOVE
@@ -68,7 +80,9 @@ default_edge_label = EdgeLabel(
     },
 )
 
+pos_labels = [default_pos_label for _ in range(n)]
 edge_labels: dict[tuple[int, int], EdgeLabel] = {}
+
 for r in range(rows):
     for c in range(cols):
         u = idx(r, c)
@@ -89,7 +103,7 @@ template_pgs = PositionGraphState(pg, radices=[2] * n)
 print("Number of positions:", len(pg.position_labels))
 print("Number of directed edges:", len(pg.edge_labels))
 print("Move neighbors of 0:", pg.get_swap_neighbors(0))
-print("Distance 0 -> 63:", pg.distance(0, 63))
+print("Distance 0 -> 15:", pg.distance(0, 15))
 
 passes = [
     SetPGSPass(template_pgs, placement=list(range(n))),

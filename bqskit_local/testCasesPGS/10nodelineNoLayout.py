@@ -30,7 +30,7 @@ data = PassData(circ)
 
 passes = [
     SetPGSPass(pgs, placement=list(range(10))),
-    #GeneralizedSabreLayoutPassPGS(total_passes=3),
+    GeneralizedSabreLayoutPassPGS(total_passes=3),
     GeneralizedSabreRoutingPassPGS(decay_delta=0.5),
 ]
 

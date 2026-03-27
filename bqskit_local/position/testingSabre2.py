@@ -6,51 +6,29 @@ from bqskit.ir.gates import HGate, CNOTGate
 from bqskit.compiler.passdata import PassData
 #from bqskit_local.mapping.sabre_pgs import GeneralizedSabreAlgorithmPGS
 from bqskit.qis.graph import CouplingGraph
-import logging
 
-_logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
-#resulted in 3989 opperations
+def make_4_node_coupling_graph() -> CouplingGraph:
+    # Fully connected graph of 16 qubits
+    num_qudits = 4
+    edges = []
+    for i in range(num_qudits - 1):
+        edges.append((i, i + 1))
+        edges.append((i + 1, i))
+    return CouplingGraph(num_qudits, edges)
 
 
 # Build the circuit
-n = 64
-circ = Circuit(n)
+circ = Circuit(4)
+for i in range(4):
+    circ.append_gate(HGate(), [i])
+circ.append_gate(CNOTGate(), [0,1])
+circ.append_gate(CNOTGate(), [0,2])
+circ.append_gate(CNOTGate(), [0,3])
 
-# One CNOT for every unordered pair (i, j) with i < j
-for control in range(n):
-    for target in range(control + 1, n):
-        circ.append_gate(CNOTGate(), (control, target))
-        #2016 gates
-
-print("Number of qudits:", circ.num_qudits)
-print("Number of CNOTs:", circ.num_operations)
-
-rows = 8
-cols = 8
-
-edges = []
-
-def idx(r, c):
-    return r * cols + c
-
-for r in range(rows):
-    for c in range(cols):
-        node = idx(r, c)
-
-        # right neighbor
-        if c < cols - 1:
-            edges.append((node, idx(r, c + 1)))
-
-        # down neighbor
-        if r < rows - 1:
-            edges.append((node, idx(r + 1, c)))
-
-cg = CouplingGraph(edges)
+cg = CouplingGraph.linear(4)
 
 model = MachineModel(
-    num_qudits=64,
+    num_qudits=4,
     coupling_graph=cg,
     gate_set={CNOTGate(), HGate()}
 )
@@ -60,14 +38,14 @@ print("hello,test",model.coupling_graph)
 
 
 passes = [
-    #UnfoldPass(),
+    UnfoldPass(),
     SetModelPass(model),
-    #QuickPartitioner(2),
-    #ApplyPlacement(),
-    GeneralizedSabreLayoutPass(total_passes=3),
+    QuickPartitioner(2),
+    ApplyPlacement(),
+    GeneralizedSabreLayoutPass(total_passes=5),
     GeneralizedSabreRoutingPass(decay_delta=0.5),
-    #ApplyPlacement(),
-    #UnfoldPass()
+    ApplyPlacement(),
+    UnfoldPass()
 ]
 print("passes",str(passes))
 # Create the compiler

@@ -12,7 +12,7 @@ from bqskit_local.routing.sabreRoutingPGS import GeneralizedSabreRoutingPassPGS
 from bqskit_local.position.state import PositionGraphState
 from bqskit_local.position.testingMethods import *
 
-#resulted in 4434 opperations
+#resulted in 4247 opperations
 
 # Build circuit
 # Build the circuit

@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import copy
 import logging
+from typing import Sequence
 
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
-from bqskit_local.mapping.sabre_pgs import GeneralizedSabreAlgorithmPGS
+from bqskit_local.mapping.sabre_pgs_behavioral_equivalence import GeneralizedSabreAlgorithmPGS
+from bqskit_local.position.graph import PositionGraph
 from bqskit_local.position.state import PositionGraphState
 
 _logger = logging.getLogger(__name__)
@@ -15,11 +17,12 @@ _logger = logging.getLogger(__name__)
 
 class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
     """
-    Uses the SABRE-PGS algorithm to choose an initial layout.
+    PGS layout pass redesigned to use only standard workflow-visible data.
     """
 
     def __init__(
         self,
+        template_pgs: PositionGraphState,
         total_passes: int = 1,
         decay_delta: float = 0.001,
         decay_reset_interval: int = 5,
@@ -27,6 +30,11 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
     ) -> None:
+        if not isinstance(template_pgs, PositionGraphState):
+            raise TypeError(
+                f'Expected PositionGraphState, got {type(template_pgs)}.',
+            )
+
         if not isinstance(total_passes, int):
             raise TypeError(
                 f'Expected int for total_passes, got {type(total_passes)}.',
@@ -35,6 +43,7 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         if total_passes < 1:
             raise ValueError('Total passes must be a positive integer.')
 
+        self.template_pgs = copy.deepcopy(template_pgs)
         self.total_passes = total_passes
 
         super().__init__(
@@ -45,79 +54,60 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
             extended_set_weight=extended_set_weight,
         )
 
-    def _layout_score(self, circuit: Circuit, pgs: PositionGraphState) -> float:
-        """
-        Score a candidate layout using frontier and lookahead distances.
-        Lower is better.
-        """
-        D = pgs.position_graph.move_cost_matrix
-        F = set(circuit.front)
-        E = self._calc_extended_set(circuit, F)
+    def _build_local_pgs(
+        self,
+        placement: Sequence[int],
+        num_circuit_qudits: int,
+    ) -> PositionGraphState:
+        if len(placement) != num_circuit_qudits:
+            raise ValueError(
+                f'Expected placement of length {num_circuit_qudits}, got {len(placement)}.',
+            )
 
-        total = 0.0
+        if len(set(placement)) != len(placement):
+            raise ValueError('Placement must assign distinct positions.')
 
-        for cp in F:
-            loc = circuit[cp].location
-            for i in range(len(loc)):
-                p1 = int(pgs.logical_to_position[loc[i]])
-                if p1 == -1:
-                    return float("inf")
-                for j in range(i + 1, len(loc)):
-                    p2 = int(pgs.logical_to_position[loc[j]])
-                    if p2 == -1:
-                        return float("inf")
-                    total += D[p1][p2]
+        base_pg = self.template_pgs.position_graph
+        placement = [int(x) for x in placement]
 
-        for cp in E:
-            loc = circuit[cp].location
-            for i in range(len(loc)):
-                p1 = int(pgs.logical_to_position[loc[i]])
-                if p1 == -1:
-                    return float("inf")
-                for j in range(i + 1, len(loc)):
-                    p2 = int(pgs.logical_to_position[loc[j]])
-                    if p2 == -1:
-                        return float("inf")
-                    total += self.extended_set_weight * D[p1][p2]
+        for pos in placement:
+            if pos < 0 or pos >= base_pg.graph.num_nodes():
+                raise ValueError(f'Invalid position {pos} in placement.')
 
-        return float(total)
+        inverse_placement = {pos: i for i, pos in enumerate(placement)}
+        local_pos_labels = [base_pg.position_labels[pos] for pos in placement]
+        local_edge_labels = {
+            (inverse_placement[u], inverse_placement[v]): label
+            for (u, v), label in base_pg.edge_labels.items()
+            if u in inverse_placement and v in inverse_placement
+        }
+
+        local_pg = PositionGraph(local_pos_labels, local_edge_labels)
+        pgs = PositionGraphState(
+            local_pg,
+            radices=list(self.template_pgs.radices[:num_circuit_qudits]),
+            gateSet=self.template_pgs.gateSet,
+        )
+
+        for logical, pos in enumerate(range(num_circuit_qudits)):
+            pgs.set_qudit_position(logical, pos)
+
+        return pgs
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
-        if 'pgs' not in data:
-            raise RuntimeError(
-                'GeneralizedSabreLayoutPassPGS requires data["pgs"].',
-            )
+        if getattr(data, 'placement', None) is not None:
+            placement = [int(x) for x in data.placement[:circuit.num_qudits]]
+        else:
+            placement = list(range(circuit.num_qudits))
 
-        pgs: PositionGraphState = data['pgs']
-
-        placed = [p for p in pgs.logical_to_position[:circuit.num_qudits] if p != -1]
-        if len(placed) != circuit.num_qudits:
-            raise RuntimeError(
-                'All circuit qudits must be assigned to positions before layout.',
-            )
-
-        best_pgs = None
-        best_score = self._layout_score(circuit, pgs)
+        pgs = self._build_local_pgs(placement, circuit.num_qudits)
 
         for _ in range(self.total_passes):
-            trial_pgs = copy.deepcopy(pgs)
+            self.forward_pass(circuit, pgs, modify_circuit=False)
+            self.backward_pass(circuit, pgs)
 
-            self.forward_pass(circuit, trial_pgs, modify_circuit=False)
-            self.backward_pass(circuit, trial_pgs)
+        perm = [int(x) for x in pgs.logical_to_position[:circuit.num_qudits]]
 
-            score = self._layout_score(circuit, trial_pgs)
-            if score < best_score:
-                best_score = score
-                best_pgs = trial_pgs
+        self._apply_perm(perm, data.placement)
 
-        if best_pgs is None:
-            raise RuntimeError('Failed to compute a layout.')
-
-        data['initial_mapping'] = best_pgs.logical_to_position.copy()
-
-        pgs._logical_to_position[:] = best_pgs.logical_to_position
-        pgs._position_to_logical[:] = best_pgs.position_to_logical
-
-        _logger.info(
-            f'Found layout: {data["initial_mapping"]}, score: {best_score}',
-        )
+        _logger.info(f'Found layout: {perm}, new placement: {data.placement}')

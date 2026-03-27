@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import Sequence
 
 from bqskit.compiler.basepass import BasePass
@@ -10,7 +11,12 @@ from bqskit_local.position.state import PositionGraphState
 
 
 class SetPGSPass(BasePass):
-    """Initialize PositionGraphState for PGS passes."""
+    """
+    Initialize standard mapping state for PGS passes.
+
+    This pass avoids storing custom objects in PassData, since those do not
+    appear to persist back out of the compiler workflow.
+    """
 
     def __init__(
         self,
@@ -22,27 +28,29 @@ class SetPGSPass(BasePass):
                 f'Expected PositionGraphState, got {type(pgs)}.',
             )
 
-        self.pgs = pgs
+        self.template_pgs = copy.deepcopy(pgs)
         self.placement = None if placement is None else list(placement)
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
-        if self.pgs.num_qudits < circuit.num_qudits:
+        if self.template_pgs.num_qudits < circuit.num_qudits:
             raise RuntimeError('PositionGraphState too small for circuit.')
 
-        if self.placement is not None:
-            if len(self.placement) != circuit.num_qudits:
-                raise ValueError(
-                    'Placement length must equal circuit.num_qudits.',
-                )
+        if self.template_pgs.num_pos < circuit.num_qudits:
+            raise RuntimeError('Not enough positions for circuit.')
 
-            for logical, pos in enumerate(self.placement):
-                self.pgs.set_qudit_position(logical, int(pos))
+        if self.placement is None:
+            placement = list(range(circuit.num_qudits))
+        else:
+            placement = [int(x) for x in self.placement]
 
-        mapping = [
-            int(x) for x in self.pgs.logical_to_position[:circuit.num_qudits]
-        ]
+        if len(placement) != circuit.num_qudits:
+            raise ValueError(
+                'Placement length must equal circuit.num_qudits.',
+            )
 
-        data["pgs"] = self.pgs
-        data["position_graph"] = self.pgs.position_graph
-        data["initial_mapping"] = mapping.copy()
-        data["final_mapping"] = mapping.copy()
+        if len(set(placement)) != len(placement):
+            raise ValueError('Placement must assign distinct positions.')
+
+        data.placement = placement.copy()
+        data.initial_mapping = placement.copy()
+        data.final_mapping = placement.copy()
