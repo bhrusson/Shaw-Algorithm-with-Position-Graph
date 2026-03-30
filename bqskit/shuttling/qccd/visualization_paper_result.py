@@ -16,7 +16,7 @@ architecture_lst = [
 ]
 
 parameter_set = {
-    "grid": ["4"],
+    "grid": ["5"],
 }
 """
     SHAPER
@@ -30,7 +30,7 @@ for circuit_idx in range(len(circuit_lst)):
             print(f"Param: {param}")
             for idx in range(1):
                 with open(
-                        f"bqskit/shuttling/qccd/paper_result_grid/SHAW_{circuit_lst[circuit_idx]}_idx{idx}_{architecture}_{param}_{num_layout}.pkl",
+                        f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/paper_result_grid/SHAW_{circuit_lst[circuit_idx]}_idx{idx}_{architecture}_{param}_{num_layout}.pkl",
                         "rb") as input_file:
                     data = pickle.load(input_file)
                     print(round(data[1], 2))

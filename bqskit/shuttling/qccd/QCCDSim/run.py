@@ -35,7 +35,7 @@ start_time = timer()
 """
 Performing global optimization ....
 """
-openqasm_file_name = f"bqskit/shuttling/qccd/benchmark_circuits/{input_filename}.qasm"
+openqasm_file_name = f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/benchmark_circuits/{input_filename}.qasm"
 # cir = Circuit.from_file(openqasm_file_name)
 #
 # compiled_circuit = compile(cir, optimization_level=4)
@@ -69,31 +69,31 @@ mpar_model2.alpha
 machine_model = "MPar2"
 '''
 
-# mpar_model3 = MachineParams()
-# mpar_model3.alpha = 0.003680029
-# mpar_model3.beta = 39.996319971
-# mpar_model3.split_merge_time = 80
-# mpar_model3.shuttle_time = 40
-# mpar_model3.junction2_cross_time = 40
-# mpar_model3.junction3_cross_time = 120
-# mpar_model3.junction4_cross_time = 120
-# mpar_model3.gate_type = gate_type
-# mpar_model3.swap_type = swap_type
-# mpar_model3.ion_swap_time = 40
-# machine_model = "MPar3"
+mpar_model3 = MachineParams()
+mpar_model3.alpha = 0.003680029
+mpar_model3.beta = 39.996319971
+mpar_model3.split_merge_time = 80
+mpar_model3.shuttle_time = 40
+mpar_model3.junction2_cross_time = 40
+mpar_model3.junction3_cross_time = 120
+mpar_model3.junction4_cross_time = 120
+mpar_model3.gate_type = gate_type
+mpar_model3.swap_type = swap_type
+mpar_model3.ion_swap_time = 40
+machine_model = "MPar3"
 
-mpar_model1 = MachineParams()
-mpar_model1.alpha = 0.003680029
-mpar_model1.beta = 39.996319971
-mpar_model1.split_merge_time = 80
-mpar_model1.shuttle_time = 5
-mpar_model1.junction2_cross_time = 5
-mpar_model1.junction3_cross_time = 100
-mpar_model1.junction4_cross_time = 120
-mpar_model1.gate_type = gate_type
-mpar_model1.swap_type = swap_type
-mpar_model1.ion_swap_time = 42
-machine_model = "MPar1"
+# mpar_model1 = MachineParams()
+# mpar_model1.alpha = 0.003680029
+# mpar_model1.beta = 39.996319971
+# mpar_model1.split_merge_time = 80
+# mpar_model1.shuttle_time = 5
+# mpar_model1.junction2_cross_time = 5
+# mpar_model1.junction3_cross_time = 100
+# mpar_model1.junction4_cross_time = 120
+# mpar_model1.gate_type = gate_type
+# mpar_model1.swap_type = swap_type
+# mpar_model1.ion_swap_time = 42
+# machine_model = "MPar1"
 
 print("Simulation")
 print("Program:", openqasm_file_name)
@@ -109,18 +109,19 @@ print("Gatetype:", gate_type)
 print("Swaptype:", swap_type)
 
 #Create a test machine
+mpar_model = mpar_model3
 if machine_type == "G2x3":
-    m = test_trap_2x3(num_ions_per_region, mpar_model1)
+    m = test_trap_2x3(num_ions_per_region, mpar_model)
 elif machine_type == "L6":
-    m = make_linear_machine(6, num_ions_per_region, mpar_model1)
+    m = make_linear_machine(6, num_ions_per_region, mpar_model)
 elif machine_type == "H6":
-    m = make_single_hexagon_machine(num_ions_per_region, mpar_model1)
+    m = make_single_hexagon_machine(num_ions_per_region, mpar_model)
 elif machine_type == "H":
-    m = test_H_machine(num_ions_per_region, mpar_model1)
+    m = test_H_machine(num_ions_per_region, mpar_model)
 elif machine_type == "Enchilada":
-    m = test_enchilada(num_ions_per_region, mpar_model1)
+    m = test_enchilada(num_ions_per_region, mpar_model)
 elif machine_type == "grid":
-    m = test_grid(4, 4, num_ions_per_region, mpar_model1)
+    m = test_grid(4, 4, num_ions_per_region, mpar_model)
 else:
     assert 0
 
@@ -136,7 +137,7 @@ ip.parse_ir(openqasm_file_name)
 
 qc = QuantumCircuit.from_qasm_file(openqasm_file_name)
 dag = circuit_to_dag(qc)
-dag_drawer(dag)
+#dag_drawer(dag)
 
 print("parse object map:")
 print(ip.cx_gate_map)
@@ -188,8 +189,8 @@ end_time = timer()
 print("----------------")
 result = [end_time-start_time, data, initial_mapping]
 
-result_filename = f"bqskit/shuttling/qccd/rebuttal_result/precompiled_QCCDSim_{input_filename}_{machine_type}_{num_ions_per_region}_{mapper_choice}.pkl"
-with open(result_filename, 'wb') as f:
-    pickle.dump(result, f)
+# result_filename = f"bqskit/shuttling/qccd/rebuttal_result/precompiled_QCCDSim_{input_filename}_{machine_type}_{num_ions_per_region}_{mapper_choice}.pkl"
+# with open(result_filename, 'wb') as f:
+#     pickle.dump(result, f)
 
 print(end_time-start_time)

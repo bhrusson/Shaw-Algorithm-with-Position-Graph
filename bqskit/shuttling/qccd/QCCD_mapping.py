@@ -333,6 +333,7 @@ class QCCDMappingAlgorithm:
         distance_to_trap_lst = []
         for pos in gate_pos:
             tmp_distance_to_trap = [D[pos][trap_space] for trap_space in selected_trap_space]
+            print(tmp_distance_to_trap)
             distance_to_trap = float(np.min(tmp_distance_to_trap))
             end_point = selected_trap_space[int(np.argmax(tmp_distance_to_trap))]
             if end_point not in self.qccd_machine.trap_end_points[selected_trap_id]:

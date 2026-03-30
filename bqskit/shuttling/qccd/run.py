@@ -10,7 +10,7 @@ from bqskit import enable_logging
 from bqskit.ir.opt import ScipyMinimizer, HilbertSchmidtCostGenerator
 from bqskit.shuttling.qccd.mapping import QCCDPAMLayoutPass, QCCDPAMRoutingPass, QCCDLayoutPass, QCCDRoutingPass
 from bqskit.shuttling.qccd import (QCCDMachineModel, QCCDSubtopologySelectionPass, create_grid_physical_machine,
-                                   QCCDMappingAlgorithm, create_testing_physical_machine, schedule_QCCD)
+                                   QCCDMappingAlgorithm, create_testing_physical_machine, schedule_QCCD, schedule_QCCD_w_fid)
 import sys
 import pickle
 #enable_logging(True)
@@ -36,8 +36,8 @@ print("Run index: ", str(run_index))
 # print("QASM output filename: ", str(qasm_result_filename))
 # print("Output filename: ", str(result_filename))
 if trap_type == "grid":
-    physical_model = create_grid_physical_machine(num_cols = 5,
-                                                  num_rows = 5,
+    physical_model = create_grid_physical_machine(num_cols = 1,
+                                                  num_rows = 1,
                                                   trap_capacity = trap_capacity)
 else:
     physical_model = create_testing_physical_machine(type=trap_type,
@@ -64,7 +64,7 @@ machine_model = QCCDMachineModel(gate_set=gate_set,
                                  multi_qudit_gate_type=gate_type,
                                  timing_data=timing_data)
 print("Position graph: ", machine_model.position_graph)
-cir = Circuit.from_file(f"bqskit/shuttling/qccd/benchmark_circuits/{input_filename}.qasm")
+cir = Circuit.from_file(f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/benchmark_circuits/{input_filename}.qasm")
 target_unitary = cir
 num_qudits = cir.num_qudits
 
@@ -124,7 +124,7 @@ print("Congestion rate: ", congestion_rate)
 gate_count_weight = 0.1
 
 qsearch_pass = QSearchSynthesisPass()
-block_size = 3
+block_size = 2
 if algo_type == "SHAW":
     workflow = [
         UnfoldPass(),
@@ -173,7 +173,7 @@ with Compiler() as compiler:
 """
 Save qasm file
 """
-qasm_result_filename = f"bqskit/shuttling/qccd/paper_result_grid/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
+qasm_result_filename = f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/paper_result_16/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
 output_circuit.save(qasm_result_filename)
 
 """
@@ -203,6 +203,6 @@ print(runtime)
 print(compile_time)
 print(data['initial_ion_assignment_qccd'])
 print(data['initial_mapping'])
-result_filename = f"bqskit/shuttling/qccd/paper_result_grid/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
+result_filename = f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/paper_result_16/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)
