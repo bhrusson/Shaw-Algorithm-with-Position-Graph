@@ -4,7 +4,6 @@ import numpy as np
 from bqskit import Circuit
 from bqskit.shuttling.qccd import QCCDMachineModel
 
-
 def schedule_QCCD(
         instructions_list: list,
         circuit: Circuit,
@@ -27,6 +26,7 @@ def schedule_QCCD(
     next_gate = None
     just_executed = False
     first_time_executed = True
+    print("Total number of cycles: ", circuit.num_cycles)
     #print(f"Start scheduling QCCD.... Parallization: {parallel}")
     parallel_moves_w_gate_execution = []
     for instruction in instructions_list:
@@ -76,7 +76,7 @@ def schedule_QCCD(
                 # print("Ion assignment is updated: {}".format(ion_assignment))
                 runtime += max(serial_moves_runtime)
                 shuttling_time += max(serial_moves_runtime)
-                runtime -= 5e-6
+                runtime -= 40e-6
                 parallization_moves = []
                 #print("Time stamp after parallel moves: {}".format(runtime))
             if num_cycles != 0:
@@ -105,7 +105,7 @@ def schedule_QCCD(
                     next_gate = 'barrier'
                 else:
                     next_gate = circuit[num_cycles + 1][0].gate.name
-                num_cycles += 1
+                    num_cycles += 1
             parallization_ops.append(gate_block)
             num_cycles += 1
             next_gate = None
@@ -144,9 +144,11 @@ def schedule_QCCD(
                             #print(f"More than one trap id....{trap_id_op}")
                             trap = trap_id_op.pop()
                             if trap is not None:
-                                executable_dict[trap] += 100e-6
+                                executable_dict[trap] += 120e-6
+                            elif list(trap_id_op) == []:
+                                continue
                             else:
-                                executable_dict[trap_id_op.pop()] += 100e-6
+                                executable_dict[trap_id_op.pop()] += 120e-6
                             #raise ValueError(f"More than one trap id....{trap_id_op}")
                         else:
                             executable_dict[trap_id_op.pop()] += qccd_machine.two_qudit_gate_time(
@@ -199,7 +201,7 @@ def schedule_QCCD(
                 ion_assignment = ast.literal_eval(instruction[1])
                 runtime += cost
                 shuttling_time += cost
-            num_cycles += 1
+            #num_cycles += 1
             # print("Current runtime {}".format(runtime))
         else:
             raise ValueError(f"Instruction must be 'Execute' or 'Move'. But return {instruction_parts[0]}")
@@ -210,14 +212,14 @@ if __name__ == "__main__":
     import pickle
 
     circuit_lst = [
-        "QAOA_16_compiled",
-        "QuantumVolume_16",
-        "QFT_16_compiled",
-        "TFIM_n16_s100_compiled",
-        "TFXY_n16_s100_compiled",
-        "QAOA_20_compiled",
-        "QuantumVolume_20",
-        "QFT_20_compiled"
+        "QAOA_wsq_8_compiled",
+        #"QuantumVolume_16",
+        "QFT_wsq_8_compiled",
+        "TFIM_wsq_n8_s100_compiled",
+        "TFXY_wsq_n8_s100_compiled",
+        #"QAOA_20_compiled",
+        #"QuantumVolume_20",
+        #"QFT_20_compiled"
     ]
 
     architecture_lst = [
@@ -226,8 +228,8 @@ if __name__ == "__main__":
     ]
 
     parameter_set = {
-        "H": [["4", "5"], ["5", "6"]],
-        "G2x3": [["3", "4"], ["4", "5"]],
+        "H": [["2", "3"]],
+        "G2x3": [["2", "3"]],
     }
     all_variance = []
     num_layout = 2
@@ -244,17 +246,14 @@ if __name__ == "__main__":
                 for idx in range(1, 6):
                     file_name = f"SHAPER_{circuit_lst[circuit_idx]}_idx{idx}_{architecture}_{param}_{num_layout}"
                     qasm_name = f"{circuit_lst[circuit_idx]}_idx{idx}_{architecture}_{param}_{num_layout}"
-                    qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{file_name}.pkl"
-                    if circuit_lst[circuit_idx] == "QFT_16_compiled" and architecture == "H" and param_idx == 0 and idx == 2:
-                        shuttling_time.append(46523)
-                        continue
+                    qasm_result_filename = f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/paper_result/{file_name}.pkl"
                     with open(
                             qasm_result_filename,
                             "rb") as input_file:
                         stored_data = data = pickle.load(input_file)
-                    (runtime, compile_time, instruction_lst, output_circuit, gate_counts,
+                    (runtime, compile_time, instruction_lst, gate_counts,
                      initial_ion_assignment, initial_mapping, final_mapping, machine_model) = stored_data
-                    output_circuit = Circuit.from_file(f"bqskit/shuttling/qccd/new_result/{qasm_name}.qasm")
+                    output_circuit = Circuit.from_file(f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/paper_result/{qasm_name}.qasm")
                     shuttlingtime, sp = schedule_QCCD(instructions_list=instruction_lst,
                                             circuit=output_circuit,
                                             initial_mapping=initial_mapping,

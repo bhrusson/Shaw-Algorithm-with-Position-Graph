@@ -3,6 +3,40 @@ from bqskit.ir import Circuit
 from bqskit.ir.gates import CNOTGate, XGate
 from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
 
+def create_grid_physical_machine(
+        num_cols: int,
+        num_rows: int,
+        trap_capacity : int) -> QCCD_physical_machine:
+    if num_cols <= 0 or num_rows <= 0:
+        raise ValueError("num_cols and num_rows must be greater than zero")
+    num_traps = (num_rows + 1) * (num_cols + 1)
+    num_junctions = num_rows * (num_cols + 1)
+    max_traps_size = [trap_capacity] * num_traps
+    executable = [True] * num_traps
+    measurable = [True] * num_traps
+    physical_machine = QCCD_physical_machine(num_traps=num_traps,
+                                             num_junctions=num_junctions,
+                                             max_traps_size=max_traps_size,
+                                             executable_traps=executable,
+                                             measurable_traps=measurable)
+    print("Creating a QCCD machine ...")
+    for row_idx in range(num_rows + 1):
+        for col_idx in range(num_cols + 1):
+            if row_idx != num_rows:
+                physical_machine.add_segment(left=physical_machine.trap_list[row_idx * (num_cols + 1) + col_idx],
+                                             right=physical_machine.junction_list[row_idx * (num_cols + 1) + col_idx])
+            if row_idx != 0:
+                physical_machine.add_segment(left=physical_machine.junction_list[(row_idx - 1) * (num_cols + 1) + col_idx],
+                                             right=physical_machine.trap_list[row_idx * (num_cols + 1) + col_idx])
+
+    for row_idx in range(num_rows):
+        for col_idx in range(num_cols):
+            physical_machine.add_segment(left=physical_machine.junction_list[row_idx * (num_cols + 1) + col_idx],
+                                         right=physical_machine.junction_list[row_idx * (num_cols + 1) + col_idx + 1])
+
+    physical_machine.print_physical_machine()
+    print("Finished creating the QCCD physical machine.")
+    return physical_machine
 
 def create_testing_physical_machine(
         type: str,
@@ -244,3 +278,6 @@ def create_simple_circuit_2(num_qubits: int) -> Circuit:
     for qubit in range(num_qubits - 1):
         circuit.append_gate(CNOTGate(), (qubit, qubit + 1))
     return circuit
+
+if __name__ == '__main__':
+    machine = create_grid_physical_machine(2, 2, 3)
