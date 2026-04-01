@@ -80,6 +80,7 @@ class PositionGraph:
         self._executable_clusters = self.fully_executable_clusters()
         self._dijkstra_shortest_path_lengths = self.digraph_all_pairs_dijkstra_path_lengths(edge_capability=EdgeCapability.MOVE)
         self._dijkstra_shortest_paths = self.all_pairs_dijkstra_shortest_paths(edge_capability=EdgeCapability.MOVE)
+        self._shortest_path_hops_tree = self.all_pairs_hop_shortest_path_trees()
         self._move_cost_matrix = self.build_move_cost_matrix()
         self._cluster_distance_maps = self.build_cluster_distance_map()
         self._move_gradient = self.build_move_gradient()
@@ -131,6 +132,10 @@ class PositionGraph:
     @property
     def shortest_paths(self) -> AllPairsPathMapping:
         return self._dijkstra_shortest_paths
+
+    @property
+    def shortest_path_hops_tree(self) -> Dict[int, Dict[int, Tuple[int, ...]]]:
+        return self._shortest_path_hops_tree
     
     @property
     def clusters(self) -> Sequence[Sequence[int]]:
@@ -388,6 +393,68 @@ class PositionGraph:
                 return float('inf')
 
         return rx.digraph_all_pairs_dijkstra_path_lengths(self._graph, edge_cost_fn)
+
+    def all_pairs_hop_shortest_path_trees(self) -> Dict[int, Dict[int, Tuple[int, ...]]]:
+        """
+        Compute all-pairs shortest paths by hop-count using CG-style tie-breaks.
+
+        This intentionally mirrors the legacy CouplingGraph shortest-path tree
+        logic: source-by-source traversal, unit-cost relaxations, and no path
+        replacement on equal-length ties. The weighted Dijkstra caches remain
+        unchanged for experiments that use MOVE weights directly.
+        """
+        all_paths: Dict[int, Dict[int, Tuple[int, ...]]] = {}
+        for source in range(len(self.position_labels)):
+            source_paths = self.get_hop_shortest_path_tree(source)
+            all_paths[source] = {
+                target: path
+                for target, path in enumerate(source_paths)
+                if len(path) > 0
+            }
+
+        return all_paths
+
+    def get_hop_shortest_path_tree(self, source: int) -> List[Tuple[int, ...]]:
+        """
+        Return hop-shortest paths from `source` using legacy CG tie-breaking.
+
+        This mirrors CouplingGraph.get_shortest_path_tree by:
+        - tracking unvisited nodes,
+        - selecting the next node by shortest hop distance,
+        - relaxing neighbors with unit cost,
+        - and preserving the first path found on equal-hop ties.
+        """
+        self.check_pos_index(source)
+
+        unvisited_positions = set(range(len(self.position_labels)))
+        distances = {i: np.inf for i in range(len(self.position_labels))}
+        paths: List[Tuple[int, ...]] = [tuple() for _ in range(len(self.position_labels))]
+        distances[source] = 0
+        paths[source] = (source,)
+
+        while len(unvisited_positions) > 0:
+            unvisited_distances = [
+                (node, dist)
+                for node, dist in distances.items()
+                if node in unvisited_positions
+            ]
+            unvisited_distances.sort(key=lambda item: item[1])
+            current = unvisited_distances[0][0]
+
+            if distances[current] == np.inf:
+                break
+
+            neighbors = set(self.move_graph.neighbors(current))
+            unvisited_neighbors = unvisited_positions.intersection(neighbors)
+
+            for neighbor in unvisited_neighbors:
+                if distances[current] + 1 < distances[neighbor]:
+                    distances[neighbor] = distances[current] + 1
+                    paths[neighbor] = paths[current] + (neighbor,)
+
+            unvisited_positions.remove(current)
+
+        return paths
     
     #this is direcitonal, two qudit gates only right now
     # see also the method: in_cluster()

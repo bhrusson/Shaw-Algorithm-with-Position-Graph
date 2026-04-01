@@ -9,7 +9,6 @@ from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
 from bqskit_local.mapping.sabre_pgs_behavioral_equivalence import GeneralizedSabreAlgorithmPGS
-from bqskit_local.position.graph import PositionGraph
 from bqskit_local.position.state import PositionGraphState
 
 _logger = logging.getLogger(__name__)
@@ -54,60 +53,46 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
             extended_set_weight=extended_set_weight,
         )
 
-    def _build_local_pgs(
+    def _build_pgs_from_mapping(
         self,
-        placement: Sequence[int],
+        mapping: Sequence[int],
         num_circuit_qudits: int,
     ) -> PositionGraphState:
-        if len(placement) != num_circuit_qudits:
+        pgs = copy.deepcopy(self.template_pgs)
+
+        pgs._logical_to_position[:] = -1
+        pgs._position_to_logical[:] = -1
+
+        if len(mapping) != num_circuit_qudits:
             raise ValueError(
-                f'Expected placement of length {num_circuit_qudits}, got {len(placement)}.',
+                f'Expected mapping of length {num_circuit_qudits}, got {len(mapping)}.',
             )
 
-        if len(set(placement)) != len(placement):
-            raise ValueError('Placement must assign distinct positions.')
+        if len(set(mapping)) != len(mapping):
+            raise ValueError('Mapping must assign distinct positions.')
 
-        base_pg = self.template_pgs.position_graph
-        placement = [int(x) for x in placement]
-
-        for pos in placement:
-            if pos < 0 or pos >= base_pg.graph.num_nodes():
-                raise ValueError(f'Invalid position {pos} in placement.')
-
-        inverse_placement = {pos: i for i, pos in enumerate(placement)}
-        local_pos_labels = [base_pg.position_labels[pos] for pos in placement]
-        local_edge_labels = {
-            (inverse_placement[u], inverse_placement[v]): label
-            for (u, v), label in base_pg.edge_labels.items()
-            if u in inverse_placement and v in inverse_placement
-        }
-
-        local_pg = PositionGraph(local_pos_labels, local_edge_labels)
-        pgs = PositionGraphState(
-            local_pg,
-            radices=list(self.template_pgs.radices[:num_circuit_qudits]),
-            gateSet=self.template_pgs.gateSet,
-        )
-
-        for logical, pos in enumerate(range(num_circuit_qudits)):
+        for logical, pos in enumerate(mapping):
+            pos = int(pos)
+            if pos < 0 or pos >= pgs.num_pos:
+                raise ValueError(f'Invalid position {pos} for logical {logical}.')
             pgs.set_qudit_position(logical, pos)
 
         return pgs
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
         if getattr(data, 'placement', None) is not None:
-            placement = [int(x) for x in data.placement[:circuit.num_qudits]]
+            start_mapping = [int(x) for x in data.placement[:circuit.num_qudits]]
         else:
-            placement = list(range(circuit.num_qudits))
+            start_mapping = list(range(circuit.num_qudits))
+            data.placement = start_mapping.copy()
 
-        pgs = self._build_local_pgs(placement, circuit.num_qudits)
+        pgs = self._build_pgs_from_mapping(start_mapping, circuit.num_qudits)
 
         for _ in range(self.total_passes):
             self.forward_pass(circuit, pgs, modify_circuit=False)
             self.backward_pass(circuit, pgs)
 
         perm = [int(x) for x in pgs.logical_to_position[:circuit.num_qudits]]
-
         self._apply_perm(perm, data.placement)
 
         _logger.info(f'Found layout: {perm}, new placement: {data.placement}')

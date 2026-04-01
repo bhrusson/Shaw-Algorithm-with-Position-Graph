@@ -1,6 +1,7 @@
 """This module implements the QCCDMachineModel class."""
 from __future__ import annotations
 import copy
+import os
 import numpy as np
 from typing import Sequence
 from typing import List
@@ -14,7 +15,6 @@ from bqskit.ir.gates.parameterized.rzz import RZZGate
 from bqskit.compiler import MachineModel
 from bqskit.compiler.gateset import GateSet
 from bqskit.compiler.gateset import GateSetLike
-from bqskit.qis.graph import CouplingGraph
 from bqskit_local.position.graph import EdgeCapability
 from bqskit_local.position.graph import EdgeLabel
 from bqskit_local.position.graph import PositionCapability
@@ -88,8 +88,17 @@ class QCCDMachineModel(MachineModel):
             radices=tuple([2] * self.total_num_positions),
             gateSet=self.gate_set,
         )
+        self._position_to_trap_id: dict[int, str] = {}
+        for trap in self.physical_graph.trap_list:
+            for position in self.physical_to_position[trap.id]:
+                self._position_to_trap_id[int(position)] = trap.id
+        self._move_path_mode = os.getenv('BQSKIT_PGS_MOVE_PATH_MODE', 'hops').lower()
+        self._all_pair_travelling_time_cache: list[list[float]] | None = None
+        self._move_blockage_profile_cache: dict[
+            tuple[int, int],
+            tuple[tuple[int, float], ...],
+        ] = {}
         self.max_ion_capacity = self.physical_graph.executable_trap_list[0].max_num_ions
-        self.coupling_graph = self._build_compatibility_coupling_graph()
         self.num_qudits = self.total_num_positions
         self.radixes = tuple([2] * self.num_qudits)
         self.timing_mat = []
@@ -100,6 +109,8 @@ class QCCDMachineModel(MachineModel):
         return self.total_num_positions
 
     def calculate_timing_matrix(self) -> None:
+        self._all_pair_travelling_time_cache = None
+        self._move_blockage_profile_cache = {}
         self.timing_mat = [
             [np.inf for _ in range(self.num_positions)]
             for _ in range(self.num_positions)
@@ -290,7 +301,6 @@ class QCCDMachineModel(MachineModel):
             radices=tuple([2] * self.total_num_positions),
             gateSet=self.gate_set,
         )
-        self.coupling_graph = self._build_compatibility_coupling_graph()
 
         # Update physical_to_position,
         new_physical_to_position = {}
@@ -299,6 +309,10 @@ class QCCDMachineModel(MachineModel):
             new_key_value = [placement.index(value) for value in key_value]
             new_physical_to_position[key] = new_key_value
         self.physical_to_position = new_physical_to_position
+        self._position_to_trap_id = {}
+        for trap in self.physical_graph.trap_list:
+            for position in self.physical_to_position[trap.id]:
+                self._position_to_trap_id[int(position)] = trap.id
 
         # Update position_to_physical
         new_position_to_physical = {}
@@ -333,10 +347,7 @@ class QCCDMachineModel(MachineModel):
             Else
                 Return None
         """
-        for trap in self.physical_graph.trap_list:
-            if position in self.physical_to_position[trap.id]:
-                return trap.id
-        return None
+        return self._position_to_trap_id.get(int(position))
 
     def check_valid_assignment(self,
                                ion_assignment: dict) -> bool:
@@ -387,6 +398,81 @@ class QCCDMachineModel(MachineModel):
         for logical, position in ion_assignment.items():
             pgs.set_qudit_position(int(logical), int(position))
         return pgs
+
+    def expand_to_full_ion_assignment(
+        self,
+        program_assignment: dict[int, int],
+    ) -> dict[int, int]:
+        """
+        Expand a program-ion placement into a full hardware occupancy map.
+
+        The returned mapping preserves every explicitly placed program ion and
+        then deterministically fills additional spectator ions based on the
+        trap-level ``initial_num_ions`` values from the physical machine.
+        """
+        full_assignment = {
+            int(logical): int(position)
+            for logical, position in program_assignment.items()
+        }
+        occupied_positions = {int(position) for position in full_assignment.values()}
+        next_logical_id = max(full_assignment.keys(), default=-1) + 1
+
+        for trap in self.physical_graph.trap_list:
+            trap_positions = list(self.physical_to_position[trap.id])
+            occupied_in_trap = [
+                position for position in trap_positions
+                if position in occupied_positions
+            ]
+            target_occupancy = max(int(trap.initial_num_ions), len(occupied_in_trap))
+            if target_occupancy <= len(occupied_in_trap):
+                continue
+
+            available_positions = [
+                position for position in trap_positions
+                if position not in occupied_positions
+            ]
+            for position in available_positions[:target_occupancy - len(occupied_in_trap)]:
+                full_assignment[next_logical_id] = int(position)
+                occupied_positions.add(int(position))
+                next_logical_id += 1
+
+        return full_assignment
+
+    def build_pgs_from_assignments(
+        self,
+        program_assignment: dict[int, int],
+        full_assignment: dict[int, int] | None = None,
+    ) -> PositionGraphState:
+        """
+        Construct a PositionGraphState from program placement plus optional
+        full hardware occupancy.
+
+        If ``full_assignment`` is omitted, the physical machine's
+        ``initial_num_ions`` values are used to synthesize spectator ions around
+        the explicitly provided program placement.
+        """
+        normalized_program = {
+            int(logical): int(position)
+            for logical, position in program_assignment.items()
+        }
+        if full_assignment is None:
+            normalized_full = self.expand_to_full_ion_assignment(normalized_program)
+        else:
+            normalized_full = {
+                int(logical): int(position)
+                for logical, position in full_assignment.items()
+            }
+            for logical, position in normalized_program.items():
+                existing = normalized_full.get(logical)
+                if existing is None:
+                    normalized_full[logical] = position
+                elif existing != position:
+                    raise ValueError(
+                        f'Full assignment disagrees with program assignment for ion '
+                        f'{logical}: {existing} != {position}.',
+                    )
+
+        return self.build_pgs_from_assignment(normalized_full)
 
     def trap_is_fully_occupied_pgs(
         self,
@@ -488,6 +574,46 @@ class QCCDMachineModel(MachineModel):
                 blocked_flag = True
         return blocked_flag, blocked_positions
 
+    def get_move_blockage_profile(
+        self,
+        source: int,
+        target: int,
+    ) -> tuple[tuple[int, float], ...]:
+        """Return cached intermediate path positions and their fixed blockage penalties."""
+        if source == target:
+            return ()
+
+        pair = tuple(sorted((int(source), int(target))))
+        cached = self._move_blockage_profile_cache.get(pair)
+        if cached is not None:
+            return cached
+
+        D = self.all_pair_travelling_time()
+        path = self.get_move_path(pair[0], pair[1])
+        profile: list[tuple[int, float]] = []
+        for block_position in path[1:-1]:
+            if self.position_to_physical[block_position] == 'segment':
+                resolve_cost = float(self.timing_data['junction_Y'])
+            elif self.position_to_physical[block_position] == 'trap':
+                trap_id = self.get_trap_id(block_position)
+                if trap_id is None:
+                    raise ValueError(f'No trap id found for trap position {block_position}.')
+                min_to_endpoints = min(
+                    float(D[block_position][end_point])
+                    for end_point in self.trap_end_points[trap_id]
+                )
+                resolve_cost = float(self.timing_data['split'] + min_to_endpoints)
+            else:
+                raise ValueError(
+                    'The block position is undefined as it sit on ',
+                    self.position_to_physical[block_position],
+                )
+            profile.append((int(block_position), resolve_cost))
+
+        frozen = tuple(profile)
+        self._move_blockage_profile_cache[pair] = frozen
+        return frozen
+
     def all_pair_travelling_time(self) -> list[list[float]]:
         """
         Calculate all pairs matrix using Floyd-Warshall.
@@ -496,14 +622,16 @@ class QCCDMachineModel(MachineModel):
             D (list[list[int]]): D[i][j] is the length of the shortest
                 path from i to j.
         """
-        D = copy.deepcopy(self.timing_mat)
-        for k in range(self.num_positions):
-            for i in range(self.num_positions):
-                for j in range(self.num_positions):
-                    D[i][j] = min(D[i][j], D[i][k] + D[k][j])
-        for id in range(self.num_positions):
-            D[id][id] = 0.0
-        return cast(List[List[float]], D)
+        if self._all_pair_travelling_time_cache is None:
+            D = copy.deepcopy(self.timing_mat)
+            for k in range(self.num_positions):
+                for i in range(self.num_positions):
+                    for j in range(self.num_positions):
+                        D[i][j] = min(D[i][j], D[i][k] + D[k][j])
+            for id in range(self.num_positions):
+                D[id][id] = 0.0
+            self._all_pair_travelling_time_cache = cast(List[List[float]], D)
+        return self._all_pair_travelling_time_cache
 
     def travelling_time_from_point(self,
                                    position1: int,
@@ -544,16 +672,36 @@ class QCCDMachineModel(MachineModel):
         """Return the shortest MOVE-capable path between two positions."""
         if source == target:
             return [source]
-        if source not in self.position_graph.shortest_paths:
-            raise RuntimeError(f'No MOVE paths cached for source {source}.')
-        path_map = self.position_graph.shortest_paths[source]
+        move_path_mode = self._move_path_mode
+        if move_path_mode == 'weighted':
+            if source not in self.position_graph.shortest_paths:
+                raise RuntimeError(
+                    f'No weighted MOVE paths cached for source {source}.',
+                )
+            path_map = self.position_graph.shortest_paths[source]
+        elif move_path_mode == 'hops':
+            if source not in self.position_graph.shortest_path_hops_tree:
+                raise RuntimeError(f'No MOVE hop paths cached for source {source}.')
+            path_map = self.position_graph.shortest_path_hops_tree[source]
+        else:
+            raise ValueError(
+                'BQSKIT_PGS_MOVE_PATH_MODE must be one of {"weighted", "hops"}.',
+            )
         if target not in path_map:
             raise RuntimeError(f'No MOVE path found between {source} and {target}.')
         return list(path_map[target])
 
     def get_longest_move_path_length(self) -> int:
         """Return the longest finite MOVE-path length in the position graph."""
-        return int(np.count_nonzero(np.isfinite(self.position_graph.move_cost_matrix[0])))
+        # Match the legacy CG threshold logic for now by using hop-count over the
+        # cached shortest paths. A future improvement would be to switch this to
+        # the precomputed weighted shortest-path distances instead, which may give
+        # better behavior once MOVE edge weights are trusted as the primary signal.
+        longest_path = 0
+        for path_map in self.position_graph.shortest_paths.values():
+            for path in path_map.values():
+                longest_path = max(longest_path, len(path))
+        return int(longest_path)
 
     def _build_position_edge_labels(
         self,
@@ -627,14 +775,6 @@ class QCCDMachineModel(MachineModel):
         if segment_type == 'junction_Y':
             return self.timing_data['junction_Y'] + self.timing_data['segment']
         raise ValueError(f'Unknown segment type: {segment_type}.')
-
-    def _build_compatibility_coupling_graph(self) -> CouplingGraph:
-        edges = {
-            tuple(sorted((u, v)))
-            for (u, v), label in self.position_graph.edge_labels.items()
-            if label.has_capability(EdgeCapability.MOVE)
-        }
-        return CouplingGraph(list(edges), self.total_num_positions)
 
 
 if __name__ == '__main__':

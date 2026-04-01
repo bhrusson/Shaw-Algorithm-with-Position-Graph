@@ -170,11 +170,13 @@ def schedule_QCCD_w_fid(
     gate_fidelities = []
     f_background_term = []
     f_mode_term = []
+    execute_rounds = 0
+    move_rounds = 0
 
     print("Total number of cycles: ", circuit.num_cycles)
 
     def flush_parallel_moves():
-        nonlocal runtime, shuttling_time, parallization_moves
+        nonlocal runtime, shuttling_time, parallization_moves, move_rounds
         if not parallization_moves:
             return
 
@@ -211,6 +213,7 @@ def schedule_QCCD_w_fid(
 
         runtime += max(serial_moves_runtime)
         shuttling_time += max(serial_moves_runtime)
+        move_rounds += 1
 
         # Existing scheduler behavior:
         runtime -= 40e-6
@@ -221,6 +224,7 @@ def schedule_QCCD_w_fid(
         nonlocal ion_assignment, parallization_ops, ion_assignment_to_be_update
         nonlocal executing_blocks, log_fidelity, gate_fidelities
         nonlocal f_background_term, f_mode_term
+        nonlocal execute_rounds
 
         if not parallization_ops:
             return
@@ -278,6 +282,7 @@ def schedule_QCCD_w_fid(
         runtime += max(block_runtime)
         execution_time += max(block_runtime)
         executing_duration = max(block_runtime)
+        execute_rounds += 1
 
         if ion_assignment_to_be_update:
             ion_assignment = copy.copy(ion_assignment_to_be_update[-1])
@@ -459,6 +464,8 @@ def schedule_QCCD_w_fid(
         "f_background_term": f_background_term,
         "f_mode_term": f_mode_term,
         "final_ion_assignment": ion_assignment,
+        "execute_rounds": execute_rounds,
+        "move_rounds": move_rounds,
     }
 
 if __name__ == "__main__":

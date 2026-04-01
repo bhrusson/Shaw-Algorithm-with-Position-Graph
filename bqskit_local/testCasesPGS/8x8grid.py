@@ -18,6 +18,7 @@ from bqskit_local.position.graph import (
 from bqskit_local.position.state import PositionGraphState
 from bqskit_local.routing.sabreRoutingPGS import GeneralizedSabreRoutingPassPGS
 
+#3990 compiled gates from 2015 initial 
 _logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 

@@ -1,4 +1,5 @@
 """Compatibility re-export for the shared PositionGraphState implementation."""
+from bqskit_local.position.state import PositionAssignmentTracker
 from bqskit_local.position.state import PositionGraphState
 
-__all__ = ['PositionGraphState']
+__all__ = ['PositionAssignmentTracker', 'PositionGraphState']

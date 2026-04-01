@@ -6,7 +6,8 @@ from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
 def create_grid_physical_machine(
         num_cols: int,
         num_rows: int,
-        trap_capacity : int) -> QCCD_physical_machine:
+        trap_capacity : int,
+        initial_ions: list[int] | None = None) -> QCCD_physical_machine:
     if num_cols <= 0 or num_rows <= 0:
         raise ValueError("num_cols and num_rows must be greater than zero")
     num_traps = (num_rows + 1) * (num_cols + 1)
@@ -17,6 +18,7 @@ def create_grid_physical_machine(
     physical_machine = QCCD_physical_machine(num_traps=num_traps,
                                              num_junctions=num_junctions,
                                              max_traps_size=max_traps_size,
+                                             initial_ions=initial_ions,
                                              executable_traps=executable,
                                              measurable_traps=measurable)
     print("Creating a QCCD machine ...")

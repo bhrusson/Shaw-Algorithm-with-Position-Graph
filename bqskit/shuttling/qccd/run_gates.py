@@ -9,10 +9,12 @@ from bqskit.ir.gates import CXGate
 from bqskit import enable_logging
 from bqskit.ir.opt import ScipyMinimizer, HilbertSchmidtCostGenerator
 from bqskit.shuttling.qccd.mapping import QCCDPAMLayoutPass, QCCDPAMRoutingPass, QCCDLayoutPass, QCCDRoutingPass
+from bqskit.shuttling.QCCD_schedule_new import schedule_qccd_from_instructions_v3
 from bqskit.shuttling.qccd import (QCCDMachineModel, QCCDSubtopologySelectionPass, create_grid_physical_machine,
                                    QCCDMappingAlgorithm, create_testing_physical_machine, schedule_QCCD, schedule_QCCD_w_fid)
 import sys
 import pickle
+from pathlib import Path
 #enable_logging(True)
 input_filename = sys.argv[1]
 algo_type = sys.argv[2]
@@ -24,6 +26,16 @@ if len(sys.argv) < 8:
     run_index = 0
 else:
     run_index = sys.argv[7]
+if len(sys.argv) < 9:
+    seed = 1234
+else:
+    seed = int(sys.argv[8])
+if len(sys.argv) < 10:
+    routing_mode = 'bruteforce'
+else:
+    routing_mode = sys.argv[9]
+if routing_mode not in ('bruteforce', 'heuristic'):
+    raise ValueError("routing_mode must be 'bruteforce' or 'heuristic'.")
 # qasm_result_filename = sys.argv[5]
 # result_filename = sys.argv[6]
 print("Input filename: ", str(input_filename))
@@ -33,6 +45,8 @@ print("Trap capacity: ", str(trap_capacity))
 print("Num layout passes: ", str(num_layout_passes))
 print("Gate type: ", str(gate_type))
 print("Run index: ", str(run_index))
+print("Seed: ", str(seed))
+print("Routing mode: ", str(routing_mode))
 # print("QASM output filename: ", str(qasm_result_filename))
 # print("Output filename: ", str(result_filename))
 if trap_type == "grid":
@@ -64,7 +78,10 @@ machine_model = QCCDMachineModel(gate_set=gate_set,
                                  multi_qudit_gate_type=gate_type,
                                  timing_data=timing_data)
 print("Position graph: ", machine_model.position_graph)
-cir = Circuit.from_file(f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/benchmark_circuits/{input_filename}.qasm")
+benchmark_dir = Path("bqskit/shuttling/qccd/benchmark_circuits")
+output_dir = Path("bqskit/shuttling/qccd/paper_result_gate")
+output_dir.mkdir(parents=True, exist_ok=True)
+cir = Circuit.from_file(str(benchmark_dir / f"{input_filename}.qasm"))
 target_unitary = cir
 num_qudits = cir.num_qudits
 
@@ -98,6 +115,7 @@ ion_assignment = {}
 all_available_trap_space = []
 for trap in machine_model.physical_graph.trap_list:
     all_available_trap_space += machine_model.physical_to_position[trap.id]
+random.seed(seed)
 trap_seq = random.sample(all_available_trap_space, num_qudits)
 for i in range(num_qudits):
     ion_assignment[i] = trap_seq[i]
@@ -116,6 +134,7 @@ else:
 print("Congestion rate: ", congestion_rate)
 
 gate_count_weight = 0.1
+force_bruteforce = routing_mode == 'bruteforce'
 
 qsearch_pass = QSearchSynthesisPass()
 block_size = 3
@@ -128,9 +147,11 @@ if algo_type == "SHAW":
         QuickPartitioner(block_size),
         ApplyPlacement(),
         QCCDLayoutPass(total_passes=num_layout_passes,
-                       cogestion_rate=congestion_rate),
+                       cogestion_rate=congestion_rate,
+                       force_bruteforce=force_bruteforce),
         QCCDRoutingPass(gate_count_weight,
-                        cogestion_rate=congestion_rate),
+                        cogestion_rate=congestion_rate,
+                        force_bruteforce=force_bruteforce),
         ApplyPlacement(),
         UnfoldPass(),
     ]
@@ -162,5 +183,22 @@ with Compiler() as compiler:
 """
 Save qasm file
 """
-qasm_result_filename = f"/work/acslab/users/baobach/bqskit-shuttling/bqskit/shuttling/qccd/paper_result_gate/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
-output_circuit.save(qasm_result_filename)
+qasm_result_filename = output_dir / (
+    f"{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
+)
+output_circuit.save(str(qasm_result_filename))
+
+schedule_result = schedule_qccd_from_instructions_v3(
+    instruction_lst=data["instruction_list"],
+    initial_ion_assignment=data['initial_ion_assignment_qccd'],
+    machine_model=data.model,
+    circuit=output_circuit,
+    parallel=True,
+)
+
+print(f"Compile time (s): {compile_time}")
+print(f"Runtime (us): {schedule_result['runtime'] / 1e-6}")
+print(f"Application fidelity: {schedule_result['application_fidelity']}")
+print(f"Instruction count: {len(data['instruction_list'])}")
+print(f"Execute rounds: {len(schedule_result['execute_rounds'])}")
+print(f"Move rounds: {len(schedule_result['move_rounds'])}")

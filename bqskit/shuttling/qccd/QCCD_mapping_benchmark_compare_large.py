@@ -63,8 +63,6 @@ def benchmark(machine_cls: type, mapping_cls: type, name: str) -> dict[str, obje
         extended_set_weight=0.5,
     )
     D = machine_model.all_pair_travelling_time()
-    pi = list(range(machine_model.num_qudits))
-
     times: list[float] = []
     total_moves = 0
     final_changed: dict[int, int] = {}
@@ -72,20 +70,32 @@ def benchmark(machine_cls: type, mapping_cls: type, name: str) -> dict[str, obje
     for _ in range(NUM_REPEATS):
         ion_assignment = copy.deepcopy(BASE_ASSIGNMENT)
         start = copy.deepcopy(ion_assignment)
+        pgs = None
+        if name == 'PGS':
+            pgs = machine_model.build_pgs_from_assignment(ion_assignment)
         run_gate_summaries: list[tuple[str, int, list[tuple[int, int]]]] = []
         t0 = perf_counter()
         total_moves = 0
         for gate in TEST_GATES:
-            moves = mapping_algo._brute_force_congestion(
-                gate=gate,
-                D=D,
-                pi=pi,
-                ion_assignment=ion_assignment,
-            )
+            if pgs is None:
+                moves = mapping_algo._brute_force_congestion(
+                    gate=gate,
+                    D=D,
+                    pi=list(range(machine_model.num_qudits)),
+                    ion_assignment=ion_assignment,
+                )
+            else:
+                moves = mapping_algo._brute_force_congestion(
+                    gate=gate,
+                    D=D,
+                    pgs=pgs,
+                )
             typed_moves = [(int(a), int(b)) for a, b in moves]
             total_moves += len(typed_moves)
             run_gate_summaries.append((str(gate), len(typed_moves), typed_moves[:10]))
         times.append(perf_counter() - t0)
+        if pgs is not None:
+            ion_assignment = mapping_algo._assignment_from_pgs(pgs)
         final_changed = {
             int(k): int(ion_assignment[k])
             for k, v in start.items()

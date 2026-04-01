@@ -4,6 +4,8 @@ import math
 import copy
 import logging
 import itertools
+import os
+from collections.abc import Callable
 from typing import Iterator
 from typing import Sequence
 from itertools import permutations, combinations
@@ -13,10 +15,14 @@ from bqskit.ir.circuit import Circuit
 from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
 from bqskit.shuttling.qccd.QCCD_machine_PGS import QCCDMachineModel
+from bqskit.shuttling.qccd.position_graph_state_PGS import PositionAssignmentTracker
 from bqskit.shuttling.qccd.position_graph_state_PGS import PositionGraphState
 from bqskit.ir.gates.barrier import BarrierPlaceholder
 
 _logger = logging.getLogger(__name__)
+
+
+PositionState = PositionGraphState | PositionAssignmentTracker
 
 
 class QCCDMappingAlgorithm:
@@ -55,7 +61,8 @@ class QCCDMappingAlgorithm:
             extended_set_size: int = 5,
             extended_set_weight: float = 0.5,
             qccd_machine: QCCDMachineModel = None,
-            cogestion_rate: float = 0.6
+            cogestion_rate: float = 0.6,
+            force_bruteforce: bool = False,
     ) -> None:
         """
         Construct a GeneralizedSabreAlgorithm.
@@ -122,39 +129,115 @@ class QCCDMappingAlgorithm:
         self.extended_set_weight = extended_set_weight
         self.qccd_machine = qccd_machine
         self.cogestion_segment_rate = cogestion_rate
+        self.force_bruteforce = force_bruteforce
 
     def _make_pgs(self, ion_assignment: dict[int, int]) -> PositionGraphState:
         return self.qccd_machine.build_pgs_from_assignment(ion_assignment)
 
-    def _assignment_from_pgs(self, pgs: PositionGraphState) -> dict[int, int]:
+    def _full_assignment_from_pgs(self, pgs: PositionGraphState) -> dict[int, int]:
+        return {
+            int(logical): int(position)
+            for logical, position in enumerate(pgs.logical_to_position)
+            if int(position) != -1
+        }
+
+    def _program_assignment_from_pgs(
+        self,
+        pgs: PositionGraphState,
+        program_ion_ids: Sequence[int],
+    ) -> dict[int, int]:
         assignment: dict[int, int] = {}
-        for logical, position in enumerate(pgs.logical_to_position):
-            if int(position) != -1:
-                assignment[int(logical)] = int(position)
+        for logical in program_ion_ids:
+            position = int(pgs.logical_to_position[int(logical)])
+            if position == -1:
+                raise RuntimeError(f'Program ion {logical} is not placed.')
+            assignment[int(logical)] = position
         return assignment
 
-    def _clone_pgs(self, pgs: PositionGraphState) -> PositionGraphState:
-        clone = PositionGraphState(
-            pgs.position_graph,
-            radices=pgs.radices,
-            gateSet=pgs.gateSet,
-        )
-        clone.logical_to_position[:] = pgs.logical_to_position
-        clone.position_to_logical[:] = pgs.position_to_logical
-        return clone
+    def _assignment_from_pgs(self, pgs: PositionGraphState) -> dict[int, int]:
+        # Legacy helper kept for compatibility with older debug and compare
+        # paths. This returns every placed ion tracked in the PGS state.
+        return self._full_assignment_from_pgs(pgs)
 
-    def _logical_at_position(self, pos: int, pgs: PositionGraphState) -> int | None:
+    def _scratch_pgs(
+        self,
+        pgs: PositionState,
+        slot: str,
+    ) -> PositionAssignmentTracker:
+        scratch_states = getattr(self, '_scratch_pgs_states', None)
+        if scratch_states is None:
+            scratch_states = {}
+            self._scratch_pgs_states = scratch_states
+        scratch = scratch_states.get(slot)
+        if scratch is None:
+            scratch = PositionAssignmentTracker(
+                len(pgs.logical_to_position),
+                len(pgs.position_to_logical),
+            )
+            scratch_states[slot] = scratch
+        return scratch.load_from_state(pgs)
+
+    def _clone_pgs(
+        self,
+        pgs: PositionState,
+        *,
+        slot: str | None = None,
+    ) -> PositionAssignmentTracker:
+        if slot is not None:
+            return self._scratch_pgs(pgs, slot)
+        return PositionAssignmentTracker(
+            len(pgs.logical_to_position),
+            len(pgs.position_to_logical),
+        ).load_from_state(pgs)
+
+    def _logical_at_position(self, pos: int, pgs: PositionState) -> int | None:
         logical = int(pgs.get_logical_qudit_at_position(pos))
         return None if logical == -1 else logical
 
-    def _is_occupied(self, pos: int, pgs: PositionGraphState) -> bool:
+    def _is_occupied(self, pos: int, pgs: PositionState) -> bool:
         return self._logical_at_position(pos, pgs) is not None
 
-    def _position_of_qudit(self, qudit: int, pgs: PositionGraphState) -> int:
+    def _position_of_qudit(self, qudit: int, pgs: PositionState) -> int:
         position = int(pgs.get_position_of_qudit(qudit))
         if position == -1:
             raise RuntimeError(f'Logical qudit {qudit} is not placed.')
         return position
+
+    def _snapshot_logical_positions(
+        self,
+        pgs: PositionState,
+        logicals: Sequence[int],
+    ) -> dict[int, int]:
+        snapshot: dict[int, int] = {}
+        for logical in logicals:
+            logical_int = int(logical)
+            if logical_int in snapshot:
+                continue
+            snapshot[logical_int] = self._position_of_qudit(logical_int, pgs)
+        return snapshot
+
+    def _restore_logical_positions(
+        self,
+        pgs: PositionState,
+        snapshot: dict[int, int],
+    ) -> None:
+        affected_positions = {
+            int(position) for position in snapshot.values() if int(position) != -1
+        }
+        for logical in snapshot:
+            current_position = int(pgs.get_position_of_qudit(int(logical)))
+            if current_position != -1:
+                affected_positions.add(current_position)
+
+        for position in affected_positions:
+            pgs.position_to_logical[int(position)] = -1
+        for logical in snapshot:
+            pgs.logical_to_position[int(logical)] = -1
+        for logical, position in snapshot.items():
+            if int(position) == -1:
+                continue
+            pgs.logical_to_position[int(logical)] = int(position)
+            pgs.position_to_logical[int(position)] = int(logical)
 
     def _sorted_points(self, points) -> list[CircuitPoint]:
         return sorted(points, key=lambda p: (p.cycle, p.qudit))
@@ -164,6 +247,143 @@ class QCCDMappingAlgorithm:
 
     def _sorted_moves(self, moves) -> list[tuple[int, int]]:
         return sorted((int(a), int(b)) for a, b in moves)
+
+    def _canonicalize_move_for_pgs(
+        self,
+        move: tuple[int, int],
+        pgs: PositionState,
+    ) -> tuple[int, int] | None:
+        u, v = (int(move[0]), int(move[1]))
+        logical_u = self._logical_at_position(u, pgs)
+        logical_v = self._logical_at_position(v, pgs)
+        if logical_u is None and logical_v is None:
+            return None
+        if logical_u is None:
+            return (v, u)
+        return (u, v)
+
+    def _append_logged_move_instruction(
+        self,
+        instructions_list: list[list[str]],
+        move: tuple[int, int],
+        pgs: PositionState,
+        D: list[list[float]],
+    ) -> bool:
+        canonical_move = self._canonicalize_move_for_pgs(move, pgs)
+        if canonical_move is None:
+            return False
+        self._apply_move(canonical_move, pgs=pgs)
+        instructions_list.append([
+            f"Move {canonical_move}",
+            f"{self._assignment_from_pgs(pgs)}",
+            f"cost: {D[canonical_move[0]][canonical_move[1]]} seconds",
+        ])
+        return True
+
+    @property
+    def _log_prefix(self) -> str:
+        return '[PGS]'
+
+    def _status_enabled(self) -> bool:
+        return os.getenv('BQSKIT_QCCD_VERBOSE', '1').lower() not in (
+            '0', 'false', 'no', 'off',
+        )
+
+    def _status(self, message: str | Callable[[], str]) -> None:
+        if self._status_enabled():
+            rendered = message() if callable(message) else message
+            print(f'{self._log_prefix} {rendered}')
+
+    def _debug_compare_enabled(self) -> bool:
+        return os.getenv('BQSKIT_QCCD_COMPARE_DEBUG', '').lower() in (
+            '1', 'true', 'yes', 'on',
+        )
+
+    def _debug_compare(self, message: str | Callable[[], str]) -> None:
+        if self._debug_compare_enabled():
+            rendered = message() if callable(message) else message
+            print(f'{self._log_prefix}[compare] {rendered}')
+
+    def _capture_forward_trace_enabled(self) -> bool:
+        return os.getenv('BQSKIT_QCCD_CAPTURE_TRACE', '').lower() in (
+            '1', 'true', 'yes', 'on',
+        )
+
+    def _snapshot_trace_value(self, value: object) -> object:
+        """Copy simple trace payloads without paying full deepcopy overhead."""
+        if isinstance(value, dict):
+            return {
+                key: self._snapshot_trace_value(val)
+                for key, val in value.items()
+            }
+        if isinstance(value, list):
+            return [self._snapshot_trace_value(item) for item in value]
+        if isinstance(value, tuple):
+            return tuple(self._snapshot_trace_value(item) for item in value)
+        return value
+
+    def _append_resolve_trace(self, entry: dict[str, object]) -> None:
+        if not self._capture_forward_trace_enabled():
+            return
+        if not hasattr(self, 'last_bruteforce_trace') or self.last_bruteforce_trace is None:
+            return
+        traces = self.last_bruteforce_trace.setdefault('resolve_trace', [])
+        traces.append(self._snapshot_trace_value(entry))
+
+    def _format_locations(
+        self,
+        circuit: Circuit,
+        points: Sequence[CircuitPoint],
+    ) -> list[tuple[int, ...]]:
+        return [
+            tuple(int(q) for q in circuit[n].location)
+            for n in self._sorted_points(points)
+        ]
+
+    def _record_forward_trace(
+        self,
+        *,
+        circuit: Circuit,
+        front_points: Sequence[CircuitPoint],
+        execute_list: Sequence[CircuitPoint],
+        pgs: PositionGraphState,
+        pre_assignment: dict[int, int],
+        post_assignment: dict[int, int],
+        action: str,
+        best_move: tuple[int, int] | None = None,
+        brute_force_gate: tuple[int, ...] | None = None,
+    ) -> None:
+        if not self._capture_forward_trace_enabled():
+            return
+        sorted_front = self._sorted_points(front_points)
+        brute_force_trace = None
+        if action == 'bruteforce':
+            brute_force_trace = self._snapshot_trace_value(
+                getattr(self, 'last_bruteforce_trace', None),
+            )
+        self.last_forward_trace.append({
+            'action': action,
+            'front_points': [str(n) for n in sorted_front],
+            'front_locations': self._format_locations(circuit, sorted_front),
+            'front_executable': [
+                (
+                    tuple(int(q) for q in circuit[n].location),
+                    self.qccd_machine.gate_is_executable(
+                        circuit[n],
+                        list(range(circuit.num_qudits)),
+                        pre_assignment,
+                    ),
+                )
+                for n in sorted_front
+            ],
+            'execute_points': [str(n) for n in self._sorted_points(execute_list)],
+            'execute_locations': self._format_locations(circuit, execute_list),
+            'best_move': None if best_move is None else tuple(int(x) for x in best_move),
+            'brute_force_gate': brute_force_gate,
+            'brute_force_trace': brute_force_trace,
+            'pre_assignment': dict(pre_assignment),
+            'post_assignment': dict(post_assignment),
+        })
 
     def forward_pass(
             self,
@@ -197,19 +417,27 @@ class QCCDMappingAlgorithm:
         initial_extended_set_size = self.extended_set_size
         prev_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
         leading_moves: list[tuple[int, int]] = []
-        _logger.debug(
-            'Starting forward sabre pass with ion assignment: %s.',
-            self._assignment_from_pgs(pgs),
-        )
+        self.last_forward_trace: list[dict[str, object]] = []
+        capture_forward_trace = self._capture_forward_trace_enabled()
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug(
+                '%s Starting forward sabre pass with ion assignment: %s.',
+                self._log_prefix,
+                self._assignment_from_pgs(pgs),
+            )
         # print(f"Starting forward sabre pass with ion assignment: {ion_assignment}.")
 
         if modify_circuit:
             instructions_list = []
-            mapped_circuit = Circuit(circuit.num_qudits, circuit.radixes)
+            mapped_circuit = Circuit(
+                self.qccd_machine.num_positions,
+                [circuit.radixes[0]] * self.qccd_machine.num_positions,
+            )
+            barrier_qudits = list(range(self.qccd_machine.num_positions))
 
         if not all(r == circuit.radixes[0] for r in circuit.radixes):
             raise RuntimeError('Cannot currently map to hybrid-level systems.')
-        longest_path = self.qccd_machine.num_positions
+        longest_path = self.qccd_machine.get_longest_move_path_length()
         # Main Loop
         executed_flag = False
         heuristic_move = True
@@ -218,23 +446,33 @@ class QCCDMappingAlgorithm:
                 # print("There is repetition..... !!!!!")
                 repeated_path = True
             if self.iter_count > math.ceil(longest_path / 4):
-                print(f"Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate")
+                self._status(
+                    f'Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate',
+                )
+                log_pgs = self._clone_pgs(pgs, slot='forward_log')
                 brute_force_moves = self._brute_force_congestion(
                     circuit[self._sorted_points(F)[0]], D, pgs,
                 )
                 if modify_circuit:
                     for move in brute_force_moves:
-                        # mapped_circuit.append_gate(SwapGate(), move)
-                        instructions_list.append(
-                            [
-                                f"Move {move}",
-                                f"{self._assignment_from_pgs(pgs)}",
-                                f"cost: {D[move[0]][move[1]]} seconds",
-                            ],
+                        if not self._append_logged_move_instruction(
+                            instructions_list,
+                            move,
+                            log_pgs,
+                            D,
+                        ):
+                            continue
+                        mapped_circuit.append_gate(
+                            BarrierPlaceholder(self.qccd_machine.num_positions),
+                            barrier_qudits,
                         )
-                        mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
-                                                   list(range(circuit.num_qudits)))
                 leading_moves += brute_force_moves
+            current_front = self._sorted_points(F)
+            pre_assignment = (
+                self._assignment_from_pgs(pgs)
+                if capture_forward_trace
+                else None
+            )
             execute_list = self._sorted_points([
                 n for n in F
                 if self.qccd_machine.gate_is_executable_pgs(circuit[n], pgs)
@@ -252,8 +490,8 @@ class QCCDMappingAlgorithm:
                 for n in execute_list:
                     F.remove(n)
                     prev_executed_counts.pop(n)
-                    _logger.debug(f'Executing gate at point {n}.')
-                    print(f'Executing gate at point {n}.')
+                    _logger.debug('%s Executing gate at point %s.', self._log_prefix, n)
+                    self._status(f'Executing gate at point {n}.')
                     if modify_circuit:
                         op = circuit[n]
                         physical_location = [self._position_of_qudit(q, pgs) for q in op.location]
@@ -261,8 +499,10 @@ class QCCDMappingAlgorithm:
                         instructions_list.append(
                             [f"Execute at {physical_location}", f"{self._assignment_from_pgs(pgs)}"],
                         )
-                        mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
-                                                   list(range(circuit.num_qudits)))
+                        mapped_circuit.append_gate(
+                            BarrierPlaceholder(self.qccd_machine.num_positions),
+                            barrier_qudits,
+                        )
                     for successor in circuit.next(n):
                         if successor not in prev_executed_counts:
                             prev_executed_counts[successor] = 1
@@ -272,6 +512,16 @@ class QCCDMappingAlgorithm:
                         total_num_prev = len(circuit.prev(successor))
                         if num_prev_executed == total_num_prev:
                             F.add(successor)
+                if capture_forward_trace:
+                    self._record_forward_trace(
+                        circuit=circuit,
+                        front_points=current_front,
+                        execute_list=execute_list,
+                        pgs=pgs,
+                        pre_assignment=pre_assignment,
+                        post_assignment=self._assignment_from_pgs(pgs),
+                        action='execute',
+                    )
                 # Reset decay if necessary
                 if self.decay_reset_on_gate:
                     self.iter_count = 0
@@ -290,7 +540,8 @@ class QCCDMappingAlgorithm:
                 elif len(F) == 1 and self.extended_set_size == 0:
                     # Retrieve executable gates giving the current ion assignment `pi`
                     if self.iter_count > 2:
-                        print("Try bruteforce due to repeated pattern...")
+                        self._status('Try bruteforce due to repeated pattern...')
+                        log_pgs = self._clone_pgs(pgs, slot='forward_log')
                         brute_force_moves = self._brute_force_congestion(
                             circuit[self._sorted_points(F)[0]],
                             D,
@@ -298,16 +549,17 @@ class QCCDMappingAlgorithm:
                         )
                         if modify_circuit:
                             for move in brute_force_moves:
-                                # mapped_circuit.append_gate(SwapGate(), move)
-                                instructions_list.append(
-                                    [
-                                        f"Move {move}",
-                                        f"{self._assignment_from_pgs(pgs)}",
-                                        f"cost: {D[move[0]][move[1]]} seconds",
-                                    ],
+                                if not self._append_logged_move_instruction(
+                                    instructions_list,
+                                    move,
+                                    log_pgs,
+                                    D,
+                                ):
+                                    continue
+                                mapped_circuit.append_gate(
+                                    BarrierPlaceholder(self.qccd_machine.num_positions),
+                                    barrier_qudits,
                                 )
-                                mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
-                                                           list(range(circuit.num_qudits)))
                         leading_moves += brute_force_moves
                         continue
                 else:
@@ -317,48 +569,82 @@ class QCCDMappingAlgorithm:
                     # print(f"Front is modified to {F}.")
             E = self._calc_extended_set(circuit, F)
             # print(f"Extended set: {[circuit[n] for n in E]}")
-            best_move = self._get_best_move(
-                circuit,
-                F,
-                E,
-                D,
-                decay,
-                heuristic_move,
-                pgs,
-            )
+            if self.force_bruteforce:
+                best_move = None
+            else:
+                best_move = self._get_best_move(
+                    circuit,
+                    F,
+                    E,
+                    D,
+                    decay,
+                    heuristic_move,
+                    pgs,
+                )
             if best_move is None:
+                brute_force_gate_point = self._sorted_points(F)[0]
+                brute_force_gate = tuple(
+                    int(q) for q in circuit[brute_force_gate_point].location
+                )
+                log_pgs = self._clone_pgs(pgs, slot='forward_log')
                 brute_force_moves = self._brute_force_congestion(
-                    circuit[self._sorted_points(F)[0]],
+                    circuit[brute_force_gate_point],
                     D,
                     pgs,
                 )
                 if modify_circuit:
                     for move in brute_force_moves:
-                        instructions_list.append(
-                            [
-                                f"Move {move}",
-                                f"{self._assignment_from_pgs(pgs)}",
-                                f"cost: {D[move[0]][move[1]]} seconds",
-                            ],
-                        )
-                        mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits),
-                                                   list(range(circuit.num_qudits)))
+                        if not self._append_logged_move_instruction(
+                            instructions_list,
+                            move,
+                            log_pgs,
+                            D,
+                        ):
+                            continue
+                        mapped_circuit.append_gate(
+                            BarrierPlaceholder(self.qccd_machine.num_positions),
+                            barrier_qudits,
+                                )
                 leading_moves += brute_force_moves
+                if capture_forward_trace:
+                    self._record_forward_trace(
+                        circuit=circuit,
+                        front_points=current_front,
+                        execute_list=execute_list,
+                        pgs=pgs,
+                        pre_assignment=pre_assignment,
+                        post_assignment=self._assignment_from_pgs(pgs),
+                        action='bruteforce',
+                        brute_force_gate=brute_force_gate,
+                    )
                 continue
-            print(f"Best move: {best_move}")
+            self._status(f'Best move: {best_move}')
+            log_pgs = self._clone_pgs(pgs, slot='forward_log')
             self._apply_move(best_move, pgs=pgs)
             leading_moves.append(best_move)
+            if capture_forward_trace:
+                self._record_forward_trace(
+                    circuit=circuit,
+                    front_points=current_front,
+                    execute_list=execute_list,
+                    pgs=pgs,
+                    pre_assignment=pre_assignment,
+                    post_assignment=self._assignment_from_pgs(pgs),
+                    action='move',
+                    best_move=best_move,
+                )
 
             if modify_circuit:
-                # mapped_circuit.append_gate(SwapGate(), best_move)
-                instructions_list.append(
-                    [
-                        f"Move {best_move} ",
-                        f"{self._assignment_from_pgs(pgs)}",
-                        f"cost: {D[best_move[0]][best_move[1]]} seconds",
-                    ],
-                )
-                mapped_circuit.append_gate(BarrierPlaceholder(circuit.num_qudits), list(range(circuit.num_qudits)))
+                if self._append_logged_move_instruction(
+                    instructions_list,
+                    best_move,
+                    log_pgs,
+                    D,
+                ):
+                    mapped_circuit.append_gate(
+                        BarrierPlaceholder(self.qccd_machine.num_positions),
+                        barrier_qudits,
+                    )
 
             self.iter_count += 1
         if modify_circuit:
@@ -379,12 +665,21 @@ class QCCDMappingAlgorithm:
         leading_moves = []
         for p in gate.location:
             gate_pos.append(self._position_of_qudit(p, pgs))
-        print(f"Trying to solve brute-force congestion at gate {gate_pos} with {self._assignment_from_pgs(pgs)}")
-        #raise ValueError("Stopping for debug....")
-        _logger.debug(
-            f"Trying to solve brute-force congestion at gate {gate_pos} "
-            f"with {self._assignment_from_pgs(pgs)}"
+        initial_gate_pos = list(gate_pos)
+        self._status(
+            lambda: (
+                f'Trying to solve brute-force congestion at gate {gate_pos} '
+                f'with {self._assignment_from_pgs(pgs)}'
+            ),
         )
+        #raise ValueError("Stopping for debug....")
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug(
+                '%s Trying to solve brute-force congestion at gate %s with %s',
+                self._log_prefix,
+                gate_pos,
+                self._assignment_from_pgs(pgs),
+            )
         selected_trap_space = []
         selected_end_point = []
         relative_distance = np.inf
@@ -403,7 +698,7 @@ class QCCDMappingAlgorithm:
                 Only need to calculate unoccupied spaces (the one near the endpoints) if exits or only the endpoints...  
             """
             num_available_trap_space = len(available_trap_space)
-            relative_dis_to_trap -= num_available_trap_space * 100e-6
+            relative_dis_to_trap -= num_available_trap_space * 120e-6
             # print(f"Considering trap: {trap.id} with distance {relative_dis_to_trap} and number of available space :{num_available_trap_space}")
             if relative_dis_to_trap < relative_distance:
                 selected_trap_space = all_trap_space
@@ -411,6 +706,7 @@ class QCCDMappingAlgorithm:
                 # selected_end_point = self.qccd_machine.trap_end_points[trap.id]
                 selected_trap_id = trap.id
                 relative_distance = relative_dis_to_trap
+        selected_trap_space_unsorted = list(selected_trap_space)
         # print(f"Selected trap: {selected_trap_space}", )
         # Select the order of moving position
         distance_to_trap_lst = []
@@ -438,12 +734,25 @@ class QCCDMappingAlgorithm:
             trap_space_distance_to_end_point.append(
                 float(np.min([D[trap_space][end_point] for end_point in selected_end_point])))
         selected_trap_space = np.array(selected_trap_space)[np.argsort(trap_space_distance_to_end_point)]
+        self.last_bruteforce_trace = {
+            'gate_location': tuple(int(q) for q in gate.location),
+            'initial_gate_pos': [int(x) for x in initial_gate_pos],
+            'selected_trap_id': selected_trap_id,
+            'selected_trap_space_initial': [int(x) for x in selected_trap_space_unsorted],
+            'selected_trap_space_sorted': [int(x) for x in list(selected_trap_space)],
+            'selected_end_point': [int(x) for x in list(selected_end_point)],
+            'distance_to_trap_lst': [float(x) for x in distance_to_trap_lst],
+            'ion_order': [int(x) for x in ion_order],
+            'leading_moves': [],
+        }
         # print("Order selected traps: ", selected_trap_space)
 
         # Move the pos to the selected trap
         for pos_idx in range(len(gate_pos)):
-            print(
-                f"Trying to moving ion {gate_pos[pos_idx]}... to {int(selected_trap_space[len(selected_trap_space) - 1 - pos_idx])}")
+            self._status(
+                f'Trying to moving ion {gate_pos[pos_idx]}... to '
+                f'{int(selected_trap_space[len(selected_trap_space) - 1 - pos_idx])}',
+            )
             #_logger.debug(f"Trying to moving ion {gate_pos[pos_idx]}...")
             # if pos_idx != len(gate_pos) - 1:
             #     print(f"Endpoint: {selected_end_point[pos_idx+1]}")
@@ -452,9 +761,14 @@ class QCCDMappingAlgorithm:
                 int(selected_trap_space[len(selected_trap_space) - 1 - pos_idx]),
                 pgs,
             )
-            print(
-                f"Ion assignment after moving ion {gate_pos[pos_idx]}: "
-                f"{self._assignment_from_pgs(pgs)}"
+            self.last_bruteforce_trace['leading_moves'] = [
+                tuple(int(v) for v in move) for move in leading_moves
+            ]
+            self._status(
+                lambda pos_idx=pos_idx: (
+                    f'Ion assignment after moving ion {gate_pos[pos_idx]}: '
+                    f'{self._assignment_from_pgs(pgs)}'
+                ),
             )
             # _logger.debug(f"Ion assignment after moving ion {gate_pos[pos_idx]}: {ion_assignment}")
             # _logger.debug(f"Selected end point: {selected_end_point}")
@@ -463,37 +777,42 @@ class QCCDMappingAlgorithm:
             # if selected_end_point in ion_assignment.values():
             #     _logger.debug(f"Position of ion: {list(ion_assignment.keys())[list(ion_assignment.values()).index(selected_end_point)]}")
             """
-                If too many ions are in the segment, move them back to trap. (Disable when trying H2 architecture)
+                If too many ions are in the segment, move them back to trap.
             """
-            # number_of_segment = len(self.qccd_machine.physical_to_position["segment_space"])
-            # ion_at_segment = []
-            # for ion in ion_assignment.keys():
-            #     if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
-            #         ion_at_segment.append(ion)
-            # if len(ion_at_segment) / number_of_segment >= self.cogestion_segment_rate:
-            #     print("As there are many ions outside the traps, move them to the trap...")
-            #     available_spaces = []
-            #     for trap in self.qccd_machine.physical_graph.trap_list:
-            #         _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
-            #         available_spaces += available_space
-            #     while ion_at_segment:
-            #         leading_moves += self._brute_force_move(
-            #             int(ion_assignment[ion_at_segment[0]]),
-            #             int(available_spaces[0]), ion_assignment
-            #         )
-            #         available_spaces = []
-            #         for trap in self.qccd_machine.physical_graph.trap_list:
-            #             _, available_space = self.qccd_machine.trap_is_fully_occupied(trap.id, ion_assignment)
-            #             available_spaces += available_space
-            #         ion_at_segment = []
-            #         for ion in ion_assignment.keys():
-            #             if ion_assignment[ion] in self.qccd_machine.physical_to_position["segment_space"]:
-            #                 ion_at_segment.append(ion)
-            #         # print("Ion at segment: ", ion_at_segment)
-            #         # print("Available trap space: ", available_spaces)
-            #         # print(f"Trying to solve brute-force congestion at gate {gate_pos} with {ion_assignment}")
-            #     for ion_index in range(len(ion_order)):
-            #         gate_pos[ion_index] = ion_assignment[ion_order[ion_index]]
+            number_of_segment = len(self.qccd_machine.physical_to_position["segment_space"])
+            current_assignment = self._assignment_from_pgs(pgs)
+            ion_at_segment = []
+            for ion in current_assignment:
+                pos = self._position_of_qudit(ion, pgs)
+                if pos in self.qccd_machine.physical_to_position["segment_space"]:
+                    ion_at_segment.append(ion)
+            if len(ion_at_segment) / number_of_segment >= self.cogestion_segment_rate:
+                self._status('As there are many ions outside the traps, move them to the trap...')
+                available_spaces = []
+                for trap in self.qccd_machine.physical_graph.trap_list:
+                    _, available_space = self.qccd_machine.trap_is_fully_occupied_pgs(trap.id, pgs)
+                    available_spaces += available_space
+                while ion_at_segment:
+                    leading_moves += self._brute_force_move(
+                        int(self._position_of_qudit(ion_at_segment[0], pgs)),
+                        int(available_spaces[0]),
+                        pgs,
+                    )
+                    self.last_bruteforce_trace['leading_moves'] = [
+                        tuple(int(v) for v in move) for move in leading_moves
+                    ]
+                    available_spaces = []
+                    for trap in self.qccd_machine.physical_graph.trap_list:
+                        _, available_space = self.qccd_machine.trap_is_fully_occupied_pgs(trap.id, pgs)
+                        available_spaces += available_space
+                    current_assignment = self._assignment_from_pgs(pgs)
+                    ion_at_segment = []
+                    for ion in current_assignment:
+                        pos = self._position_of_qudit(ion, pgs)
+                        if pos in self.qccd_machine.physical_to_position["segment_space"]:
+                            ion_at_segment.append(ion)
+                for ion_index in range(len(ion_order)):
+                    gate_pos[ion_index] = self._position_of_qudit(ion_order[ion_index], pgs)
             """
                 Clearing the end-point of the selected trap
             """
@@ -503,7 +822,7 @@ class QCCDMappingAlgorithm:
                   (pos_idx != len(gate_pos) - 1 and
                    self._logical_at_position(int(selected_end_point[pos_idx + 1]), pgs)
                    not in gate_pi)):
-                print(f"Clearing endpoint {selected_end_point[pos_idx+1]}.........")
+                self._status(f'Clearing endpoint {selected_end_point[pos_idx+1]}.........')
                 end_point_neighbors = sorted(
                     self.qccd_machine.get_move_neighbors(selected_end_point[pos_idx + 1]),
                 )
@@ -524,14 +843,21 @@ class QCCDMappingAlgorithm:
                         int(selected_end_point[pos_idx + 1]), int(potential_blockage[0]),
                         pgs, clearing_ep=True
                     )
+                    self.last_bruteforce_trace['leading_moves'] = [
+                        tuple(int(v) for v in move) for move in leading_moves
+                    ]
                 else:
                     self._apply_move((selected_end_point[pos_idx + 1], end_point_neighbors[0]), pgs=pgs)
                     leading_moves.append(tuple(sorted((selected_end_point[pos_idx + 1], end_point_neighbors[0]))))
+                    self.last_bruteforce_trace['leading_moves'] = [
+                        tuple(int(v) for v in move) for move in leading_moves
+                    ]
                     # print(f"Perform move {(selected_end_point[pos_idx + 1], end_point_neighbors[0])} to clear "
                     #       f"the endpoint")
             for ion_index in range(len(ion_order)):
                 gate_pos[ion_index] = self._position_of_qudit(ion_order[ion_index], pgs)
-            print(f"Gate position gate updated to {gate_pos}--------------c")
+            self._status(lambda: f'Gate position gate updated to {gate_pos}--------------c')
+        self.last_bruteforce_trace['final_assignment'] = self._assignment_from_pgs(pgs)
         return leading_moves
 
     def _brute_force_move(
@@ -604,6 +930,7 @@ class QCCDMappingAlgorithm:
         # print("Original blockage: ", original_blockage)
         target_ion_index = self._logical_at_position(target, pgs)
         blockage_neighbors = sorted(self.qccd_machine.get_move_neighbors(blockage))
+        initial_blockage_neighbors = list(blockage_neighbors)
         # print("Initial blockage neighbors: ", blockage_neighbors)
         if original_target in blockage_neighbors:
             blockage_neighbors.remove(original_target)
@@ -634,6 +961,16 @@ class QCCDMappingAlgorithm:
                 potential_blockage.append(neighbor)
         for neighbor in potential_blockage:
             blockage_neighbors.remove(neighbor)
+        resolve_entry: dict[str, object] = {
+            'num_call': int(num_call),
+            'target': int(target),
+            'blockage': int(blockage),
+            'path': [int(x) for x in path],
+            'initial_blockage_neighbors': [int(x) for x in initial_blockage_neighbors],
+            'filtered_blockage_neighbors': [int(x) for x in blockage_neighbors],
+            'potential_blockage': [int(x) for x in potential_blockage],
+            'clearing_ep': bool(clearing_ep),
+        }
         # _logger.debug(f"Potential blockage neighbors: {potential_blockage}")
         # print(f"Updated Blockage neighbors: {blockage_neighbors}")
         # print(f"Potential blockage neighbors: {potential_blockage}")
@@ -654,6 +991,11 @@ class QCCDMappingAlgorithm:
                 choosen_idx = int(np.argmin(congestion_scores[choosen_indices[0]]))
             else:
                 choosen_idx = int(choosen_indices[0][0])
+            resolve_entry['branch'] = 'free_neighbor'
+            resolve_entry['congestion_rates'] = [float(x) for x in congestion_rates]
+            resolve_entry['congestion_scores'] = [float(x) for x in congestion_scores]
+            resolve_entry['chosen_neighbor'] = int(blockage_neighbors[choosen_idx])
+            self._append_resolve_trace(resolve_entry)
             # print(f"Choose to resolve {blockage_neighbors[choosen_idx]}")
             self._apply_move((blockage, blockage_neighbors[choosen_idx]), pgs=pgs)
             leading_moves.append(tuple(sorted((blockage, blockage_neighbors[choosen_idx]))))
@@ -678,8 +1020,14 @@ class QCCDMappingAlgorithm:
                 choosen_idx = int(np.argmin(congestion_scores[choosen_indices[0]]))
             else:
                 choosen_idx = int(choosen_indices[0][0])
+            resolve_entry['branch'] = 'potential_blockage'
+            resolve_entry['congestion_rates'] = [float(x) for x in congestion_rates]
+            resolve_entry['congestion_scores'] = [float(x) for x in congestion_scores]
+            resolve_entry['chosen_neighbor'] = int(potential_blockage[choosen_idx])
 
             if congestion_rates[choosen_idx] == 1.0 and clearing_ep is False:
+                resolve_entry['fallback'] = 'reverse_target'
+                self._append_resolve_trace(resolve_entry)
                 # print(f"As the best path leads to deadend, we choose to re-add the target to potential neighbor")
                 if self.congestion_rate(target, target, blockage, pgs, depth=self.qccd_machine.max_ion_capacity - 1 + num_call)[0] <= congestion_rates[choosen_idx]:
                     # Reverse move (treat target as blockage and vice versa)
@@ -706,6 +1054,7 @@ class QCCDMappingAlgorithm:
                 else:
                     raise ValueError("This method does not resolve this case !!!")
             else:
+                self._append_resolve_trace(resolve_entry)
                 #print(f"Choose to resolve {potential_blockage[choosen_idx]}")
                 leading_moves += self._resolve_congestion(blockage, path, potential_blockage[choosen_idx],
                                                           pgs, original_target, original_blockage,
@@ -718,6 +1067,8 @@ class QCCDMappingAlgorithm:
                 #     f"at {blockage} as we have moved the target ions.")
                 # print("Current ion assignment: ", ion_assignment)
         else:
+            resolve_entry['branch'] = 'deadend'
+            self._append_resolve_trace(resolve_entry)
             # print("No blockage neighbors...")
             # print(f"As the best path leads to deadend, we choose to re-add the target to potential neighbor")
             # print(f"Blockage: {blockage}, target: {target}")
@@ -817,11 +1168,13 @@ class QCCDMappingAlgorithm:
         leading_moves: list[tuple[int, int]] = []
         heuristic_move = True
         next_executed_counts: dict[CircuitPoint, int] = {n: 0 for n in F}
-        _logger.debug(
-            'Starting backward sabre QCCD pass with ion assignment: %s.',
-            self._assignment_from_pgs(pgs),
-        )
-        longest_path = self.qccd_machine.num_positions
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug(
+                '%s Starting backward sabre QCCD pass with ion assignment: %s.',
+                self._log_prefix,
+                self._assignment_from_pgs(pgs),
+            )
+        longest_path = self.qccd_machine.get_longest_move_path_length()
         # Main Loop
         while len(F) > 0:
             # print("Front: ", [circuit[n] for n in F])
@@ -849,7 +1202,7 @@ class QCCDMappingAlgorithm:
                 for n in execute_list:
                     F.remove(n)
                     next_executed_counts.pop(n)
-                    _logger.debug(f'Executing gate at point {n}.')
+                    _logger.debug('%s Executing gate at point %s.', self._log_prefix, n)
                     for predessor in circuit.prev(n):
                         if predessor not in next_executed_counts:
                             next_executed_counts[predessor] = 1
@@ -892,9 +1245,12 @@ class QCCDMappingAlgorithm:
             # Pick and apply a swap
             E = self._calc_extended_set(circuit, F)
             #print(f"Extended set: {[circuit[n] for n in E]}")
-            best_move = self._get_best_move(
-                circuit, F, E, D, decay, heuristic_move, pgs,
-            )
+            if self.force_bruteforce:
+                best_move = None
+            else:
+                best_move = self._get_best_move(
+                    circuit, F, E, D, decay, heuristic_move, pgs,
+                )
             if best_move is None:
                 leading_moves += self._brute_force_congestion(
                     circuit[self._sorted_points(F)[0]], D, pgs,
@@ -944,8 +1300,26 @@ class QCCDMappingAlgorithm:
             )
         else:
             move_candidate_list = self._obtain_moves(circuit, pgs)
-        # print("All candidate move: ", move_candidate_list)
+        frontier_points = self._sorted_points(F)
+        frontier_locations = [tuple(int(q) for q in circuit[n].location) for n in frontier_points]
+        if self._debug_compare_enabled():
+            self._debug_compare(
+                lambda: (
+                    f'frontier points={frontier_points} '
+                    f'logical_locations={frontier_locations}'
+                ),
+            )
+            self._debug_compare(
+                lambda: (
+                    f'current assignment='
+                    f'{dict(sorted(self._assignment_from_pgs(pgs).items()))}'
+                ),
+            )
+            self._debug_compare(
+                lambda: f'candidate moves={self._sorted_moves(move_candidate_list)}',
+            )
         list_of_best_move = []
+        move_scores = []
         # Score them, tracking the best one
         # scores = Parallel(n_jobs=5)(delayed(self._score_move)(circuit, F, D, pi, ion_assignment, move, decay, E)
         #                             for move in move_candidate_list)
@@ -961,19 +1335,23 @@ class QCCDMappingAlgorithm:
                 E,
                 pgs,
             )
+            move_scores.append((move, float(score)))
             if score < best_score:
                 best_score = score
                 best_move = move
                 list_of_best_move = [move]
             elif score == best_score:
                 list_of_best_move.append(move)
-            # print(f"Score of move {move}: {score}")
+        self._debug_compare(lambda: f'move scores={move_scores}')
         if best_move is None:
             # print("*** Unable to find best move. ***")
             return None
             # raise RuntimeError('Unable to find best move.')
         # print(f"List of best move: {list_of_best_move}")
         if len(list_of_best_move) == 1:
+            self._debug_compare(
+                lambda: f'chosen move={best_move} best_score={float(best_score)}',
+            )
             return best_move
         else:
             # ToDo: There is some case where we have to decide between moves with
@@ -991,9 +1369,19 @@ class QCCDMappingAlgorithm:
                     else:
                         move_relative_score += np.sum([np.min([D[pos][move[0]], D[pos][move[1]]]) for pos in p])
                 move_relative_scores.append(move_relative_score)
-            return self._sorted_moves(
-                [list_of_best_move[i] for i in np.where(move_relative_scores == np.min(move_relative_scores))[0]],
-            )[0]
+            tied_moves = [
+                list_of_best_move[i]
+                for i in np.where(move_relative_scores == np.min(move_relative_scores))[0]
+            ]
+            chosen = self._sorted_moves(tied_moves)[0]
+            self._debug_compare(
+                'tie-break among best moves='
+                + str(list_of_best_move)
+                + ' relative_scores='
+                + str([float(score) for score in move_relative_scores])
+                + f' chosen={chosen}',
+            )
+            return chosen
 
     def _obtain_heuristic_moves(
             self,
@@ -1004,7 +1392,7 @@ class QCCDMappingAlgorithm:
         """Produce all possible realizable physical moves w.r.t frontier given the current QCCD hardware."""
         position_to_physical = self.qccd_machine.position_to_physical
         physical_qudit_positions = []
-        for location in F:
+        for location in list(F)[:1]:
             block = circuit[location]
             for qudit in block.location:
                 physical_qudit_positions.append(self._position_of_qudit(qudit, pgs))
@@ -1057,29 +1445,34 @@ class QCCDMappingAlgorithm:
             pgs: PositionGraphState,
     ) -> float:
         """Score the candidate realizable physical moves given the current algorithm state and ion assignment."""
-        trial_pgs = self._clone_pgs(pgs)
-        l1 = self._logical_at_position(move[0], trial_pgs)
-        l2 = self._logical_at_position(move[1], trial_pgs)
+        l1 = self._logical_at_position(move[0], pgs)
+        l2 = self._logical_at_position(move[1], pgs)
         if l1 is None and l2 is None:
             raise RuntimeError(f'The move {move} is not a valid move as there is no ion in these assignment.')
-        self._apply_move(move, pgs=trial_pgs)
+        affected = [logical for logical in (l1, l2) if logical is not None]
+        snapshot = self._snapshot_logical_positions(pgs, affected)
+        try:
+            self._apply_move(move, pgs=pgs)
 
-        # Calculate front set term
-        front = 0.0
-        for n in F:
-            logical_qudits = circuit[n].location
-            front += self._get_distance(logical_qudits, D, trial_pgs)
-        front /= len(F)
+            # Calculate front set term
+            front = 0.0
+            for n in F:
+                logical_qudits = circuit[n].location
+                front += self._get_distance(logical_qudits, D, pgs)
+            front /= len(F)
 
-        # Calculate extended set term
-        extend = 0.0
-        if len(E) > 0:
-            for n in E:
-                extend += self._get_distance(circuit[n].location, D, trial_pgs)
-            extend /= len(E)
-            extend *= self.extended_set_weight
+            # Calculate extended set term
+            extend = 0.0
+            # Match the legacy CG implementation for apples-to-apples comparison.
+            # if len(E) > 0:
+            #     for n in E:
+            #         extend += self._get_distance(circuit[n].location, D, pgs)
+            #     extend /= len(E)
+            #     extend *= self.extended_set_weight
 
-        return front + extend
+            return front + extend
+        finally:
+            self._restore_logical_positions(pgs, snapshot)
 
     # def _get_distance_from_position_to_trap(self,
     #                                         position: int,
@@ -1152,7 +1545,7 @@ class QCCDMappingAlgorithm:
             positions: list[int],
             available_space: list[int],
             D: list[list[float]],
-            pgs: PositionGraphState | None = None,
+            pgs: PositionState | None = None,
     ) -> float:
         """
             Get minimum distance from all the position of the gate to the trap...
@@ -1165,29 +1558,21 @@ class QCCDMappingAlgorithm:
         if pgs is None:
             raise ValueError('PositionGraphState is required for native distance scoring.')
         for space in permutations(available_space, len(positions)):
-            #print("Considering space combination: {}".format(space))
-            blockage = [self.qccd_machine.path_is_blocked_pgs(positions[i], space[i], pgs)[1]
-                        for i in range(len(positions))]
-            #print("Blockage: ", blockage)
-            space_distance = np.sum([D[positions[i]][space[i]] for i in range(len(positions))])
-            #print("Space distance: ", space_distance)
-            for block_w in blockage:
-                for block_position in block_w:
-                    if self.qccd_machine.position_to_physical[block_position] == 'segment':
-                        resolve_cost = self.qccd_machine.timing_data['junction_Y']
-                    elif self.qccd_machine.position_to_physical[block_position] == 'trap':
-                        min_to_endpoints = np.min([D[block_position][end_point] for end_point in
-                                                   self.qccd_machine.trap_end_points[
-                                                       self.qccd_machine.get_trap_id(block_position)]])
-                        resolve_cost = (self.qccd_machine.timing_data['split'] + min_to_endpoints)
-                    else:
-                        raise ValueError("The block position is undefined as it sit on ",
-                                         self.qccd_machine.position_to_physical[block_position])
-                    space_distance += resolve_cost
+            space_distance = float(
+                sum(D[positions[i]][space[i]] for i in range(len(positions)))
+            )
+            for i in range(len(positions)):
+                blockage_profile = self.qccd_machine.get_move_blockage_profile(
+                    positions[i],
+                    space[i],
+                )
+                for block_position, resolve_cost in blockage_profile:
+                    if pgs.get_logical_qudit_at_position(block_position) != -1:
+                        space_distance += resolve_cost
             # print(f"Distance when considering space {space}: ", space_distance)
             # print(f"Current minimum distance: ", distance)
             # print("........")
-            distance = np.min([space_distance, distance])
+            distance = min(space_distance, distance)
         """
             Only consider the endpoint
         """
@@ -1274,7 +1659,7 @@ class QCCDMappingAlgorithm:
     def _apply_move(
             self,
             move: tuple[int, int],
-            pgs: PositionGraphState,
+            pgs: PositionState,
     ) -> None:
         """Apply the move to the live PositionGraphState."""
         _logger.debug('applying move %s' % str(move))

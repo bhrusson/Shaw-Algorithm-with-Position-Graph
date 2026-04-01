@@ -6,6 +6,6 @@ setup(
     description='BQSKit extension for compiling to shuttling ion-trap architectures.',
     version='0.1.0',
     packages=find_namespace_packages(),
-    install_requires=['bqskit', 'numpy'],
+    install_requires=['bqskit', 'numpy', 'rustworkx'],
     python_requires='>=3.8, <4.0'
 )
