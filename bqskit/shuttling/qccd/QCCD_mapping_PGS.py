@@ -280,6 +280,26 @@ class QCCDMappingAlgorithm:
         ])
         return True
 
+    def _apply_and_append_move(
+        self,
+        leading_moves: list[tuple[int, int]],
+        move: tuple[int, int],
+        pgs: PositionState,
+        *,
+        context: str = '',
+    ) -> bool:
+        canonical_move = (int(move[0]), int(move[1]))
+        if canonical_move[0] == canonical_move[1]:
+            message = f'Skipping no-op move {canonical_move}'
+            if context:
+                message += f' ({context})'
+            self._debug_compare(message)
+            _logger.debug(message)
+            return False
+        self._apply_move(canonical_move, pgs=pgs)
+        leading_moves.append(tuple(sorted(canonical_move)))
+        return True
+
     @property
     def _log_prefix(self) -> str:
         return '[PGS]'
@@ -847,8 +867,12 @@ class QCCDMappingAlgorithm:
                         tuple(int(v) for v in move) for move in leading_moves
                     ]
                 else:
-                    self._apply_move((selected_end_point[pos_idx + 1], end_point_neighbors[0]), pgs=pgs)
-                    leading_moves.append(tuple(sorted((selected_end_point[pos_idx + 1], end_point_neighbors[0]))))
+                    self._apply_and_append_move(
+                        leading_moves,
+                        (selected_end_point[pos_idx + 1], end_point_neighbors[0]),
+                        pgs,
+                        context='clear endpoint neighbor',
+                    )
                     self.last_bruteforce_trace['leading_moves'] = [
                         tuple(int(v) for v in move) for move in leading_moves
                     ]
@@ -878,22 +902,34 @@ class QCCDMappingAlgorithm:
         for idx_point in range(len(path) - 1):
             possible_move = (path[idx_point], path[idx_point + 1])
             if not self._is_occupied(path[idx_point + 1], pgs):
-                self._apply_move(possible_move, pgs=pgs)
-                leading_moves.append(tuple(sorted(possible_move)))
+                self._apply_and_append_move(
+                    leading_moves,
+                    possible_move,
+                    pgs,
+                    context='bruteforce empty neighbor',
+                )
                 # print(
                 #     f"Perform move {(possible_move, ion_assignment)} as there is no ion in the neighbor, "
                 #     f"ion status: {ion_status}")
             elif ion_status == 'trap' and self.qccd_machine.position_to_physical[path[idx_point + 1]] == 'trap':
-                self._apply_move(possible_move, pgs=pgs)
-                leading_moves.append(tuple(sorted(possible_move)))
+                self._apply_and_append_move(
+                    leading_moves,
+                    possible_move,
+                    pgs,
+                    context='bruteforce trap inner swap',
+                )
                 # print(f"Perform move {possible_move} with inner-swap, ion status: {ion_status}")
             else:
                 ion_pos = path[idx_point]
                 blockage = path[idx_point + 1]
                 # print(f"There is blockage at {blockage}, try to resolve it...")
                 leading_moves += self._resolve_congestion(ion_pos, path, blockage, pgs, ion_pos, blockage)
-                self._apply_move(possible_move, pgs=pgs)
-                leading_moves.append(tuple(sorted(possible_move)))
+                self._apply_and_append_move(
+                    leading_moves,
+                    possible_move,
+                    pgs,
+                    context='bruteforce after congestion resolution',
+                )
                 # print(f"Perform move {possible_move} after resolving blockage")
                 # print(f"Ion assignment after resolving blockage: {ion_assignment}")
             if ion_status == 'segment' and self.qccd_machine.position_to_physical[path[idx_point + 1]] == 'trap':
@@ -997,8 +1033,12 @@ class QCCDMappingAlgorithm:
             resolve_entry['chosen_neighbor'] = int(blockage_neighbors[choosen_idx])
             self._append_resolve_trace(resolve_entry)
             # print(f"Choose to resolve {blockage_neighbors[choosen_idx]}")
-            self._apply_move((blockage, blockage_neighbors[choosen_idx]), pgs=pgs)
-            leading_moves.append(tuple(sorted((blockage, blockage_neighbors[choosen_idx]))))
+            self._apply_and_append_move(
+                leading_moves,
+                (blockage, blockage_neighbors[choosen_idx]),
+                pgs,
+                context=f'resolve free neighbor num_call={num_call}',
+            )
             # print(f"Blockage: {blockage}, blockage neighbors: {blockage_neighbors[choosen_idx]}")
             # print(
             #     f"Perform move (1) {(blockage, blockage_neighbors[choosen_idx])} to try resolving the blockage at {blockage}")
@@ -1034,8 +1074,12 @@ class QCCDMappingAlgorithm:
                     # print(f"Blockage: {blockage}, target: {target}")
                     leading_moves += self._resolve_congestion(blockage, [], target, pgs,
                                                                     original_target, original_blockage, num_call + 1)
-                    self._apply_move((blockage, target), pgs=pgs)
-                    leading_moves.append(tuple(sorted((blockage, target))))
+                    self._apply_and_append_move(
+                        leading_moves,
+                        (blockage, target),
+                        pgs,
+                        context=f'resolve reverse target step 1 num_call={num_call}',
+                    )
                     # print(
                     #     f"Perform move (2) {(blockage, target)} to try resolving the blockage at {blockage}")
                     # print("Current ion assignment: ", ion_assignment)
@@ -1046,8 +1090,12 @@ class QCCDMappingAlgorithm:
                             and self.qccd_machine.get_trap_id(blockage) is None):
                         leading_moves += self._resolve_congestion(target, [], blockage, pgs,
                                                                   original_target, original_blockage, num_call+1)
-                    self._apply_move((blockage, target), pgs=pgs)
-                    leading_moves.append(tuple(sorted((blockage, target))))
+                    self._apply_and_append_move(
+                        leading_moves,
+                        (blockage, target),
+                        pgs,
+                        context=f'resolve reverse target step 2 num_call={num_call}',
+                    )
                     # print(
                     #     f"Perform move (2') {(blockage, target)} to try resolving the blockage at {blockage}")
                     # print("Current ion assignment: ", ion_assignment)
@@ -1059,8 +1107,12 @@ class QCCDMappingAlgorithm:
                 leading_moves += self._resolve_congestion(blockage, path, potential_blockage[choosen_idx],
                                                           pgs, original_target, original_blockage,
                                                           num_call + 1)
-                self._apply_move((blockage, potential_blockage[choosen_idx]), pgs=pgs)
-                leading_moves.append(tuple(sorted((blockage, potential_blockage[choosen_idx]))))
+                self._apply_and_append_move(
+                    leading_moves,
+                    (blockage, potential_blockage[choosen_idx]),
+                    pgs,
+                    context=f'resolve potential blockage num_call={num_call}',
+                )
                 # print(f"Blockage: {blockage}, potential blockage: {potential_blockage[choosen_idx]}")
                 # print(
                 #     f"Perform move (3) {(blockage, potential_blockage[choosen_idx])} to try resolving the blockage "
@@ -1074,8 +1126,12 @@ class QCCDMappingAlgorithm:
             # print(f"Blockage: {blockage}, target: {target}")
             leading_moves += self._resolve_congestion(blockage, [], target, pgs,
                                                       original_target, original_blockage, num_call+1)
-            self._apply_move((blockage, target), pgs=pgs)
-            leading_moves.append(tuple(sorted((blockage, target))))
+            self._apply_and_append_move(
+                leading_moves,
+                (blockage, target),
+                pgs,
+                context=f'resolve deadend step 1 num_call={num_call}',
+            )
             # print(
             #     f"Perform move (4) {(blockage, target)} to try resolving the blockage at {blockage}")
             # print("Current ion assignment: ", ion_assignment)
@@ -1086,8 +1142,12 @@ class QCCDMappingAlgorithm:
                     and self.qccd_machine.get_trap_id(blockage) is None):
                 leading_moves += self._resolve_congestion(target, [], blockage, pgs,
                                                           original_target, original_blockage, num_call+1)
-            self._apply_move((blockage, target), pgs=pgs)
-            leading_moves.append(tuple(sorted((blockage, target))))
+            self._apply_and_append_move(
+                leading_moves,
+                (blockage, target),
+                pgs,
+                context=f'resolve deadend step 2 num_call={num_call}',
+            )
             # print(
             #     f"Perform move (4') {(blockage, target)} to try resolving the blockage at {blockage}")
             # print("Current ion assignment: ", ion_assignment)
@@ -1660,8 +1720,12 @@ class QCCDMappingAlgorithm:
             self,
             move: tuple[int, int],
             pgs: PositionState,
-    ) -> None:
+    ) -> bool:
         """Apply the move to the live PositionGraphState."""
+        move = (int(move[0]), int(move[1]))
+        if move[0] == move[1]:
+            _logger.debug('skipping self move %s', move)
+            return False
         _logger.debug('applying move %s' % str(move))
         l1 = self._logical_at_position(move[0], pgs)
         l2 = self._logical_at_position(move[1], pgs)
@@ -1674,6 +1738,7 @@ class QCCDMappingAlgorithm:
         else:
             pgs.swap_logical_qudits(l1, l2)
         _logger.debug('ion assignment after move %s', self._assignment_from_pgs(pgs))
+        return True
         # decay[move[0]] += self.decay_delta
         # decay[move[1]] += self.decay_delta
 

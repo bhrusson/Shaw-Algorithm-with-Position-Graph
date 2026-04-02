@@ -5,4 +5,5 @@ from .QCCD_mapping import QCCDMappingAlgorithm
 from .QCCD_util import create_testing_physical_machine, create_grid_physical_machine
 from .QCCD_topology import QCCDSubtopologySelectionPass
 from .QCCD_schedule import schedule_QCCD 
+from .qccd_schedule_CG import schedule_QCCD_CG
 from .QCCD_schedule_fidelity import schedule_QCCD_w_fid
