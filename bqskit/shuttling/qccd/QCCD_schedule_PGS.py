@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+# Legacy scheduler kept for reference only.
+# Active compare and grid flows now use bqskit.shuttling.QCCD_schedule_new.
+
 import ast
 import re
 from functools import lru_cache

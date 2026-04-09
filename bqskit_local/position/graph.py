@@ -85,6 +85,7 @@ class PositionGraph:
         self._cluster_distance_maps = self.build_cluster_distance_map()
         self._move_gradient = self.build_move_gradient()
         self._swap_neighbors = self._build_swap_neighbors()
+        self._position_to_cluster = self._build_position_to_cluster_map()
 
 
     def __str__(self) -> str:
@@ -140,6 +141,10 @@ class PositionGraph:
     @property
     def clusters(self) -> Sequence[Sequence[int]]:
         return self._executable_clusters
+
+    @property
+    def position_to_cluster(self) -> Dict[int, int]:
+        return self._position_to_cluster
 
     def position_label(self, pos_index: int) -> PositionLabel:
         self.check_pos_index(pos_index)
@@ -202,12 +207,7 @@ class PositionGraph:
         cluster_idx = None
 
         for p in pos:
-            found = None
-            for i, cluster in enumerate(self._executable_clusters):
-                if p in cluster:
-                    found = i
-                    break
-
+            found = self._position_to_cluster.get(int(p))
             if found is None:
                 return False  # position not in any cluster
 
@@ -455,6 +455,15 @@ class PositionGraph:
             unvisited_positions.remove(current)
 
         return paths
+
+    def get_cached_hop_shortest_path_tree(self, source: int) -> List[Tuple[int, ...]]:
+        """Return the precomputed hop-shortest path tree for `source`."""
+        self.check_pos_index(source)
+        cached_paths = self._shortest_path_hops_tree[source]
+        return [
+            cached_paths.get(node_index, tuple())
+            for node_index in range(len(self.position_labels))
+        ]
     
     #this is direcitonal, two qudit gates only right now
     # see also the method: in_cluster()
@@ -547,6 +556,15 @@ class PositionGraph:
         self.check_pos_index(target)
 
         if edge_capability == EdgeCapability.MOVE:
+            paths_from_start = self._dijkstra_shortest_paths[start]
+            if target not in paths_from_start:
+                return None
+            return (
+                list(paths_from_start[target]),
+                float(self._move_cost_matrix[start, target]),
+            )
+
+        if edge_capability == EdgeCapability.MOVE:
             graph = self._move_graph
         elif edge_capability == EdgeCapability.EXECUTE:
             graph = self._execute_graph
@@ -620,6 +638,13 @@ class PositionGraph:
             cluster_maps[cid] = dist
 
         return cluster_maps
+
+    def _build_position_to_cluster_map(self) -> Dict[int, int]:
+        cluster_map: Dict[int, int] = {}
+        for cluster_idx, cluster in enumerate(self._executable_clusters):
+            for position in cluster:
+                cluster_map[int(position)] = cluster_idx
+        return cluster_map
     
     def build_move_gradient(self) -> Dict[int, Dict[int, List[int]]]:
         """
@@ -676,6 +701,13 @@ class PositionGraph:
             from qudit_pos to i. If i is unreachable, the tuple is empty.
         """
         self.check_pos_index(qudit_pos)
+
+        if edge_capability == EdgeCapability.MOVE:
+            paths_dict = self._dijkstra_shortest_paths[qudit_pos]
+            return [
+                tuple(paths_dict.get(node_index, []))
+                for node_index in range(len(self.position_labels))
+            ]
 
         if edge_capability == EdgeCapability.MOVE:
             graph = self.move_graph

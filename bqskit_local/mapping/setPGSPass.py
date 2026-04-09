@@ -1,6 +1,4 @@
 from __future__ import annotations
-
-import copy
 from typing import Sequence
 
 from bqskit.compiler.basepass import BasePass
@@ -28,7 +26,7 @@ class SetPGSPass(BasePass):
                 f'Expected PositionGraphState, got {type(pgs)}.',
             )
 
-        self.template_pgs = copy.deepcopy(pgs)
+        self.template_pgs = pgs.copy()
         self.placement = None if placement is None else list(placement)
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
@@ -39,13 +37,13 @@ class SetPGSPass(BasePass):
             raise RuntimeError('Not enough positions for circuit.')
 
         if self.placement is None:
-            placement = list(range(circuit.num_qudits))
+            placement = list(range(self.template_pgs.num_qudits))
         else:
             placement = [int(x) for x in self.placement]
 
-        if len(placement) != circuit.num_qudits:
+        if len(placement) < circuit.num_qudits:
             raise ValueError(
-                'Placement length must equal circuit.num_qudits.',
+                'Placement length must be at least circuit.num_qudits.',
             )
 
         if len(set(placement)) != len(placement):

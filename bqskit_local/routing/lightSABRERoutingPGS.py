@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from typing import Sequence
 
@@ -6,19 +7,15 @@ from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
-from bqskit_local.mapping.sabre_pgs_behavioral_equivalence import (
-    GeneralizedSabreAlgorithmPGS,
-)
+from bqskit_local.mapping.lightSABRE_pgs import GeneralizedLightSABREAlgorithmPGS
 from bqskit_local.position.graph import PositionGraph
 from bqskit_local.position.state import PositionGraphState
 
 _logger = logging.getLogger(__name__)
 
 
-class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
-    """
-    PGS routing pass redesigned to use only standard workflow-visible data.
-    """
+class GeneralizedLightSABRERoutingPassPGS(BasePass, GeneralizedLightSABREAlgorithmPGS):
+    """LightSABRE-style PGS routing with multiple seeded trials."""
 
     def __init__(
         self,
@@ -29,13 +26,24 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
         cg_compatibility_mode: bool = False,
+        heuristic: str = 'decay',
+        seed: int | None = None,
+        trials: int = 1,
+        attempt_limit: int | None = None,
     ) -> None:
         if not isinstance(template_pgs, PositionGraphState):
             raise TypeError(
                 f'Expected PositionGraphState, got {type(template_pgs)}.',
             )
 
+        if not isinstance(trials, int):
+            raise TypeError(f'Expected int for trials, got {type(trials)}.')
+
+        if trials < 1:
+            raise ValueError('trials must be a positive integer.')
+
         self.template_pgs = template_pgs.copy()
+        self.trials = trials
 
         super().__init__(
             decay_delta=decay_delta,
@@ -44,6 +52,9 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
             extended_set_size=extended_set_size,
             extended_set_weight=extended_set_weight,
             cg_compatibility_mode=cg_compatibility_mode,
+            heuristic=heuristic,
+            seed=seed,
+            attempt_limit=attempt_limit,
         )
 
     def _build_local_pgs(
@@ -79,13 +90,6 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         placement: Sequence[int],
         num_circuit_qudits: int,
     ) -> PositionGraphState:
-        # For benchmark circuits smaller than the target architecture, native
-        # CouplingGraph SABRE still routes over the full hardware graph. Using
-        # only the induced subgraph on the selected positions can disconnect
-        # the architecture and produce infinite heuristic scores.
-        if len(placement) < self.template_pgs.num_pos:
-            return self._build_local_pgs(placement, num_circuit_qudits)
-
         if len(placement) != num_circuit_qudits:
             raise ValueError(
                 f'Expected placement of length {num_circuit_qudits}, got {len(placement)}.',
@@ -127,20 +131,69 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         else:
             placement = list(range(circuit.num_qudits))
 
-        if self.cg_compatibility_mode:
-            pgs = self._build_compatibility_local_pgs(
-                placement,
-                circuit.num_qudits,
+        candidate_placements: list[list[int]] = []
+        seen: set[tuple[int, ...]] = set()
+
+        def add_candidate(candidate: Sequence[int]) -> None:
+            normalized = [int(x) for x in candidate[:circuit.num_qudits]]
+            if len(normalized) != circuit.num_qudits:
+                return
+            key = tuple(normalized)
+            if key in seen:
+                return
+            seen.add(key)
+            candidate_placements.append(normalized)
+
+        add_candidate(placement)
+        for candidate in data.get('lightsabre_layout_candidates', []):
+            add_candidate(candidate)
+
+        best_score: tuple[int, int, int] | None = None
+        best_circuit: Circuit | None = None
+        best_mapping: list[int] | None = None
+        best_placement: list[int] | None = None
+
+        for trial_index in range(self.trials):
+            trial_placement = candidate_placements[trial_index % len(candidate_placements)]
+            if self.cg_compatibility_mode:
+                pgs = self._build_compatibility_local_pgs(
+                    trial_placement,
+                    circuit.num_qudits,
+                )
+            else:
+                pgs = self._build_local_pgs(trial_placement, circuit.num_qudits)
+
+            trial_circuit = circuit.copy()
+            self.begin_trial(trial_index)
+            self.forward_pass(trial_circuit, pgs, modify_circuit=True)
+
+            score = self.routed_trial_score(trial_circuit)
+            final_mapping = [
+                int(x) for x in pgs.logical_to_position[:circuit.num_qudits]
+            ]
+
+            _logger.info(
+                'LightSABRE routing trial %d produced score=%s final_mapping=%s',
+                trial_index,
+                score,
+                final_mapping,
             )
-        else:
-            pgs = self._build_local_pgs(placement, circuit.num_qudits)
 
-        _logger.info(f'Routing start mapping: {pgs.logical_to_position}')
-        _logger.info(f'Routing start placement: {data.get("placement")}')
+            if best_score is None or score < best_score:
+                best_score = score
+                best_circuit = trial_circuit
+                best_mapping = final_mapping
+                best_placement = trial_placement.copy()
 
-        self.forward_pass(circuit, pgs, modify_circuit=True)
+        if best_circuit is None or best_mapping is None or best_placement is None:
+            raise RuntimeError('LightSABRE routing produced no successful trials.')
 
-        final_mapping = [int(x) for x in pgs.logical_to_position[:circuit.num_qudits]]
-        data.final_mapping = final_mapping.copy()
+        circuit.become(best_circuit)
+        data.final_mapping = best_mapping.copy()
+        data['lightsabre_selected_routing_placement'] = best_placement.copy()
 
-        _logger.info(f'Finished routing with layout: {final_mapping}')
+        _logger.info(
+            'LightSABRE selected routing score=%s final_mapping=%s',
+            best_score,
+            best_mapping,
+        )

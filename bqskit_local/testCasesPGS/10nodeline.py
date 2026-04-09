@@ -28,8 +28,8 @@ data = PassData(circ)
 
 passes = [
     SetPGSPass(pgs, placement=list(range(10))),
-    GeneralizedSabreLayoutPassPGS(total_passes=1),
-    GeneralizedSabreRoutingPassPGS(decay_delta=0.5),
+    GeneralizedSabreLayoutPassPGS(pgs, total_passes=1),
+    GeneralizedSabreRoutingPassPGS(pgs, decay_delta=0.5),
 ]
 
 
@@ -42,7 +42,6 @@ for p in passes:
 
 print("Initial mapping:", data["initial_mapping"])
 print("Final mapping:", data["final_mapping"])
-print("PGS mapping:", data["pgs"].logical_to_position)
 
 print("\nCompiled circuit:")
 for i, op in enumerate(compiled):

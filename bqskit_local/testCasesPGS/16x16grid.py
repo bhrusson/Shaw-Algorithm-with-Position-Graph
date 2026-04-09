@@ -12,25 +12,25 @@ from bqskit_local.mapping.setPGSPass import SetPGSPass
 from bqskit_local.position.state import PositionGraphState
 from bqskit_local.routing.lightSABRERoutingPGS import GeneralizedLightSABRERoutingPassPGS
 from bqskit_local.routing.sabreRoutingPGS import GeneralizedSabreRoutingPassPGS
-from bqskit_local.testCasesPGS.ibmEagleCommon import (
-    IBM_EAGLE_COUPLING_MAP,
-    IBM_EAGLE_NUM_QUDITS,
-    build_named_eagle_circuit,
-    build_eagle_position_graph,
+from bqskit_local.testCasesPGS.grid16Common import (
+    GRID16_NUM_QUDITS,
+    build_16x16_challenge_circuit,
+    build_16x16_position_graph,
 )
 
 _logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Run the IBM Eagle PositionGraph SABRE workflow.',
+        description='Run the 16x16 grid PositionGraph SABRE workflow.',
     )
     parser.add_argument(
-        '--workload',
-        choices=['test', 'stress', 'challenge'],
-        default='challenge',
-        help='Which Eagle workload to compile.',
+        '--rounds',
+        type=int,
+        default=2,
+        help='Number of challenge-circuit rounds.',
     )
     parser.add_argument(
         '--cg-compat',
@@ -85,23 +85,24 @@ def main() -> None:
     args = parse_args()
     effective_cg_compat = args.cg_compat or args.algorithm == 'sabre'
 
-    circ = build_named_eagle_circuit(args.workload)
-    pg = build_eagle_position_graph()
-    template_pgs = PositionGraphState(pg, radices=[2] * IBM_EAGLE_NUM_QUDITS)
+    circ = build_16x16_challenge_circuit(rounds=args.rounds)
+    pg = build_16x16_position_graph()
+    template_pgs = PositionGraphState(pg, radices=[2] * GRID16_NUM_QUDITS)
 
-    print("Architecture: IBM Eagle / Washington PositionGraph")
-    print("Workload:", args.workload)
+    print("Architecture: 16x16 grid PositionGraph")
+    print("Challenge rounds:", args.rounds)
     print("Algorithm:", args.algorithm)
     print("CG compatibility mode:", effective_cg_compat)
     print("Number of qudits:", circ.num_qudits)
     print("Number of operations:", circ.num_operations)
-    print("Number of directed couplings:", len(IBM_EAGLE_COUPLING_MAP))
+    print("Number of positions:", len(pg.position_labels))
+    print("Number of directed edges:", len(pg.edge_labels))
     print("Move neighbors of 0:", pg.get_swap_neighbors(0))
-    print("Distance 0 -> 126:", pg.distance(0, 126))
+    print("Distance 0 -> 255:", pg.distance(0, GRID16_NUM_QUDITS - 1))
 
     if args.algorithm == 'lightsabre':
         passes = [
-            SetPGSPass(template_pgs, placement=list(range(IBM_EAGLE_NUM_QUDITS))),
+            SetPGSPass(template_pgs, placement=list(range(GRID16_NUM_QUDITS))),
             GeneralizedLightSABRELayoutPassPGS(
                 template_pgs,
                 max_iterations=args.max_iterations,
@@ -122,7 +123,7 @@ def main() -> None:
         ]
     else:
         passes = [
-            SetPGSPass(template_pgs, placement=list(range(IBM_EAGLE_NUM_QUDITS))),
+            SetPGSPass(template_pgs, placement=list(range(GRID16_NUM_QUDITS))),
             GeneralizedSabreLayoutPassPGS(
                 template_pgs,
                 total_passes=args.sabre_layout_passes,

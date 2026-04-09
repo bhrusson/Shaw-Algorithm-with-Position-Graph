@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import argparse
 import logging
+from time import perf_counter
 
 from bqskit.compiler import CompilationTask, Compiler, MachineModel
 from bqskit.ir.gates import CNOTGate, HGate
@@ -11,51 +13,75 @@ from bqskit_local.testCasesPGS.ibmEagleCommon import (
     IBM_EAGLE_COUPLING_MAP,
     IBM_EAGLE_NUM_QUDITS,
     IBM_EAGLE_UNDIRECTED_COUPLING_MAP,
-    build_eagle_test_circuit,
+    build_named_eagle_circuit,
 )
 
 _logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description='Run the IBM Eagle CouplingGraph SABRE workflow.',
+    )
+    parser.add_argument(
+        '--workload',
+        choices=['test', 'stress', 'challenge'],
+        default='challenge',
+        help='Which Eagle workload to compile.',
+    )
+    parser.add_argument(
+        '--sabre-layout-passes',
+        type=int,
+        default=3,
+        help='Number of layout forward/backward passes to use for SABRE.',
+    )
+    return parser.parse_args()
 
-circ = build_eagle_test_circuit()
-cg = CouplingGraph(IBM_EAGLE_UNDIRECTED_COUPLING_MAP, IBM_EAGLE_NUM_QUDITS)
-model = MachineModel(
-    num_qudits=IBM_EAGLE_NUM_QUDITS,
-    coupling_graph=cg,
-    gate_set={CNOTGate(), HGate()},
-)
 
-print("Architecture: IBM Eagle / Washington")
-print("Number of qudits:", circ.num_qudits)
-print("Number of CNOTs:", circ.num_operations)
-print("Number of undirected couplings:", len(IBM_EAGLE_UNDIRECTED_COUPLING_MAP))
+def main() -> None:
+    args = parse_args()
 
-passes = [
-    SetModelPass(model),
-    GeneralizedSabreLayoutPass(total_passes=3),
-    GeneralizedSabreRoutingPass(decay_delta=0.5),
-]
-print("passes", str(passes))
+    circ = build_named_eagle_circuit(args.workload)
+    cg = CouplingGraph(IBM_EAGLE_UNDIRECTED_COUPLING_MAP, IBM_EAGLE_NUM_QUDITS)
+    model = MachineModel(
+        num_qudits=IBM_EAGLE_NUM_QUDITS,
+        coupling_graph=cg,
+        gate_set={CNOTGate(), HGate()},
+    )
 
-compiler = Compiler()
-task = CompilationTask(circ, passes)
-data = task.data
+    print("Architecture: IBM Eagle / Washington")
+    print("Workload:", args.workload)
+    print("Number of qudits:", circ.num_qudits)
+    print("Number of operations:", circ.num_operations)
+    print("Number of undirected couplings:", len(IBM_EAGLE_UNDIRECTED_COUPLING_MAP))
 
-_logger.info("Driver data before compile: initial_mapping=%s", data.get("initial_mapping"))
-_logger.info("Driver data before compile: final_mapping=%s", data.get("final_mapping"))
-_logger.info("Driver data before compile: placement=%s", data.get("placement"))
+    passes = [
+        SetModelPass(model),
+        GeneralizedSabreLayoutPass(total_passes=args.sabre_layout_passes),
+        GeneralizedSabreRoutingPass(decay_delta=0.5),
+    ]
+    print("passes", str(passes))
 
-compiled = compiler.compile(circ, passes, data=data)
+    compiler = Compiler()
+    task = CompilationTask(circ, passes)
+    data = task.data
 
-_logger.info("Driver data after compile: initial_mapping=%s", data.get("initial_mapping"))
-_logger.info("Driver data after compile: final_mapping=%s", data.get("final_mapping"))
-_logger.info("Driver data after compile: placement=%s", data.get("placement"))
+    _logger.info("Driver data before compile: initial_mapping=%s", data.get("initial_mapping"))
+    _logger.info("Driver data before compile: final_mapping=%s", data.get("final_mapping"))
+    _logger.info("Driver data before compile: placement=%s", data.get("placement"))
 
-print("Original circuit:")
-for i, op in enumerate(circ):
-    print(f"{i}: {op}")
+    start_time = perf_counter()
+    compiled = compiler.compile(circ, passes, data=data)
+    elapsed_time = perf_counter() - start_time
 
-print("\nCompiled circuit:")
-for i, op in enumerate(compiled):
-    print(f"{i}: {op}")
+    _logger.info("Driver data after compile: initial_mapping=%s", data.get("initial_mapping"))
+    _logger.info("Driver data after compile: final_mapping=%s", data.get("final_mapping"))
+    _logger.info("Driver data after compile: placement=%s", data.get("placement"))
+
+    print("Compilation runtime (s):", f"{elapsed_time:.3f}")
+    print("Original operation count:", circ.num_operations)
+    print("Compiled operation count:", compiled.num_operations)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,5 +1,6 @@
 from timeit import default_timer as timer
 import random
+from pathlib import Path
 from bqskit.passes import *
 from bqskit.compiler import Compiler
 from bqskit.ir.circuit import Circuit
@@ -8,20 +9,10 @@ from bqskit.ir.gates.parameterized import U3Gate
 from bqskit.ir.gates import CXGate
 from bqskit import enable_logging
 from bqskit.ir.opt import ScipyMinimizer, HilbertSchmidtCostGenerator
-from bqskit.shuttling.qccd.mapping import (
-    QCCDPAMLayoutPass,
-    QCCDPAMLayoutPassPGS,
-    QCCDPAMRoutingPass,
-    QCCDPAMRoutingPassPGS,
-    QCCDLayoutPass,
-    QCCDLayoutPassPGS,
-    QCCDRoutingPass,
-    QCCDRoutingPassPGS,
-)
-from bqskit.shuttling.qccd import (QCCDMachineModel, QCCDSubtopologySelectionPass,
-                                   QCCDMappingAlgorithm, create_testing_physical_machine, schedule_QCCD
-                                  )
-from bqskit.shuttling.qccd.QCCD_machine_PGS import QCCDMachineModel as QCCDMachineModelPGS
+from bqskit.shuttling.QCCD_schedule_new import schedule_qccd_from_instructions_v3
+from bqskit.shuttling.qccd.mapping import QCCDPAMLayoutPass, QCCDPAMRoutingPass, QCCDLayoutPass, QCCDRoutingPass
+from bqskit.shuttling.qccd import (QCCDMachineModel, QCCDSubtopologySelectionPass, create_grid_physical_machine,
+                                   QCCDMappingAlgorithm, create_testing_physical_machine, schedule_QCCD_w_fid)
 import sys
 import pickle
 #enable_logging(True)
@@ -33,13 +24,20 @@ num_layout_passes = int(sys.argv[5])
 gate_type = sys.argv[6]
 if len(sys.argv) < 8:
     run_index = 0
-    mapper_backend = "CG"
-elif len(sys.argv) < 9:
-    run_index = sys.argv[7]
-    mapper_backend = "CG"
 else:
     run_index = sys.argv[7]
-    mapper_backend = sys.argv[8]
+if len(sys.argv) < 9:
+    grid_cols = 1
+else:
+    grid_cols = int(sys.argv[8])
+if len(sys.argv) < 10:
+    grid_rows = grid_cols
+else:
+    grid_rows = int(sys.argv[9])
+if len(sys.argv) < 11:
+    seed = 1234
+else:
+    seed = int(sys.argv[10])
 # qasm_result_filename = sys.argv[5]
 # result_filename = sys.argv[6]
 print("Input filename: ", str(input_filename))
@@ -49,12 +47,20 @@ print("Trap capacity: ", str(trap_capacity))
 print("Num layout passes: ", str(num_layout_passes))
 print("Gate type: ", str(gate_type))
 print("Run index: ", str(run_index))
-print("Mapper backend: ", str(mapper_backend))
+print("Schedule backend: new")
+print("Seed: ", str(seed))
+if trap_type == "grid":
+    print("Grid cols: ", str(grid_cols))
+    print("Grid rows: ", str(grid_rows))
 # print("QASM output filename: ", str(qasm_result_filename))
 # print("Output filename: ", str(result_filename))
-
-physical_model = create_testing_physical_machine(type=trap_type,
-                                                 trap_capacity=int(trap_capacity))
+if trap_type == "grid":
+    physical_model = create_grid_physical_machine(num_cols = grid_cols,
+                                                  num_rows = grid_rows,
+                                                  trap_capacity = trap_capacity)
+else:
+    physical_model = create_testing_physical_machine(type=trap_type,
+                                                     trap_capacity=int(trap_capacity))
 timing_data = {'sq_timings': 30e-6,
                'tq_timings': 40e-6,
                'segment': 5e-6,
@@ -63,26 +69,66 @@ timing_data = {'sq_timings': 30e-6,
                'merge': 80e-6,
                'junction_Y': 100e-6,
                'junction_X': 120e-6}
+# timing_data = {'sq_timings': 40e-6,
+#                'tq_timings': 40e-6,
+#                'segment': 40e-6,
+#                'inner_swap': 40e-6,
+#                'split': 80e-6,
+#                'merge': 80e-6,
+#                'junction_Y': 120e-6,
+#                'junction_X': 120e-6}
 gate_set = GateSet({U3Gate(), CXGate()})
-machine_cls = QCCDMachineModelPGS if mapper_backend.upper() == "PGS" else QCCDMachineModel
-machine_model = machine_cls(gate_set=gate_set,
-                            physical_graph=physical_model,
-                            multi_qudit_gate_type=gate_type,
-                            timing_data=timing_data)
+machine_model = QCCDMachineModel(gate_set=gate_set,
+                                 physical_graph=physical_model,
+                                 multi_qudit_gate_type=gate_type,
+                                 timing_data=timing_data)
 print("Position graph: ", machine_model.position_graph)
-cir = Circuit.from_file(f"bqskit/shuttling/qccd/benchmark_circuits/{input_filename}.qasm")
+repo_qccd_dir = Path(__file__).resolve().parent
+benchmark_dir = repo_qccd_dir / "benchmark_circuits"
+result_dir = repo_qccd_dir / "paper_result_16"
+result_dir.mkdir(parents=True, exist_ok=True)
+cir = Circuit.from_file(str(benchmark_dir / f"{input_filename}.qasm"))
 target_unitary = cir
 num_qudits = cir.num_qudits
 
 """
     Define ion assignment
 """
+# initial_assignment = {0: [13, 14, 15, 16, 17], 1: [12, 11, 10, 9, 8],
+#     2: [], 3: [18, 19, 20, 21, 22], 4: [7, 28, 6, 5, 4],
+#     5: [31, 0], 6: [23, 24, 25, 26, 27], 7: [29, 3, 30, 2, 1], 8: []}
+
+"""
+QFT_wsq_32
+    {0: [21, 10, 30, 26, 1], 1: [28, 3, 27, 4, 25],
+    2: [22, 9, 20, 11, 19], 3: [5, 31, 0, 29, 2],
+    4: [6, 24, 7, 23, 8], 5: [12, 18, 13, 17, 14],
+    6: [], 7: [16, 15], 8: []}
+TFIM_wsq_n32_s100
+   {0: [12, 13, 14, 15, 16],
+   1: [11, 10, 9, 8, 7], 2: [],
+   3: [17, 18, 19, 20, 21], 4: [27, 28, 6, 5, 29],
+   5: [1, 0], 6: [22, 23, 24, 25, 26],
+   7: [4, 3, 30, 2, 31], 8: []}
+TFXY_wsq_n32_s100
+    {0: [13, 14, 15, 16, 17], 1: [12, 11, 10, 9, 8],
+    2: [], 3: [18, 19, 20, 21, 22], 4: [7, 28, 6, 5, 4],
+    5: [31, 0], 6: [23, 24, 25, 26, 27], 7: [29, 3, 30, 2, 1], 8: []}
+"""
+
 ion_assignment = {}
+# trap_idx = 0
+# for trap in machine_model.physical_graph.trap_list:
+#     trap_space = machine_model.physical_to_position[trap.id]
+#     for space_idx, ion in enumerate(initial_assignment[trap_idx]):
+#         ion_assignment[ion] = trap_space[space_idx]
+#     trap_idx += 1
+####
 all_available_trap_space = []
 for trap in machine_model.physical_graph.trap_list:
     all_available_trap_space += machine_model.physical_to_position[trap.id]
-
-trap_seq = random.sample(all_available_trap_space, num_qudits)
+rng = random.Random(seed)
+trap_seq = rng.sample(all_available_trap_space, num_qudits)
 for i in range(num_qudits):
     ion_assignment[i] = trap_seq[i]
 print("Initial ion assignment: ", ion_assignment)
@@ -94,88 +140,51 @@ executable_spaces = 0
 for trap in machine_model.physical_graph.executable_trap_list:
     executable_spaces += trap.max_num_ions
 if cir.num_qudits == executable_spaces:
-    congestion_rate = 0.5
-else:
     congestion_rate = 1.0
+else:
+    congestion_rate = 0.5
 print("Congestion rate: ", congestion_rate)
 
 gate_count_weight = 0.1
 
 qsearch_pass = QSearchSynthesisPass()
-block_size = 2
+block_size = 3
 if algo_type == "SHAW":
-    if mapper_backend.upper() == "PGS":
-        layout_pass = QCCDLayoutPassPGS(
-            total_passes=num_layout_passes,
-            cogestion_rate=congestion_rate,
-        )
-        routing_pass = QCCDRoutingPassPGS(
-            gate_count_weight,
-            cogestion_rate=congestion_rate,
-        )
-        workflow = [
-            UnfoldPass(),
-            SetModelPass(machine_model),
-            UpdateDataPass(key='ion_assignment_qccd', val=ion_assignment),
-            layout_pass,
-            routing_pass,
-            UnfoldPass(),
-        ]
-    else:
-        workflow = [
-            UnfoldPass(),
-            SetModelPass(machine_model),
-            UpdateDataPass(key='ion_assignment_qccd', val=ion_assignment),
-            # Re-target the gate
-            # QuickPartitioner(block_size),
-            # ApplyPlacement(),
-            QCCDLayoutPass(total_passes=num_layout_passes,
-                           cogestion_rate=congestion_rate),
-            QCCDRoutingPass(gate_count_weight,
-                            cogestion_rate=congestion_rate),
-            ApplyPlacement(),
-            UnfoldPass(),
-        ]
+    workflow = [
+        UnfoldPass(),
+        SetModelPass(machine_model),
+        UpdateDataPass(key='ion_assignment_qccd', val=ion_assignment),
+        # Re-target the gate
+        QuickPartitioner(block_size),
+        ApplyPlacement(),
+        QCCDLayoutPass(total_passes=num_layout_passes,
+                       cogestion_rate=congestion_rate),
+        QCCDRoutingPass(gate_count_weight,
+                        cogestion_rate=congestion_rate),
+        ApplyPlacement(),
+        UnfoldPass(),
+    ]
 elif algo_type == "SHAPER":
-    if mapper_backend.upper() == "PGS":
-        workflow = [
-            UnfoldPass(),
-            SetModelPass(machine_model),
-            UpdateDataPass(key='ion_assignment_qccd', val=ion_assignment),
-            QCCDSubtopologySelectionPass(block_size),
-            QuickPartitioner(block_size),
-            ForEachBlockPass(
-                EmbedAllPermutationsPass(inner_synthesis=qsearch_pass,
-                                         input_perm=True,
-                                         vary_topology=True)
-            ),
-            QCCDPAMLayoutPassPGS(total_passes=num_layout_passes,
-                                 cogestion_segment_rate=congestion_rate),
-            QCCDPAMRoutingPassPGS(gate_count_weight,
-                                  cogestion_segment_rate=congestion_rate),
-            UnfoldPass(),
-        ]
-    else:
-        workflow = [
-            UnfoldPass(),
-            SetModelPass(machine_model),
-            UpdateDataPass(key='ion_assignment_qccd', val=ion_assignment),
-            QCCDSubtopologySelectionPass(block_size),
-            # Re-target the gate
-            QuickPartitioner(block_size),
-            ForEachBlockPass(
-                EmbedAllPermutationsPass(inner_synthesis=qsearch_pass,
-                                         input_perm=True,
-                                         vary_topology=True)
-            ),
-            ApplyPlacement(),
-            QCCDLayoutPass(total_passes=num_layout_passes,
-                           cogestion_rate=congestion_rate),
-            QCCDRoutingPass(gate_count_weight,
-                            cogestion_rate=congestion_rate),
-            ApplyPlacement(),
-            UnfoldPass(),
-        ]
+    workflow = [
+        UnfoldPass(),
+        SetModelPass(machine_model),
+        UpdateDataPass(key='ion_assignment_qccd', val=ion_assignment),
+        QCCDSubtopologySelectionPass(block_size),
+        # Re-target the gate
+        QuickPartitioner(block_size),
+        ForEachBlockPass(
+            EmbedAllPermutationsPass(inner_synthesis=qsearch_pass,
+                                     input_perm=True,
+                                     vary_topology=True)
+        ),
+        ApplyPlacement(),
+        QCCDLayoutPass(total_passes=num_layout_passes,
+                       cogestion_rate=congestion_rate),
+        QCCDRoutingPass(gate_count_weight,
+                        cogestion_rate=congestion_rate),
+        ApplyPlacement(),
+        UnfoldPass(),
+    ]
 else:
     raise ValueError("algo_type must be SHAW or SHAPER")
 
@@ -188,19 +197,33 @@ with Compiler() as compiler:
 """
 Save qasm file
 """
-qasm_result_filename = f"bqskit/shuttling/qccd/new_result/{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
+qasm_result_filename = str(
+    result_dir / f"{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.qasm"
+)
+if trap_type == "grid":
+    qasm_result_filename = str(
+        result_dir
+        / f"{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{grid_cols}x{grid_rows}_{trap_capacity}_{num_layout_passes}.qasm"
+    )
 output_circuit.save(qasm_result_filename)
 
 """
 Calculating runtime
 """
-runtime, sp = schedule_QCCD(data["instruction_list"],
-                        output_circuit,
-                        data.initial_mapping,
-                        data['initial_ion_assignment_qccd'],
-                        data.model,
-                        parallel=True)
+schedule_result = schedule_qccd_from_instructions_v3(
+    instruction_lst=data["instruction_list"],
+    initial_ion_assignment=data['initial_ion_assignment_qccd'],
+    machine_model=machine_model,
+    circuit=output_circuit,
+    parallel=True,
+    execute_location_mode='logical',
+)
+runtime = schedule_result["runtime"]
+sp = schedule_result["shuttling_profile_critical"]
 print(f"Scheduling QCCD: {runtime / 1e-6} us, costing {compile_time} s to compile")
+print(f"Application fidelity: {schedule_result['application_fidelity']}")
+print(f"Execute rounds: {len(schedule_result['execute_rounds'])}")
+print(f"Move rounds: {len(schedule_result['move_rounds'])}")
 
 """
 Save pickle result file
@@ -214,7 +237,17 @@ result = [
           data['final_mapping'],
           machine_model
           ]
-
-result_filename = f"bqskit/shuttling/qccd/rebuttal_result/{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
+print(runtime)
+print(compile_time)
+print(data['initial_ion_assignment_qccd'])
+print(data['initial_mapping'])
+result_filename = str(
+    result_dir / f"{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{trap_capacity}_{num_layout_passes}.pkl"
+)
+if trap_type == "grid":
+    result_filename = str(
+        result_dir
+        / f"{algo_type}_{input_filename}_idx{run_index}_{trap_type}_{grid_cols}x{grid_rows}_{trap_capacity}_{num_layout_passes}.pkl"
+    )
 with open(result_filename, 'wb') as f:
     pickle.dump(result, f)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from time import perf_counter
 
 from bqskit.compiler import CompilationTask, Compiler
 from bqskit.ir.circuit import Circuit
@@ -107,8 +108,16 @@ print("Distance 0 -> 15:", pg.distance(0, 15))
 
 passes = [
     SetPGSPass(template_pgs, placement=list(range(n))),
-    GeneralizedSabreLayoutPassPGS(template_pgs, total_passes=3),
-    GeneralizedSabreRoutingPassPGS(template_pgs, decay_delta=0.5),
+    GeneralizedSabreLayoutPassPGS(
+        template_pgs,
+        total_passes=3,
+        cg_compatibility_mode=True,
+    ),
+    GeneralizedSabreRoutingPassPGS(
+        template_pgs,
+        decay_delta=0.5,
+        cg_compatibility_mode=True,
+    ),
 ]
 print("passes", str(passes))
 
@@ -121,11 +130,17 @@ _logger.info("Driver data before compile: initial_mapping=%s", data.get("initial
 _logger.info("Driver data before compile: final_mapping=%s", data.get("final_mapping"))
 _logger.info("Driver data before compile: placement=%s", data.get("placement"))
 
+start_time = perf_counter()
 compiled = compiler.compile(circ, passes, data=data)
+elapsed_time = perf_counter() - start_time
 
 _logger.info("Driver data after compile: initial_mapping=%s", data.get("initial_mapping"))
 _logger.info("Driver data after compile: final_mapping=%s", data.get("final_mapping"))
 _logger.info("Driver data after compile: placement=%s", data.get("placement"))
+
+print("Compilation runtime (s):", f"{elapsed_time:.3f}")
+print("Original operation count:", circ.num_operations)
+print("Compiled operation count:", compiled.num_operations)
 
 print("Original circuit:")
 for i, op in enumerate(circ):

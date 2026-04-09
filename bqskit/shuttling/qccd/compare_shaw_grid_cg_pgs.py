@@ -32,7 +32,6 @@ from bqskit.shuttling.qccd.QCCD_machine_PGS import (
     QCCDMachineModel as PGSMachineModel,
 )
 from bqskit.shuttling.QCCD_schedule_new import schedule_qccd_from_instructions_v3
-from bqskit.shuttling.qccd.QCCD_schedule_PGS import schedule_QCCD_PGS
 from bqskit.shuttling.qccd.run_grid_pgs_shaw import build_assignment
 
 
@@ -88,6 +87,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument('--verbose-status', action='store_true')
     parser.add_argument('--print-paths', action='store_true')
+    parser.add_argument(
+        '--print-position-graph',
+        action='store_true',
+        help='Print raw position-graph positions and edges after each machine model is built.',
+    )
     parser.add_argument('--window', type=int, default=8)
     parser.add_argument(
         '--pgs-move-path-modes',
@@ -115,23 +119,22 @@ def parse_assignment(text: str) -> dict[int, int]:
 def normalize_execute(
     inst: list[Any],
     assignment: dict[int, int],
+    execute_location_mode: str,
 ) -> tuple[str, list[int], dict[int, int]]:
     payload = parse_execute_payload(inst[0])
     inverse_assignment = {position: logical for logical, position in assignment.items()}
-    assignment_keys = set(assignment.keys())
-    assignment_values = set(assignment.values())
-    normalized_qudits: list[int] = []
+    if execute_location_mode not in {'logical', 'physical'}:
+        raise ValueError(
+            "execute_location_mode must be one of {'logical', 'physical'}",
+        )
 
-    if all(value in assignment_values for value in payload):
-        normalized_qudits = [int(inverse_assignment[value]) for value in payload]
-    elif all(value in assignment_keys for value in payload):
+    if execute_location_mode == 'logical':
         normalized_qudits = [int(value) for value in payload]
     else:
-        for value in payload:
-            if value in inverse_assignment:
-                normalized_qudits.append(int(inverse_assignment[value]))
-            else:
-                normalized_qudits.append(int(value))
+        normalized_qudits = [
+            int(inverse_assignment.get(value, value))
+            for value in payload
+        ]
 
     return ('Execute', sorted(normalized_qudits), parse_assignment(inst[1]))
 
@@ -147,9 +150,10 @@ def normalize_move(inst: list[Any]) -> tuple[str, tuple[int, int], dict[int, int
 def normalize_instruction(
     inst: list[Any],
     assignment: dict[int, int],
+    execute_location_mode: str,
 ) -> tuple[str, Any, dict[int, int]]:
     if inst[0].startswith('Execute'):
-        return normalize_execute(inst, assignment)
+        return normalize_execute(inst, assignment, execute_location_mode)
     if inst[0].startswith('Move'):
         return normalize_move(inst)
     return (inst[0], None, parse_assignment(inst[1]))
@@ -164,15 +168,8 @@ def run_compare_scheduler(
     full_initial_ion_assignment: dict[int, int] | None,
     machine_model: Any,
 ) -> dict[str, Any]:
+    del initial_mapping
     if backend == 'PGS':
-        runtime, shuttling_share = schedule_QCCD_PGS(
-            instructions_list=instruction_list,
-            circuit=circuit,
-            initial_mapping=initial_mapping,
-            initial_ion_assignment=initial_ion_assignment,
-            qccd_machine=machine_model,
-            parallel=True,
-        )
         analytics_result = schedule_qccd_from_instructions_v3(
             instruction_lst=instruction_list,
             initial_ion_assignment=initial_ion_assignment,
@@ -183,8 +180,8 @@ def run_compare_scheduler(
             execute_location_mode='physical',
         )
         return {
-            'runtime': float(runtime),
-            'shuttling_share': float(shuttling_share),
+            'runtime': float(analytics_result['runtime']),
+            'shuttling_share': float(analytics_result['shuttling_profile_critical']),
             'application_fidelity': analytics_result['application_fidelity'],
             'execute_rounds': len(analytics_result['execute_rounds']),
             'move_rounds': len(analytics_result['move_rounds']),
@@ -226,6 +223,41 @@ def print_path_comparison(
         print(f'  {pair}: CG={cg_path} PGS={pgs_path} same={cg_path == pgs_path}')
 
 
+def print_position_graph_details(label: str, machine_model: Any) -> None:
+    position_graph = machine_model.position_graph
+    print(f'{label} position graph details:')
+    print(f'  physical_to_position: {machine_model.physical_to_position}')
+
+    if hasattr(position_graph, 'position_labels') and hasattr(position_graph, 'edge_labels'):
+        num_positions = len(position_graph.position_labels)
+        num_edges = len(position_graph.edge_labels)
+        print('  positions:')
+        for index, position_label in enumerate(position_graph.position_labels):
+            print(
+                f'    {index}: capability={position_label.capability} '
+                f'weights={position_label.weights}',
+            )
+        print('  edges:')
+        for (u, v), edge_label in sorted(position_graph.edge_labels.items()):
+            print(
+                f'    ({int(u)}, {int(v)}): capability={edge_label.capability} '
+                f'weights={edge_label.weights}',
+            )
+        print(f'  num_positions: {num_positions}')
+        print(f'  num_edges: {num_edges}')
+        return
+
+    positions = list(range(int(position_graph.num_qudits)))
+    edges = sorted(
+        (int(edge[0]), int(edge[1]))
+        for edge in position_graph
+    )
+    print(f'  positions: {positions}')
+    print(f'  edges: {edges}')
+    print(f'  num_positions: {len(positions)}')
+    print(f'  num_edges: {len(edges)}')
+
+
 class _TemporaryEnv:
     def __init__(self, key: str, value: str | None) -> None:
         self.key = key
@@ -258,6 +290,7 @@ def compile_case(
     stage: str,
     congestion_override: float | None = None,
     pgs_move_path_mode: str | None = None,
+    print_position_graph: bool = False,
 ) -> dict[str, Any]:
     env_value = pgs_move_path_mode if backend == 'PGS' else None
     with _TemporaryEnv('BQSKIT_PGS_MOVE_PATH_MODE', env_value):
@@ -274,6 +307,11 @@ def compile_case(
             multi_qudit_gate_type=gate_type,
             timing_data=TIMING_DATA,
         )
+        if print_position_graph:
+            graph_label = backend
+            if backend == 'PGS' and pgs_move_path_mode is not None:
+                graph_label = f'{backend}[{pgs_move_path_mode}]'
+            print_position_graph_details(graph_label, machine_model)
         congestion = congestion_rate(machine_model, circuit.num_qudits)
         if congestion_override is not None:
             congestion = float(congestion_override)
@@ -364,6 +402,7 @@ def run_pre_layout_workflow(
     gate_type: str,
     grid_cols: int,
     grid_rows: int,
+    print_position_graph: bool = False,
 ) -> tuple[Circuit, Any]:
     physical_model = create_grid_physical_machine(
         num_cols=grid_cols,
@@ -378,6 +417,8 @@ def run_pre_layout_workflow(
         multi_qudit_gate_type=gate_type,
         timing_data=TIMING_DATA,
     )
+    if print_position_graph:
+        print_position_graph_details(f'{backend} pre-layout', machine_model)
     workflow = [
         UnfoldPass(),
         SetModelPass(machine_model),
@@ -404,6 +445,7 @@ def trace_layout_case(
     grid_rows: int,
     routing_mode: str,
     congestion_override: float | None = None,
+    print_position_graph: bool = False,
 ) -> dict[str, Any]:
     pre_circuit, pre_data = run_pre_layout_workflow(
         backend,
@@ -413,6 +455,7 @@ def trace_layout_case(
         gate_type,
         grid_cols,
         grid_rows,
+        print_position_graph,
     )
     force_bruteforce = routing_mode == 'bruteforce'
     congestion = congestion_rate(pre_data.model, pre_circuit.num_qudits)
@@ -476,6 +519,7 @@ def trace_layout_wrapper_case(
     grid_rows: int,
     routing_mode: str,
     congestion_override: float | None = None,
+    print_position_graph: bool = False,
 ) -> dict[str, Any]:
     previous_wrapper = os.environ.get('BQSKIT_QCCD_CAPTURE_LAYOUT_WRAPPER')
     previous_forward = os.environ.get('BQSKIT_QCCD_CAPTURE_TRACE')
@@ -494,6 +538,7 @@ def trace_layout_wrapper_case(
             routing_mode,
             'layout',
             congestion_override=congestion_override,
+            print_position_graph=print_position_graph,
         )
     finally:
         if previous_wrapper is None:
@@ -538,6 +583,7 @@ def trace_forward_pass_case(
     grid_rows: int,
     routing_mode: str,
     congestion_override: float | None = None,
+    print_position_graph: bool = False,
 ) -> dict[str, Any]:
     pre_circuit, pre_data = run_pre_layout_workflow(
         backend,
@@ -547,6 +593,7 @@ def trace_forward_pass_case(
         gate_type,
         grid_cols,
         grid_rows,
+        print_position_graph,
     )
     force_bruteforce = routing_mode == 'bruteforce'
     congestion = congestion_rate(pre_data.model, pre_circuit.num_qudits)
@@ -597,6 +644,7 @@ def compile_from_matched_layout(
     routing_mode: str,
     congestion_override: float | None = None,
     pgs_move_path_mode: str | None = None,
+    print_position_graph: bool = False,
 ) -> dict[str, Any]:
     env_value = pgs_move_path_mode if backend == 'PGS' else None
     with _TemporaryEnv('BQSKIT_PGS_MOVE_PATH_MODE', env_value):
@@ -608,6 +656,7 @@ def compile_from_matched_layout(
             gate_type,
             grid_cols,
             grid_rows,
+            print_position_graph,
         )
         force_bruteforce = routing_mode == 'bruteforce'
         congestion = congestion_rate(pre_data.model, pre_circuit.num_qudits)
@@ -801,6 +850,7 @@ def main() -> None:
                 args.grid_rows,
                 args.routing_mode,
                 congestion_override=args.cg_congestion_rate_override,
+                print_position_graph=args.print_position_graph,
             )
             pgs_results = [
                 compile_from_matched_layout(
@@ -815,6 +865,7 @@ def main() -> None:
                     args.routing_mode,
                     congestion_override=args.pgs_congestion_rate_override,
                     pgs_move_path_mode=mode,
+                    print_position_graph=args.print_position_graph,
                 )
                 for mode in pgs_move_path_modes
             ]
@@ -831,6 +882,7 @@ def main() -> None:
                 args.routing_mode,
                 args.stage,
                 congestion_override=args.cg_congestion_rate_override,
+                print_position_graph=args.print_position_graph,
             )
             pgs_results = [
                 compile_case(
@@ -846,6 +898,7 @@ def main() -> None:
                     args.stage,
                     congestion_override=args.pgs_congestion_rate_override,
                     pgs_move_path_mode=mode,
+                    print_position_graph=args.print_position_graph,
                 )
                 for mode in pgs_move_path_modes
             ]
@@ -875,6 +928,7 @@ def main() -> None:
             args.grid_rows,
             args.routing_mode,
             congestion_override=args.cg_congestion_rate_override,
+            print_position_graph=args.print_position_graph,
         )
         pgs_trace = trace_layout_case(
             'PGS',
@@ -887,6 +941,7 @@ def main() -> None:
             args.grid_rows,
             args.routing_mode,
             congestion_override=args.pgs_congestion_rate_override,
+            print_position_graph=args.print_position_graph,
         )
         print('Layout trace:')
         print(f"  CG pre-layout front locations : {cg_trace['front_locations']}")
@@ -933,6 +988,7 @@ def main() -> None:
             args.grid_rows,
             args.routing_mode,
             congestion_override=args.cg_congestion_rate_override,
+            print_position_graph=args.print_position_graph,
         )
         pgs_trace = trace_layout_wrapper_case(
             'PGS',
@@ -945,6 +1001,7 @@ def main() -> None:
             args.grid_rows,
             args.routing_mode,
             congestion_override=args.pgs_congestion_rate_override,
+            print_position_graph=args.print_position_graph,
         )
         print('Layout wrapper trace:')
         print(f"  CG pre-layout front locations : {cg_trace['front_locations']}")
@@ -1006,6 +1063,7 @@ def main() -> None:
             args.grid_rows,
             args.routing_mode,
             congestion_override=args.cg_congestion_rate_override,
+            print_position_graph=args.print_position_graph,
         )
         pgs_trace = trace_forward_pass_case(
             'PGS',
@@ -1017,6 +1075,7 @@ def main() -> None:
             args.grid_rows,
             args.routing_mode,
             congestion_override=args.pgs_congestion_rate_override,
+            print_position_graph=args.print_position_graph,
         )
         print('Forward pass trace:')
         print(f"  CG initial assignment : {cg_trace['initial_assignment']}")
@@ -1088,16 +1147,28 @@ def main() -> None:
         print('\nDetailed normalized divergence view is only shown for a single PGS mode.')
         return
 
-    current_cg_assignment = assignment
-    current_pgs_assignment = assignment
+    current_cg_assignment = copy.deepcopy(
+        cg['data'].get('initial_ion_assignment_qccd', assignment),
+    )
+    current_pgs_assignment = copy.deepcopy(
+        pgs['data'].get('initial_ion_assignment_qccd', assignment),
+    )
     first_divergence = None
     first_state_divergence = None
 
     for i, (cg_inst, pgs_inst) in enumerate(
         zip(cg['instruction_list'], pgs['instruction_list']),
     ):
-        cg_norm = normalize_instruction(cg_inst, current_cg_assignment)
-        pgs_norm = normalize_instruction(pgs_inst, current_pgs_assignment)
+        cg_norm = normalize_instruction(
+            cg_inst,
+            current_cg_assignment,
+            'logical',
+        )
+        pgs_norm = normalize_instruction(
+            pgs_inst,
+            current_pgs_assignment,
+            'physical',
+        )
 
         current_cg_assignment = cg_norm[2]
         current_pgs_assignment = pgs_norm[2]
@@ -1127,13 +1198,25 @@ def main() -> None:
     start = max(0, first_divergence - 3)
     end = first_divergence + args.window
 
-    cg_assignment = assignment
-    pgs_assignment = assignment
+    cg_assignment = copy.deepcopy(
+        cg['data'].get('initial_ion_assignment_qccd', assignment),
+    )
+    pgs_assignment = copy.deepcopy(
+        pgs['data'].get('initial_ion_assignment_qccd', assignment),
+    )
     for i in range(min(end, len(cg['instruction_list']), len(pgs['instruction_list']))):
         cg_inst = cg['instruction_list'][i]
         pgs_inst = pgs['instruction_list'][i]
-        cg_norm = normalize_instruction(cg_inst, cg_assignment)
-        pgs_norm = normalize_instruction(pgs_inst, pgs_assignment)
+        cg_norm = normalize_instruction(
+            cg_inst,
+            cg_assignment,
+            'logical',
+        )
+        pgs_norm = normalize_instruction(
+            pgs_inst,
+            pgs_assignment,
+            'physical',
+        )
         cg_assignment = cg_norm[2]
         pgs_assignment = pgs_norm[2]
 

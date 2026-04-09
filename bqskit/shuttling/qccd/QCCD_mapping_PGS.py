@@ -130,6 +130,10 @@ class QCCDMappingAlgorithm:
         self.qccd_machine = qccd_machine
         self.cogestion_segment_rate = cogestion_rate
         self.force_bruteforce = force_bruteforce
+        self._congestion_geometry_cache: dict[
+            tuple[int, int, int, int],
+            tuple[tuple[int, ...], ...],
+        ] = {}
 
     def _make_pgs(self, ion_assignment: dict[int, int]) -> PositionGraphState:
         return self.qccd_machine.build_pgs_from_assignment(ion_assignment)
@@ -177,7 +181,7 @@ class QCCDMappingAlgorithm:
             scratch_states[slot] = scratch
         return scratch.load_from_state(pgs)
 
-    def _clone_pgs(
+    def _log_pgs(
         self,
         pgs: PositionState,
         *,
@@ -350,6 +354,121 @@ class QCCDMappingAlgorithm:
         traces = self.last_bruteforce_trace.setdefault('resolve_trace', [])
         traces.append(self._snapshot_trace_value(entry))
 
+    def _congestion_layers(
+        self,
+        position: int,
+        target: int,
+        blockage: int,
+        depth: int,
+    ) -> tuple[tuple[int, ...], ...]:
+        key = (int(position), int(target), int(blockage), int(depth))
+        cached = self._congestion_geometry_cache.get(key)
+        if cached is not None:
+            return cached
+
+        depth_d_neighbors: list[tuple[int, ...]] = []
+        full_neighbors: set[int] = set()
+        while len(depth_d_neighbors) < depth:
+            if len(depth_d_neighbors) == 0:
+                node_d_neighbors = [
+                    int(node)
+                    for node in self.qccd_machine.get_move_neighbors(position)
+                    if int(node) != int(blockage)
+                ]
+                full_neighbors.update(node_d_neighbors)
+            else:
+                node_d_neighbors = []
+                for pos in depth_d_neighbors[-1]:
+                    for node in self.qccd_machine.get_move_neighbors(int(pos)):
+                        node_int = int(node)
+                        if (
+                            node_int not in full_neighbors
+                            and node_int != int(target)
+                            and node_int != int(blockage)
+                            and node_int != int(position)
+                        ):
+                            node_d_neighbors.append(node_int)
+                            full_neighbors.add(node_int)
+            depth_d_neighbors.append(tuple(self._sorted_unique_ints(node_d_neighbors)))
+
+        cached = tuple(depth_d_neighbors)
+        self._congestion_geometry_cache[key] = cached
+        return cached
+
+    def _congestion_signature(
+        self,
+        position: int,
+        layers: tuple[tuple[int, ...], ...],
+        pgs: PositionState,
+    ) -> tuple[int, ...]:
+        occupied: list[int] = []
+        position_int = int(position)
+        if self._is_occupied(position_int, pgs):
+            occupied.append(position_int)
+        for layer in layers:
+            for node in layer:
+                node_int = int(node)
+                if self._is_occupied(node_int, pgs):
+                    occupied.append(node_int)
+        return tuple(occupied)
+
+    def _congestion_rate_from_layers(
+        self,
+        position: int,
+        layers: tuple[tuple[int, ...], ...],
+        pgs: PositionState,
+    ) -> tuple[float, float]:
+        position_int = int(position)
+        if self._is_occupied(position_int, pgs):
+            congestion_score = 1.0
+        else:
+            congestion_score = 0.0
+
+        layer_weight = 1.0
+        num_neighbors = 0
+        num_occupied_neighbors = 0
+        seen_neighbors: set[int] = set()
+        for layer in layers:
+            for node in layer:
+                node_int = int(node)
+                if self._is_occupied(node_int, pgs):
+                    congestion_score += layer_weight
+                if node_int not in seen_neighbors:
+                    seen_neighbors.add(node_int)
+                    num_neighbors += 1
+                    if self._is_occupied(node_int, pgs):
+                        num_occupied_neighbors += 1
+            layer_weight -= 0.1
+
+        if num_neighbors == 0:
+            return 1.0, np.inf
+        return num_occupied_neighbors / num_neighbors, congestion_score
+
+    def _cached_congestion_rate(
+        self,
+        position: int,
+        target: int,
+        blockage: int,
+        pgs: PositionState,
+        *,
+        depth: int,
+        cache: dict[tuple[object, ...], tuple[float, float]],
+    ) -> tuple[float, float]:
+        layers = self._congestion_layers(position, target, blockage, depth)
+        key = (
+            int(position),
+            int(target),
+            int(blockage),
+            int(depth),
+            self._congestion_signature(position, layers, pgs),
+        )
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        cached = self._congestion_rate_from_layers(position, layers, pgs)
+        cache[key] = cached
+        return cached
+
     def _format_locations(
         self,
         circuit: Circuit,
@@ -469,7 +588,7 @@ class QCCDMappingAlgorithm:
                 self._status(
                     f'Try bruteforce due to multiple steps ({self.iter_count}) to solve one gate',
                 )
-                log_pgs = self._clone_pgs(pgs, slot='forward_log')
+                log_pgs = self._log_pgs(pgs, slot='forward_log')
                 brute_force_moves = self._brute_force_congestion(
                     circuit[self._sorted_points(F)[0]], D, pgs,
                 )
@@ -561,7 +680,7 @@ class QCCDMappingAlgorithm:
                     # Retrieve executable gates giving the current ion assignment `pi`
                     if self.iter_count > 2:
                         self._status('Try bruteforce due to repeated pattern...')
-                        log_pgs = self._clone_pgs(pgs, slot='forward_log')
+                        log_pgs = self._log_pgs(pgs, slot='forward_log')
                         brute_force_moves = self._brute_force_congestion(
                             circuit[self._sorted_points(F)[0]],
                             D,
@@ -606,7 +725,7 @@ class QCCDMappingAlgorithm:
                 brute_force_gate = tuple(
                     int(q) for q in circuit[brute_force_gate_point].location
                 )
-                log_pgs = self._clone_pgs(pgs, slot='forward_log')
+                log_pgs = self._log_pgs(pgs, slot='forward_log')
                 brute_force_moves = self._brute_force_congestion(
                     circuit[brute_force_gate_point],
                     D,
@@ -639,7 +758,7 @@ class QCCDMappingAlgorithm:
                     )
                 continue
             self._status(f'Best move: {best_move}')
-            log_pgs = self._clone_pgs(pgs, slot='forward_log')
+            log_pgs = self._log_pgs(pgs, slot='forward_log')
             self._apply_move(best_move, pgs=pgs)
             leading_moves.append(best_move)
             if capture_forward_trace:
@@ -765,6 +884,7 @@ class QCCDMappingAlgorithm:
             'ion_order': [int(x) for x in ion_order],
             'leading_moves': [],
         }
+        congestion_cache: dict[tuple[object, ...], tuple[float, float]] = {}
         # print("Order selected traps: ", selected_trap_space)
 
         # Move the pos to the selected trap
@@ -780,6 +900,7 @@ class QCCDMappingAlgorithm:
                 int(gate_pos[pos_idx]),
                 int(selected_trap_space[len(selected_trap_space) - 1 - pos_idx]),
                 pgs,
+                congestion_cache=congestion_cache,
             )
             self.last_bruteforce_trace['leading_moves'] = [
                 tuple(int(v) for v in move) for move in leading_moves
@@ -817,6 +938,7 @@ class QCCDMappingAlgorithm:
                         int(self._position_of_qudit(ion_at_segment[0], pgs)),
                         int(available_spaces[0]),
                         pgs,
+                        congestion_cache=congestion_cache,
                     )
                     self.last_bruteforce_trace['leading_moves'] = [
                         tuple(int(v) for v in move) for move in leading_moves
@@ -861,7 +983,7 @@ class QCCDMappingAlgorithm:
                     potential_blockage = [i for i in occupied_neighbors if self.qccd_machine.get_trap_id(i) is None]
                     leading_moves += self._brute_force_move(
                         int(selected_end_point[pos_idx + 1]), int(potential_blockage[0]),
-                        pgs, clearing_ep=True
+                        pgs, clearing_ep=True, congestion_cache=congestion_cache,
                     )
                     self.last_bruteforce_trace['leading_moves'] = [
                         tuple(int(v) for v in move) for move in leading_moves
@@ -882,6 +1004,7 @@ class QCCDMappingAlgorithm:
                 gate_pos[ion_index] = self._position_of_qudit(ion_order[ion_index], pgs)
             self._status(lambda: f'Gate position gate updated to {gate_pos}--------------c')
         self.last_bruteforce_trace['final_assignment'] = self._assignment_from_pgs(pgs)
+        self.last_bruteforce_trace['congestion_cache_entries'] = len(congestion_cache)
         return leading_moves
 
     def _brute_force_move(
@@ -889,7 +1012,8 @@ class QCCDMappingAlgorithm:
             position: int,
             trap_space: int,
             pgs: PositionGraphState,
-            clearing_ep: bool = False
+            clearing_ep: bool = False,
+            congestion_cache: dict[tuple[object, ...], tuple[float, float]] | None = None,
     ) -> list[tuple[int, int]]:
         """
             Physical function
@@ -923,7 +1047,17 @@ class QCCDMappingAlgorithm:
                 ion_pos = path[idx_point]
                 blockage = path[idx_point + 1]
                 # print(f"There is blockage at {blockage}, try to resolve it...")
-                leading_moves += self._resolve_congestion(ion_pos, path, blockage, pgs, ion_pos, blockage)
+                if congestion_cache is None:
+                    congestion_cache = {}
+                leading_moves += self._resolve_congestion(
+                    ion_pos,
+                    path,
+                    blockage,
+                    pgs,
+                    ion_pos,
+                    blockage,
+                    congestion_cache=congestion_cache,
+                )
                 self._apply_and_append_move(
                     leading_moves,
                     possible_move,
@@ -948,12 +1082,15 @@ class QCCDMappingAlgorithm:
             original_blockage: int,
             num_call: int = 0,
             clearing_ep: bool = False,
+            congestion_cache: dict[tuple[object, ...], tuple[float, float]] | None = None,
     ) -> list[tuple[int, int]]:
         """
             Physical function
         """
         if num_call > 100:
             raise ValueError("Too many repetitive call...")
+        if congestion_cache is None:
+            congestion_cache = {}
         # print(
         #     f"Trying to resolve blockage {blockage} from the target {target} path with ion assignment {ion_assignment}")
         _logger.debug(
@@ -1012,8 +1149,17 @@ class QCCDMappingAlgorithm:
         # print(f"Potential blockage neighbors: {potential_blockage}")
         # Todo: Instead of simply use the first element, can we do sth better? (DONE)
         if blockage_neighbors:
-            congestion = np.array([self.congestion_rate(blockage_neighbor, target, blockage, pgs, depth=self.qccd_machine.max_ion_capacity - 1 + num_call) for
-                                         blockage_neighbor in blockage_neighbors])
+            congestion = np.array([
+                self._cached_congestion_rate(
+                    blockage_neighbor,
+                    target,
+                    blockage,
+                    pgs,
+                    depth=self.qccd_machine.max_ion_capacity - 1 + num_call,
+                    cache=congestion_cache,
+                )
+                for blockage_neighbor in blockage_neighbors
+            ])
             _logger.debug(f"Congestion: {congestion}")
             congestion_rates = congestion[:, 0]
             congestion_scores = congestion[:, 1]
@@ -1045,8 +1191,17 @@ class QCCDMappingAlgorithm:
             # print("Current ion assignment: ", ion_assignment)
             return leading_moves
         elif potential_blockage:
-            congestion = np.array([self.congestion_rate(blockage_neighbor, target, blockage, pgs, depth=self.qccd_machine.max_ion_capacity - 1 + num_call) for
-                                        blockage_neighbor in potential_blockage])
+            congestion = np.array([
+                self._cached_congestion_rate(
+                    blockage_neighbor,
+                    target,
+                    blockage,
+                    pgs,
+                    depth=self.qccd_machine.max_ion_capacity - 1 + num_call,
+                    cache=congestion_cache,
+                )
+                for blockage_neighbor in potential_blockage
+            ])
             congestion_rates = congestion[:, 0]
             congestion_scores = congestion[:, 1]
             # print(f"Congestion rates: {congestion_rates}")
@@ -1069,11 +1224,19 @@ class QCCDMappingAlgorithm:
                 resolve_entry['fallback'] = 'reverse_target'
                 self._append_resolve_trace(resolve_entry)
                 # print(f"As the best path leads to deadend, we choose to re-add the target to potential neighbor")
-                if self.congestion_rate(target, target, blockage, pgs, depth=self.qccd_machine.max_ion_capacity - 1 + num_call)[0] <= congestion_rates[choosen_idx]:
+                if self._cached_congestion_rate(
+                    target,
+                    target,
+                    blockage,
+                    pgs,
+                    depth=self.qccd_machine.max_ion_capacity - 1 + num_call,
+                    cache=congestion_cache,
+                )[0] <= congestion_rates[choosen_idx]:
                     # Reverse move (treat target as blockage and vice versa)
                     # print(f"Blockage: {blockage}, target: {target}")
                     leading_moves += self._resolve_congestion(blockage, [], target, pgs,
-                                                                    original_target, original_blockage, num_call + 1)
+                                                                    original_target, original_blockage, num_call + 1,
+                                                                    congestion_cache=congestion_cache)
                     self._apply_and_append_move(
                         leading_moves,
                         (blockage, target),
@@ -1089,7 +1252,8 @@ class QCCDMappingAlgorithm:
                     if (self.qccd_machine.get_trap_id(blockage) != self.qccd_machine.get_trap_id(target)
                             and self.qccd_machine.get_trap_id(blockage) is None):
                         leading_moves += self._resolve_congestion(target, [], blockage, pgs,
-                                                                  original_target, original_blockage, num_call+1)
+                                                                  original_target, original_blockage, num_call+1,
+                                                                  congestion_cache=congestion_cache)
                     self._apply_and_append_move(
                         leading_moves,
                         (blockage, target),
@@ -1106,7 +1270,8 @@ class QCCDMappingAlgorithm:
                 #print(f"Choose to resolve {potential_blockage[choosen_idx]}")
                 leading_moves += self._resolve_congestion(blockage, path, potential_blockage[choosen_idx],
                                                           pgs, original_target, original_blockage,
-                                                          num_call + 1)
+                                                          num_call + 1,
+                                                          congestion_cache=congestion_cache)
                 self._apply_and_append_move(
                     leading_moves,
                     (blockage, potential_blockage[choosen_idx]),
@@ -1125,7 +1290,8 @@ class QCCDMappingAlgorithm:
             # print(f"As the best path leads to deadend, we choose to re-add the target to potential neighbor")
             # print(f"Blockage: {blockage}, target: {target}")
             leading_moves += self._resolve_congestion(blockage, [], target, pgs,
-                                                      original_target, original_blockage, num_call+1)
+                                                      original_target, original_blockage, num_call+1,
+                                                      congestion_cache=congestion_cache)
             self._apply_and_append_move(
                 leading_moves,
                 (blockage, target),
@@ -1141,7 +1307,8 @@ class QCCDMappingAlgorithm:
             if (self.qccd_machine.get_trap_id(blockage) != self.qccd_machine.get_trap_id(target)
                     and self.qccd_machine.get_trap_id(blockage) is None):
                 leading_moves += self._resolve_congestion(target, [], blockage, pgs,
-                                                          original_target, original_blockage, num_call+1)
+                                                          original_target, original_blockage, num_call+1,
+                                                          congestion_cache=congestion_cache)
             self._apply_and_append_move(
                 leading_moves,
                 (blockage, target),
@@ -1159,48 +1326,8 @@ class QCCDMappingAlgorithm:
                         blockage: int,
                         pgs: PositionGraphState,
                         depth: int = 2):
-        # print(f"Position: {position}")
-        # print(f"Blockage: {blockage}")
-        depth_d_neighbors = []
-        full_neighbors = []
-        while len(depth_d_neighbors) < depth:
-            if len(depth_d_neighbors) == 0:
-                node_d_neighbors = self.qccd_machine.get_move_neighbors(position)
-                if blockage in node_d_neighbors:
-                    node_d_neighbors.remove(blockage)
-                full_neighbors += node_d_neighbors
-            else:
-                node_d_neighbors = []
-                for pos in depth_d_neighbors[-1]:
-                    for node in self.qccd_machine.get_move_neighbors(pos):
-                        if node not in full_neighbors and node != target and node != blockage and node != position:
-                            node_d_neighbors.append(node)
-                            full_neighbors.append(node)
-            depth_d_neighbors.append(self._sorted_unique_ints(node_d_neighbors))
-        # print("Depth d neighbors:", depth_d_neighbors)
-        num_neighbors = 0
-        num_occupied_neighbors = 0
-        if self._is_occupied(position, pgs):
-            congestion_score = 1.0
-        else:
-            congestion_score = 0.0
-        layer_weight = 1
-        for layer in depth_d_neighbors:
-            for node in layer:
-                if self._is_occupied(node, pgs):
-                    congestion_score += 1 * layer_weight
-            layer_weight -= .1
-        # print(f"Congestion score: {congestion_score}")
-        neighbors = list(itertools.chain.from_iterable(depth_d_neighbors))
-        neighbors = set(neighbors)
-        # print(f"d_neighbors: {neighbors}")
-        for neighbor in neighbors:
-            num_neighbors += 1
-            if self._is_occupied(neighbor, pgs):
-                num_occupied_neighbors += 1
-        if num_neighbors == 0:
-            return 1.0, np.inf
-        return num_occupied_neighbors / num_neighbors, congestion_score
+        layers = self._congestion_layers(position, target, blockage, depth)
+        return self._congestion_rate_from_layers(position, layers, pgs)
 
     ######################################################################################
     def backward_pass(

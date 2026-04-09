@@ -1,6 +1,4 @@
 from __future__ import annotations
-
-import copy
 import logging
 from typing import Sequence
 
@@ -28,6 +26,7 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         decay_reset_on_gate: bool = True,
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
+        cg_compatibility_mode: bool = False,
     ) -> None:
         if not isinstance(template_pgs, PositionGraphState):
             raise TypeError(
@@ -42,7 +41,7 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         if total_passes < 1:
             raise ValueError('Total passes must be a positive integer.')
 
-        self.template_pgs = copy.deepcopy(template_pgs)
+        self.template_pgs = template_pgs.copy()
         self.total_passes = total_passes
 
         super().__init__(
@@ -51,6 +50,7 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
             decay_reset_on_gate=decay_reset_on_gate,
             extended_set_size=extended_set_size,
             extended_set_weight=extended_set_weight,
+            cg_compatibility_mode=cg_compatibility_mode,
         )
 
     def _build_pgs_from_mapping(
@@ -58,10 +58,8 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         mapping: Sequence[int],
         num_circuit_qudits: int,
     ) -> PositionGraphState:
-        pgs = copy.deepcopy(self.template_pgs)
-
-        pgs._logical_to_position[:] = -1
-        pgs._position_to_logical[:] = -1
+        pgs = self.template_pgs.copy()
+        pgs.clear_assignments()
 
         if len(mapping) != num_circuit_qudits:
             raise ValueError(

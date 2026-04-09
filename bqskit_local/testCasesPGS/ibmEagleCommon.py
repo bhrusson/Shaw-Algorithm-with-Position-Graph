@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from bqskit.ir.circuit import Circuit
 from bqskit.ir.gates import CNOTGate
+from bqskit.ir.gates import HGate
 from bqskit_local.position.graph import (
     EdgeCapability,
     EdgeLabel,
@@ -59,70 +60,253 @@ IBM_EAGLE_UNDIRECTED_COUPLING_MAP = sorted({
     if int(u) != int(v)
 })
 
+IBM_EAGLE_BASE_GATE_PAIRS = [
+    # Long-range fanout from the low end of the device.
+    (0, 126),
+    (0, 14),
+    (0, 41),
+    (0, 71),
+    (0, 110),
 
-def build_eagle_test_circuit() -> Circuit:
-    circ = Circuit(IBM_EAGLE_NUM_QUDITS)
+    # Walk a path through the middle of the machine.
+    (14, 18),
+    (18, 33),
+    (33, 39),
+    (39, 53),
+    (53, 71),
+    (71, 90),
+    (90, 110),
+    (110, 126),
 
-    # A moderately deep nonlocal pattern to exercise layout and routing
-    # without exploding runtime like an all-pairs benchmark.
-    gate_pairs = [
-        # Long-range fanout from the low end of the device.
-        (0, 126),
-        (0, 14),
-        (0, 41),
-        (0, 71),
-        (0, 110),
+    # Cross-links that force alternative routing choices.
+    (14, 54),
+    (18, 58),
+    (33, 72),
+    (39, 81),
+    (41, 54),
+    (45, 64),
+    (58, 72),
+    (62, 81),
+    (66, 85),
+    (71, 91),
+    (74, 89),
+    (79, 98),
+    (83, 102),
+    (87, 106),
+    (94, 118),
+    (98, 122),
+    (102, 126),
 
-        # Walk a path through the middle of the machine.
-        (14, 18),
-        (18, 33),
-        (33, 39),
-        (39, 53),
-        (53, 71),
-        (71, 90),
-        (90, 110),
-        (110, 126),
+    # Reverse pressure from the high end back into the graph.
+    (126, 112),
+    (126, 73),
+    (126, 45),
+    (112, 87),
+    (87, 45),
+    (73, 41),
 
-        # Cross-links that force alternative routing choices.
-        (14, 54),
-        (18, 58),
-        (33, 72),
-        (39, 81),
-        (41, 54),
-        (45, 64),
-        (58, 72),
-        (62, 81),
-        (66, 85),
-        (71, 91),
-        (74, 89),
-        (79, 98),
-        (83, 102),
-        (87, 106),
-        (94, 118),
-        (98, 122),
-        (102, 126),
+    # A few local gates to create interleaving opportunities.
+    (20, 21),
+    (41, 42),
+    (58, 59),
+    (79, 80),
+    (100, 101),
+    (121, 122),
+]
 
-        # Reverse pressure from the high end back into the graph.
-        (126, 112),
-        (126, 73),
-        (126, 45),
-        (112, 87),
-        (87, 45),
-        (73, 41),
+IBM_EAGLE_MIXER_PAIRS = [
+    (4, 15),
+    (12, 17),
+    (24, 34),
+    (28, 35),
+    (41, 53),
+    (45, 54),
+    (58, 71),
+    (62, 72),
+    (79, 91),
+    (83, 92),
+    (96, 109),
+    (100, 110),
+    (104, 111),
+    (118, 122),
+]
 
-        # A few local gates to create interleaving opportunities.
-        (20, 21),
-        (41, 42),
-        (58, 59),
-        (79, 80),
-        (100, 101),
-        (121, 122),
+IBM_EAGLE_LANDMARKS = [
+    0, 14, 18, 33, 41, 45, 53, 58, 62, 71, 79, 83, 87, 94, 100, 110, 118, 126,
+]
+
+IBM_EAGLE_LONG_RANGE_PAIRS = [
+    (0, 126),
+    (0, 110),
+    (0, 94),
+    (14, 118),
+    (18, 126),
+    (33, 110),
+    (41, 118),
+    (45, 126),
+    (53, 100),
+    (58, 122),
+    (62, 126),
+    (71, 110),
+    (79, 126),
+    (83, 118),
+    (87, 122),
+    (94, 126),
+    (100, 14),
+    (110, 18),
+    (118, 41),
+    (126, 53),
+]
+
+IBM_EAGLE_CROSS_REGION_PAIRS = [
+    (14, 71),
+    (18, 79),
+    (33, 87),
+    (39, 94),
+    (41, 100),
+    (45, 110),
+    (53, 118),
+    (58, 126),
+    (62, 91),
+    (71, 102),
+    (74, 110),
+    (79, 122),
+    (83, 126),
+    (87, 112),
+    (94, 62),
+    (98, 71),
+    (102, 79),
+    (106, 83),
+]
+
+
+def _stripe_pairs(
+    offset: int,
+    *,
+    reverse_every_other: bool = False,
+) -> list[tuple[int, int]]:
+    pairs: list[tuple[int, int]] = []
+    edges = IBM_EAGLE_UNDIRECTED_COUPLING_MAP[offset::2]
+    for index, (u, v) in enumerate(edges):
+        if reverse_every_other and index % 2 == 1:
+            pairs.append((v, u))
+        else:
+            pairs.append((u, v))
+    return pairs
+
+
+def _cycle_pairs(nodes: list[int], rotation: int) -> list[tuple[int, int]]:
+    size = len(nodes)
+    return [
+        (nodes[i], nodes[(i + rotation) % size])
+        for i in range(size)
+        if nodes[i] != nodes[(i + rotation) % size]
     ]
 
-    for control, target in gate_pairs:
-        circ.append_gate(CNOTGate(), (control, target))
+
+def build_eagle_test_circuit(
+    repetitions: int = 1,
+    include_single_qudit_layer: bool = False,
+    mirrored: bool = False,
+    include_mixers: bool = False,
+) -> Circuit:
+    if repetitions < 1:
+        raise ValueError('repetitions must be positive.')
+
+    circ = Circuit(IBM_EAGLE_NUM_QUDITS)
+    if include_single_qudit_layer:
+        for qudit in range(IBM_EAGLE_NUM_QUDITS):
+            circ.append_gate(HGate(), (qudit,))
+
+    for repetition in range(repetitions):
+        if mirrored and repetition % 2 == 1:
+            gate_pairs = [(target, control) for control, target in reversed(IBM_EAGLE_BASE_GATE_PAIRS)]
+        else:
+            gate_pairs = IBM_EAGLE_BASE_GATE_PAIRS
+
+        for control, target in gate_pairs:
+            circ.append_gate(CNOTGate(), (control, target))
+
+        if include_mixers and repetition != repetitions - 1:
+            for control, target in IBM_EAGLE_MIXER_PAIRS:
+                circ.append_gate(CNOTGate(), (control, target))
 
     return circ
+
+
+def build_eagle_stress_circuit(
+    repetitions: int = 4,
+) -> Circuit:
+    return build_eagle_test_circuit(
+        repetitions=repetitions,
+        include_single_qudit_layer=True,
+        mirrored=True,
+        include_mixers=True,
+    )
+
+
+def build_eagle_challenge_circuit(
+    rounds: int = 6,
+) -> Circuit:
+    if rounds < 1:
+        raise ValueError('rounds must be positive.')
+
+    circ = Circuit(IBM_EAGLE_NUM_QUDITS)
+
+    for qudit in range(IBM_EAGLE_NUM_QUDITS):
+        circ.append_gate(HGate(), (qudit,))
+
+    for round_index in range(rounds):
+        if round_index % 2 == 0:
+            base_pairs = IBM_EAGLE_BASE_GATE_PAIRS
+            long_pairs = IBM_EAGLE_LONG_RANGE_PAIRS
+            cross_pairs = IBM_EAGLE_CROSS_REGION_PAIRS
+        else:
+            base_pairs = [(target, control) for control, target in reversed(IBM_EAGLE_BASE_GATE_PAIRS)]
+            long_pairs = [(target, control) for control, target in reversed(IBM_EAGLE_LONG_RANGE_PAIRS)]
+            cross_pairs = [(target, control) for control, target in reversed(IBM_EAGLE_CROSS_REGION_PAIRS)]
+
+        for control, target in base_pairs:
+            circ.append_gate(CNOTGate(), (control, target))
+
+        for control, target in long_pairs:
+            circ.append_gate(CNOTGate(), (control, target))
+
+        for control, target in cross_pairs:
+            circ.append_gate(CNOTGate(), (control, target))
+
+        for control, target in _cycle_pairs(IBM_EAGLE_LANDMARKS, 3 + (round_index % 4)):
+            circ.append_gate(CNOTGate(), (control, target))
+
+        for control, target in _stripe_pairs(round_index % 2, reverse_every_other=(round_index % 2 == 1)):
+            circ.append_gate(CNOTGate(), (control, target))
+
+        if round_index != rounds - 1:
+            for qudit in range(round_index % 2, IBM_EAGLE_NUM_QUDITS, 2):
+                circ.append_gate(HGate(), (qudit,))
+
+            for control, target in IBM_EAGLE_MIXER_PAIRS:
+                if round_index % 2 == 1:
+                    circ.append_gate(CNOTGate(), (target, control))
+                else:
+                    circ.append_gate(CNOTGate(), (control, target))
+
+    return circ
+
+
+def build_named_eagle_circuit(workload: str) -> Circuit:
+    workload_key = workload.strip().lower()
+
+    if workload_key == 'test':
+        return build_eagle_test_circuit()
+
+    if workload_key == 'stress':
+        return build_eagle_stress_circuit()
+
+    if workload_key == 'challenge':
+        return build_eagle_challenge_circuit()
+
+    raise ValueError(f'Unknown Eagle workload: {workload}.')
 
 
 def build_eagle_position_graph() -> PositionGraph:
