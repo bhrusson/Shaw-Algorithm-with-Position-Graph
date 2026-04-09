@@ -1,0 +1,213 @@
+command: C:\Python314\python.exe -m bqskit.shuttling.qccd.compare_shaw_grid_cg_pgs QFT_wsq_16_compiled --trap-capacity 3 --num-layout-passes 2 --gate-type FM --seed 1234 --grid-cols 2 --grid-rows 2 --routing-mode bruteforce --stage full --window 6 --pgs-move-path-modes hops
+duration_s: 31.404408
+timed_out: False
+return_code: 0
+
+--- stdout ---
+Creating a QCCD machine ...
+QCCD physical machine:
+### Traps ### 
+Trap(id='trap_0', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_1', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_2', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_6', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_7', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_8', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+### Junctions ### 
+Junction(id='junction_0')
+Junction(id='junction_1')
+Junction(id='junction_2')
+Junction(id='junction_3')
+Junction(id='junction_4')
+Junction(id='junction_5')
+### Segments ### 
+Segment(id='segment_0', left=Trap(id='trap_0', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_0'))
+Segment(id='segment_1', left=Trap(id='trap_1', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_1'))
+Segment(id='segment_2', left=Trap(id='trap_2', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_2'))
+Segment(id='segment_3', left=Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_3'))
+Segment(id='segment_4', left=Junction(id='junction_0'), right=Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_5', left=Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_4'))
+Segment(id='segment_6', left=Junction(id='junction_1'), right=Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_7', left=Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_5'))
+Segment(id='segment_8', left=Junction(id='junction_2'), right=Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_9', left=Junction(id='junction_3'), right=Trap(id='trap_6', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_10', left=Junction(id='junction_4'), right=Trap(id='trap_7', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_11', left=Junction(id='junction_5'), right=Trap(id='trap_8', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_12', left=Junction(id='junction_0'), right=Junction(id='junction_1'))
+Segment(id='segment_13', left=Junction(id='junction_1'), right=Junction(id='junction_2'))
+Segment(id='segment_14', left=Junction(id='junction_3'), right=Junction(id='junction_4'))
+Segment(id='segment_15', left=Junction(id='junction_4'), right=Junction(id='junction_5'))
+Finished creating the QCCD physical machine.
+Creating a QCCD machine ...
+QCCD physical machine:
+### Traps ### 
+Trap(id='trap_0', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_1', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_2', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_6', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_7', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_8', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+### Junctions ### 
+Junction(id='junction_0')
+Junction(id='junction_1')
+Junction(id='junction_2')
+Junction(id='junction_3')
+Junction(id='junction_4')
+Junction(id='junction_5')
+### Segments ### 
+Segment(id='segment_0', left=Trap(id='trap_0', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_0'))
+Segment(id='segment_1', left=Trap(id='trap_1', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_1'))
+Segment(id='segment_2', left=Trap(id='trap_2', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_2'))
+Segment(id='segment_3', left=Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_3'))
+Segment(id='segment_4', left=Junction(id='junction_0'), right=Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_5', left=Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_4'))
+Segment(id='segment_6', left=Junction(id='junction_1'), right=Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_7', left=Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_5'))
+Segment(id='segment_8', left=Junction(id='junction_2'), right=Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_9', left=Junction(id='junction_3'), right=Trap(id='trap_6', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_10', left=Junction(id='junction_4'), right=Trap(id='trap_7', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_11', left=Junction(id='junction_5'), right=Trap(id='trap_8', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_12', left=Junction(id='junction_0'), right=Junction(id='junction_1'))
+Segment(id='segment_13', left=Junction(id='junction_1'), right=Junction(id='junction_2'))
+Segment(id='segment_14', left=Junction(id='junction_3'), right=Junction(id='junction_4'))
+Segment(id='segment_15', left=Junction(id='junction_4'), right=Junction(id='junction_5'))
+Finished creating the QCCD physical machine.
+Initial ion assignment: {0: 24, 1: 14, 2: 3, 3: 0, 4: 2, 5: 18, 6: 1, 7: 22, 8: 26, 9: 11, 10: 7, 11: 23, 12: 15, 13: 12, 14: 25, 15: 5}
+Routing mode: bruteforce
+Stage: full
+Creating a QCCD machine ...
+QCCD physical machine:
+### Traps ### 
+Trap(id='trap_0', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_1', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_2', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_6', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_7', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_8', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+### Junctions ### 
+Junction(id='junction_0')
+Junction(id='junction_1')
+Junction(id='junction_2')
+Junction(id='junction_3')
+Junction(id='junction_4')
+Junction(id='junction_5')
+### Segments ### 
+Segment(id='segment_0', left=Trap(id='trap_0', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_0'))
+Segment(id='segment_1', left=Trap(id='trap_1', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_1'))
+Segment(id='segment_2', left=Trap(id='trap_2', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_2'))
+Segment(id='segment_3', left=Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_3'))
+Segment(id='segment_4', left=Junction(id='junction_0'), right=Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_5', left=Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_4'))
+Segment(id='segment_6', left=Junction(id='junction_1'), right=Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_7', left=Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_5'))
+Segment(id='segment_8', left=Junction(id='junction_2'), right=Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_9', left=Junction(id='junction_3'), right=Trap(id='trap_6', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_10', left=Junction(id='junction_4'), right=Trap(id='trap_7', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_11', left=Junction(id='junction_5'), right=Trap(id='trap_8', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_12', left=Junction(id='junction_0'), right=Junction(id='junction_1'))
+Segment(id='segment_13', left=Junction(id='junction_1'), right=Junction(id='junction_2'))
+Segment(id='segment_14', left=Junction(id='junction_3'), right=Junction(id='junction_4'))
+Segment(id='segment_15', left=Junction(id='junction_4'), right=Junction(id='junction_5'))
+Finished creating the QCCD physical machine.
+Creating a QCCD machine ...
+QCCD physical machine:
+### Traps ### 
+Trap(id='trap_0', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_1', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_2', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_6', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_7', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+Trap(id='trap_8', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True)
+### Junctions ### 
+Junction(id='junction_0')
+Junction(id='junction_1')
+Junction(id='junction_2')
+Junction(id='junction_3')
+Junction(id='junction_4')
+Junction(id='junction_5')
+### Segments ### 
+Segment(id='segment_0', left=Trap(id='trap_0', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_0'))
+Segment(id='segment_1', left=Trap(id='trap_1', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_1'))
+Segment(id='segment_2', left=Trap(id='trap_2', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_2'))
+Segment(id='segment_3', left=Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_3'))
+Segment(id='segment_4', left=Junction(id='junction_0'), right=Trap(id='trap_3', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_5', left=Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_4'))
+Segment(id='segment_6', left=Junction(id='junction_1'), right=Trap(id='trap_4', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_7', left=Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True), right=Junction(id='junction_5'))
+Segment(id='segment_8', left=Junction(id='junction_2'), right=Trap(id='trap_5', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_9', left=Junction(id='junction_3'), right=Trap(id='trap_6', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_10', left=Junction(id='junction_4'), right=Trap(id='trap_7', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_11', left=Junction(id='junction_5'), right=Trap(id='trap_8', max_num_ions=3, initial_num_ions=0, executable=True, measureable=True))
+Segment(id='segment_12', left=Junction(id='junction_0'), right=Junction(id='junction_1'))
+Segment(id='segment_13', left=Junction(id='junction_1'), right=Junction(id='junction_2'))
+Segment(id='segment_14', left=Junction(id='junction_3'), right=Junction(id='junction_4'))
+Segment(id='segment_15', left=Junction(id='junction_4'), right=Junction(id='junction_5'))
+Finished creating the QCCD physical machine.
+Summary:
+  CG            compile_time_s=20.092710 runtime_us=60572.000 fidelity=0.000001829252 instructions=1001 execute_rounds=69 move_rounds=376
+  PGS           compile_time_s=6.091041 runtime_us=46308.000 fidelity=0.000001829252 instructions=1001 execute_rounds=69 move_rounds=376
+First divergence index: 0
+First state divergence index: none
+
+Index 0
+  CG raw : ['Execute at [13, 14, 15]', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 13, 14: 14, 15: 12}']
+  CG norm: ('Execute', [13, 14, 15])
+  PGS raw : ['Execute at [13, 14, 12]', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 13, 14: 14, 15: 12}']
+  PGS norm: ('Execute', [12, 13, 14])
+  CG next assignment : {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 13, 14: 14, 15: 12}
+  PGS next assignment: {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 13, 14: 14, 15: 12}
+
+Index 1
+  CG raw : ['Move (12, 13)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 14, 15: 13}', 'cost: 4.2e-05 seconds']
+  CG norm: ('Move', (12, 13))
+  PGS raw : ['Move (12, 13)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 14, 15: 13}', 'cost: 4.2e-05 seconds']
+  PGS norm: ('Move', (12, 13))
+  CG next assignment : {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 14, 15: 13}
+  PGS next assignment: {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 14, 15: 13}
+
+Index 2
+  CG raw : ['Move (13, 14)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 14}', 'cost: 4.2e-05 seconds']
+  CG norm: ('Move', (13, 14))
+  PGS raw : ['Move (13, 14)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 14}', 'cost: 4.2e-05 seconds']
+  PGS norm: ('Move', (13, 14))
+  CG next assignment : {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 14}
+  PGS next assignment: {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 14}
+
+Index 3
+  CG raw : ['Move (14, 32)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 32}', 'cost: 8.5e-05 seconds']
+  CG norm: ('Move', (14, 32))
+  PGS raw : ['Move (14, 32)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 32}', 'cost: 8.5e-05 seconds']
+  PGS norm: ('Move', (14, 32))
+  CG next assignment : {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 32}
+  PGS next assignment: {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 32}
+
+Index 4
+  CG raw : ['Move (32, 37)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 37}', 'cost: 0.000125 seconds']
+  CG norm: ('Move', (32, 37))
+  PGS raw : ['Move (32, 37)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 37}', 'cost: 0.000125 seconds']
+  PGS norm: ('Move', (32, 37))
+  CG next assignment : {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 37}
+  PGS next assignment: {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 37}
+
+Index 5
+  CG raw : ['Move (37, 21)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 21}', 'cost: 8.5e-05 seconds']
+  CG norm: ('Move', (37, 21))
+  PGS raw : ['Move (37, 21)', '{0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 21}', 'cost: 8.5e-05 seconds']
+  PGS norm: ('Move', (37, 21))
+  CG next assignment : {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 21}
+  PGS next assignment: {0: 18, 1: 24, 2: 25, 3: 11, 4: 10, 5: 0, 6: 1, 7: 38, 8: 35, 9: 16, 10: 15, 11: 23, 12: 22, 13: 12, 14: 13, 15: 21}
+
+--- stderr ---
+

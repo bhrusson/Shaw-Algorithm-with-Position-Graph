@@ -1,0 +1,48 @@
+{
+  "created_at": "2026-04-01T17:25:20.094787",
+  "python": "C:\\Python314\\python.exe",
+  "args": {
+    "circuits": [
+      "QFT_wsq_16_compiled",
+      "QFT_wsq_32_compiled"
+    ],
+    "trap_capacity": 3,
+    "num_layout_passes": 2,
+    "gate_type": "FM",
+    "seed": 1234,
+    "routing_mode": "bruteforce",
+    "stage": "full",
+    "cg_congestion_rate_override": null,
+    "pgs_congestion_rate_override": null,
+    "pgs_move_path_modes": [
+      "hops"
+    ],
+    "grid_strategy": "min-square",
+    "grid_cols": null,
+    "grid_rows": null,
+    "output_root": "bqskit/shuttling/qccd/batch_results",
+    "run_name": "qft_sweep_dryrun",
+    "timeout_seconds": 0,
+    "cooldown_seconds": 0.0,
+    "verbose_status": false,
+    "print_paths": false,
+    "window": 6,
+    "continue_on_error": false,
+    "dry_run": true
+  },
+  "missing_benchmarks": [],
+  "cases": [
+    {
+      "benchmark": "QFT_wsq_16_compiled",
+      "grid_cols": 2,
+      "grid_rows": 2,
+      "num_qudits": 16
+    },
+    {
+      "benchmark": "QFT_wsq_32_compiled",
+      "grid_cols": 3,
+      "grid_rows": 3,
+      "num_qudits": 32
+    }
+  ]
+}

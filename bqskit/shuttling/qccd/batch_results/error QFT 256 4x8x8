@@ -1,0 +1,16 @@
+ python -m bqskit.shuttling.qccd.run_grid_pgs_shaw QFT_wsq_256_compiled --trap-capacity 4 --grid-cols 7 --grid-rows 7 --save-qasm --save-pkl --summary-only
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\bhrusson\Documents\bqskit_shuttling\bqskit-shuttling\bqskit\shuttling\qccd\run_grid_pgs_shaw.py", line 299, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\bhrusson\Documents\bqskit_shuttling\bqskit-shuttling\bqskit\shuttling\qccd\run_grid_pgs_shaw.py", line 225, in main
+    schedule_result = schedule_qccd_from_instructions_v3(
+        instruction_lst=data['instruction_list'],
+    ...<5 lines>...
+        execute_location_mode='physical',
+    )
+  File "C:\Users\bhrusson\Documents\bqskit_shuttling\bqskit-shuttling\bqskit\shuttling\QCCD_schedule_new.py", line 581, in schedule_qccd_from_instructions_v3
+    raise ValueError(f"Move ({u}, {v}) is not an edge in machine_model.coupling_graph.")
+ValueError: Move (99, 389) is not an edge in machine_model.coupling_graph.
