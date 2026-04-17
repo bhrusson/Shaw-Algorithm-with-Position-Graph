@@ -7,7 +7,7 @@ import os
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
-from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
+from bqskit.shuttling.qccd.QCCD_cached_mapping import QCCDMappingAlgorithm
 
 _logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def _capture_layout_snapshots_enabled() -> bool:
     )
 
 
-class QCCDLayoutPass(QCCDMappingAlgorithm, BasePass):
+class QCCDCachedLayoutPass(QCCDMappingAlgorithm, BasePass):
     """Layout algorithm using permutation-aware mapping."""
 
     def __init__(

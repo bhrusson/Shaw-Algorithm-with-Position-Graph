@@ -1,7 +1,9 @@
 from .layout.pam import QCCDPAMLayoutPass
 from .layout.naive import QCCDLayoutPass
+from .layout.cached import QCCDCachedLayoutPass
 from .routing.pam import QCCDPAMRoutingPass
 from .routing.naive import QCCDRoutingPass
+from .routing.cached import QCCDCachedRoutingPass
 
 try:
     from .layout.pam_pgs import QCCDPAMLayoutPassPGS

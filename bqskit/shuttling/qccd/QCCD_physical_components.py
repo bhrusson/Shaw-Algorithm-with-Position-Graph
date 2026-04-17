@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 import numpy as np
 from typing import NamedTuple
 
@@ -187,6 +188,12 @@ class QCCD_physical_machine:
         """
             Print QCCD physical machine.
         """
+        if os.environ.get('BQSKIT_QCCD_PRINT_MACHINE', '1').lower() in (
+            '0',
+            'false',
+            'no',
+        ):
+            return
         print("QCCD physical machine:")
         print("### Traps ### ")
         for trap in self.trap_list:

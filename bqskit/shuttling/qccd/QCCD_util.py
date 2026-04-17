@@ -1,7 +1,16 @@
 import math
+import os
 from bqskit.ir import Circuit
 from bqskit.ir.gates import CNOTGate, XGate
 from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
+
+
+def _machine_logging_enabled() -> bool:
+    return os.environ.get('BQSKIT_QCCD_PRINT_MACHINE', '1').lower() not in (
+        '0',
+        'false',
+        'no',
+    )
 
 def create_grid_physical_machine(
         num_cols: int,
@@ -21,7 +30,8 @@ def create_grid_physical_machine(
                                              initial_ions=initial_ions,
                                              executable_traps=executable,
                                              measurable_traps=measurable)
-    print("Creating a QCCD machine ...")
+    if _machine_logging_enabled():
+        print("Creating a QCCD machine ...")
     for row_idx in range(num_rows + 1):
         for col_idx in range(num_cols + 1):
             if row_idx != num_rows:
@@ -36,8 +46,9 @@ def create_grid_physical_machine(
             physical_machine.add_segment(left=physical_machine.junction_list[row_idx * (num_cols + 1) + col_idx],
                                          right=physical_machine.junction_list[row_idx * (num_cols + 1) + col_idx + 1])
 
-    physical_machine.print_physical_machine()
-    print("Finished creating the QCCD physical machine.")
+    if _machine_logging_enabled():
+        physical_machine.print_physical_machine()
+        print("Finished creating the QCCD physical machine.")
     return physical_machine
 
 def create_testing_physical_machine(
@@ -55,7 +66,8 @@ def create_testing_physical_machine(
                                                  max_traps_size=max_traps_size,
                                                  executable_traps=executable,
                                                  measurable_traps=measurable)
-        print("Creating a QCCD machine ...")
+        if _machine_logging_enabled():
+            print("Creating a QCCD machine ...")
         # print("Adding segments ...")
         physical_machine.add_segment(left=physical_machine.trap_list[0],
                                      right=physical_machine.junction_list[0])
@@ -67,7 +79,8 @@ def create_testing_physical_machine(
                                      right=physical_machine.junction_list[1])
         physical_machine.add_segment(left=physical_machine.trap_list[3],
                                      right=physical_machine.junction_list[1])
-        physical_machine.print_physical_machine()
+        if _machine_logging_enabled():
+            physical_machine.print_physical_machine()
     elif type == "H2":
         num_traps = 12
         max_traps_size = [trap_capacity] * 10
@@ -81,7 +94,8 @@ def create_testing_physical_machine(
                                                  max_traps_size=max_traps_size,
                                                  executable_traps=executable,
                                                  measurable_traps=measurable)
-        print("Creating a QCCD machine ...")
+        if _machine_logging_enabled():
+            print("Creating a QCCD machine ...")
         """ Bottom 4 trap """
         physical_machine.add_segment(left=physical_machine.trap_list[0],
                                      right=physical_machine.trap_list[1])
@@ -110,7 +124,8 @@ def create_testing_physical_machine(
                                      right=physical_machine.trap_list[11])
         physical_machine.add_segment(left=physical_machine.trap_list[11],
                                      right=physical_machine.trap_list[9])
-        physical_machine.print_physical_machine()
+        if _machine_logging_enabled():
+            physical_machine.print_physical_machine()
     elif type == "Helios":
         num_traps = 9
         max_traps_size = [trap_capacity] * 8
@@ -123,7 +138,8 @@ def create_testing_physical_machine(
                                                  max_traps_size=max_traps_size,
                                                  executable_traps=executable,
                                                  measurable_traps=measurable)
-        print("Creating a QCCD machine ...")
+        if _machine_logging_enabled():
+            print("Creating a QCCD machine ...")
         """ Bottom 4 trap """
         physical_machine.add_segment(left=physical_machine.trap_list[0],
                                      right=physical_machine.trap_list[1])
@@ -148,7 +164,8 @@ def create_testing_physical_machine(
                                      right=physical_machine.junction_list[0])
         physical_machine.add_segment(left=physical_machine.junction_list[0],
                                      right=physical_machine.trap_list[8])
-        physical_machine.print_physical_machine()
+        if _machine_logging_enabled():
+            physical_machine.print_physical_machine()
     elif type == "Enchilada":
         num_traps = 9
         num_junctions = 6
@@ -165,7 +182,8 @@ def create_testing_physical_machine(
                                                  max_traps_size=max_traps_size,
                                                  executable_traps=executable,
                                                  measurable_traps=measurable)
-        print("Creating a QCCD machine ...")
+        if _machine_logging_enabled():
+            print("Creating a QCCD machine ...")
         # print("Adding segments ...")
         physical_machine.add_segment(left=physical_machine.trap_list[0],
                                      right=physical_machine.junction_list[0])
@@ -195,7 +213,8 @@ def create_testing_physical_machine(
                                      right=physical_machine.trap_list[6])
         physical_machine.add_segment(left=physical_machine.junction_list[5],
                                      right=physical_machine.trap_list[8])
-        physical_machine.print_physical_machine()
+        if _machine_logging_enabled():
+            physical_machine.print_physical_machine()
     elif type == "one_trap":
         num_traps = 1
         num_junctions = 0
@@ -207,9 +226,11 @@ def create_testing_physical_machine(
                                                  max_traps_size=max_traps_size,
                                                  executable_traps=executable,
                                                  measurable_traps=measurable)
-        print("Creating a QCCD machine ...")
+        if _machine_logging_enabled():
+            print("Creating a QCCD machine ...")
         # print("Adding segments ...")
-        physical_machine.print_physical_machine()
+        if _machine_logging_enabled():
+            physical_machine.print_physical_machine()
     elif type == "linear":
         num_junctions = 0
         max_traps_size = [trap_capacity] * num_traps

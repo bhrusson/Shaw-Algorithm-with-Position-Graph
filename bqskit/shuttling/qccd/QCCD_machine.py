@@ -1,4 +1,4 @@
-"""This module implements the QCCDMachineModel class."""
+﻿"""This module implements the QCCDMachineModel class."""
 from __future__ import annotations
 import copy
 import numpy as np
@@ -481,3 +481,4 @@ if __name__ == '__main__':
     # print(machine_model.timing_mat)
     # print("All pair travelling time...")
     # print(machine_model.all_pair_travelling_time())
+

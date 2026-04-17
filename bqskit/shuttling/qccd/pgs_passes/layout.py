@@ -115,6 +115,7 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
 
         snapshots: list[tuple[str, dict[int, int]]] = []
         forward_traces: list[tuple[str, list[dict[str, object]]]] = []
+        backward_traces: list[tuple[str, list[dict[str, object]]]] = []
         pgs_array_snapshots: list[tuple[str, list[int]]] = []
         program_ion_ids = list(data.get(PROGRAM_ION_IDS_KEY, []))
 
@@ -152,6 +153,11 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
 
             self.backward_pass(circuit, pgs=pgs)
             if _capture_layout_snapshots_enabled():
+                backward_traces.append((
+                    f'backward_{layout_pass_index + 1}',
+                    copy.deepcopy(getattr(self, 'last_backward_trace', [])),
+                ))
+            if _capture_layout_snapshots_enabled():
                 snapshots.append((
                     f'backward_{layout_pass_index + 1}',
                     copy.deepcopy(self._program_assignment_from_pgs(pgs, program_ion_ids)),
@@ -171,6 +177,7 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
         if snapshots:
             data['qccd_layout_wrapper_snapshots'] = snapshots
             data['qccd_layout_wrapper_forward_traces'] = forward_traces
+            data['qccd_layout_wrapper_backward_traces'] = backward_traces
         if pgs_array_snapshots:
             data['qccd_layout_wrapper_pgs_arrays'] = pgs_array_snapshots
 

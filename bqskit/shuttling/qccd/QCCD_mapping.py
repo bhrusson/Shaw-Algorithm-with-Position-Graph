@@ -1,4 +1,4 @@
-"""This module implements the GeneralizedSabreAlgorithm class."""
+﻿"""This module implements the GeneralizedSabreAlgorithm class."""
 from __future__ import annotations
 import math
 import copy
@@ -1593,3 +1593,4 @@ if __name__ == '__main__':
                                         extended_set_size=5,
                                         extended_set_weight=0.5)
     mapping_algo.forward_pass(circuit, pi, ion_assignment, modify_circuit=True)
+

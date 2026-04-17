@@ -43,7 +43,7 @@ class CaseConfig:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Run CG vs PGS compare sweeps for QFT benchmark circuits.',
+        description='Run QFT compare sweeps across CG, CG-CACHED, and PGS backends.',
     )
     parser.add_argument(
         '--circuits',
@@ -56,6 +56,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--gate-type', default='FM')
     parser.add_argument('--seed', type=int, default=1234)
     parser.add_argument(
+        '--backends',
+        nargs='+',
+        choices=['CG', 'CG-CACHED', 'PGS'],
+        default=['CG', 'CG-CACHED', 'PGS'],
+        help='Backends to pass through to compare_shaw_grid_cg_pgs.',
+    )
+    parser.add_argument(
         '--routing-mode',
         choices=['heuristic', 'bruteforce'],
         default='bruteforce',
@@ -65,6 +72,7 @@ def parse_args() -> argparse.Namespace:
         choices=['layout', 'full', 'full-matched-layout'],
         default='full',
     )
+    parser.add_argument('--congestion-rate-override', type=float, default=None)
     parser.add_argument('--cg-congestion-rate-override', type=float, default=None)
     parser.add_argument('--pgs-congestion-rate-override', type=float, default=None)
     parser.add_argument(
@@ -147,7 +155,8 @@ def make_output_dir(args: argparse.Namespace) -> Path:
     run_name = args.run_name
     if run_name is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        run_name = f'qft_cg_vs_pgs_{timestamp}'
+        backend_slug = '-'.join(args.backends).lower()
+        run_name = f'qft_compare_{backend_slug}_{timestamp}'
     output_dir = root / run_name
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
@@ -159,6 +168,8 @@ def build_command(case: CaseConfig, args: argparse.Namespace) -> list[str]:
         '-m',
         'bqskit.shuttling.qccd.compare_shaw_grid_cg_pgs',
         case.benchmark,
+        '--backends',
+        *args.backends,
         '--trap-capacity',
         str(args.trap_capacity),
         '--num-layout-passes',
@@ -180,6 +191,11 @@ def build_command(case: CaseConfig, args: argparse.Namespace) -> list[str]:
         '--pgs-move-path-modes',
         *args.pgs_move_path_modes,
     ]
+    if args.congestion_rate_override is not None:
+        cmd.extend([
+            '--congestion-rate-override',
+            str(args.congestion_rate_override),
+        ])
     if args.cg_congestion_rate_override is not None:
         cmd.extend([
             '--cg-congestion-rate-override',
