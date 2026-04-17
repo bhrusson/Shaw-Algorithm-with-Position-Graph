@@ -232,6 +232,185 @@ def normalize_instruction(
     return (inst[0], None, parse_assignment(inst[1]))
 
 
+def coupling_edge_set(machine_model: Any) -> set[tuple[int, int]]:
+    graph = machine_model.coupling_graph
+    edges: set[tuple[int, int]] = set()
+
+    if hasattr(graph, 'edge_labels'):
+        raw_edges = graph.edge_labels.keys()
+    else:
+        raw_edges = graph
+
+    for edge in raw_edges:
+        u = int(edge[0])
+        v = int(edge[1])
+        edges.add((u, v))
+        edges.add((v, u))
+
+    return edges
+
+
+def _format_instruction_window(
+    instruction_list: list[Any],
+    center_index: int,
+    window: int,
+) -> str:
+    radius = max(0, int(window))
+    start = max(0, center_index - radius)
+    stop = min(len(instruction_list), center_index + radius + 1)
+    lines = [f'instruction window [{start}, {stop}):']
+    for idx in range(start, stop):
+        marker = '>>' if idx == center_index else '  '
+        lines.append(f'  {marker} {idx}: {instruction_list[idx]}')
+    return '\n'.join(lines)
+
+
+def _logical_at_position(
+    assignment: dict[int, int],
+    position: int,
+) -> int | None:
+    for logical, physical in assignment.items():
+        if int(physical) == int(position):
+            return int(logical)
+    return None
+
+
+def _safe_position_kind(machine_model: Any, position: int) -> Any:
+    position_to_physical = getattr(machine_model, 'position_to_physical', {})
+    if isinstance(position_to_physical, dict):
+        return position_to_physical.get(int(position))
+    return None
+
+
+def _safe_trap_id(machine_model: Any, position: int) -> Any:
+    if not hasattr(machine_model, 'get_trap_id'):
+        return None
+    try:
+        return machine_model.get_trap_id(int(position))
+    except Exception:
+        return None
+
+
+def _safe_move_neighbors(machine_model: Any, position: int) -> list[int]:
+    if hasattr(machine_model, 'get_move_neighbors'):
+        try:
+            return [int(x) for x in machine_model.get_move_neighbors(int(position))]
+        except Exception:
+            return []
+    graph = getattr(machine_model, 'position_graph', None)
+    move_graph = getattr(graph, 'move_graph', None)
+    if move_graph is not None and hasattr(move_graph, 'neighbors_undirected'):
+        try:
+            return [int(x) for x in move_graph.neighbors_undirected(int(position))]
+        except Exception:
+            return []
+    return []
+
+
+def _safe_move_path(machine_model: Any, source: int, target: int) -> list[int] | None:
+    if hasattr(machine_model, 'get_move_path'):
+        try:
+            return [int(x) for x in machine_model.get_move_path(int(source), int(target))]
+        except Exception:
+            return None
+    graph = getattr(machine_model, 'position_graph', None)
+    if graph is None:
+        return None
+    if hasattr(graph, 'get_shortest_path_tree'):
+        try:
+            tree = graph.get_shortest_path_tree(int(source))
+            return [int(x) for x in tree[int(target)]]
+        except Exception:
+            return None
+    return None
+
+
+def _format_invalid_move_diagnostics(
+    *,
+    backend: str,
+    move: tuple[int, int],
+    inst_index: int,
+    instruction_list: list[Any],
+    machine_model: Any,
+    current_assignment: dict[int, int],
+    after_assignment: dict[int, int],
+    window: int,
+) -> str:
+    u, v = int(move[0]), int(move[1])
+    u_neighbors = _safe_move_neighbors(machine_model, u)
+    v_neighbors = _safe_move_neighbors(machine_model, v)
+    path = _safe_move_path(machine_model, u, v)
+    before_u = _logical_at_position(current_assignment, u)
+    before_v = _logical_at_position(current_assignment, v)
+    after_u = _logical_at_position(after_assignment, u)
+    after_v = _logical_at_position(after_assignment, v)
+
+    endpoint_report = {
+        'u': {
+            'position': u,
+            'kind': _safe_position_kind(machine_model, u),
+            'trap_id': _safe_trap_id(machine_model, u),
+            'logical_before': before_u,
+            'logical_after': after_u,
+            'move_neighbors': u_neighbors,
+        },
+        'v': {
+            'position': v,
+            'kind': _safe_position_kind(machine_model, v),
+            'trap_id': _safe_trap_id(machine_model, v),
+            'logical_before': before_v,
+            'logical_after': after_v,
+            'move_neighbors': v_neighbors,
+        },
+        'positions_same_trap': _safe_trap_id(machine_model, u) == _safe_trap_id(machine_model, v),
+        'suggested_move_path': path,
+    }
+
+    return (
+        f'[{backend}] Invalid emitted move {move}: not an edge in machine_model.coupling_graph.\n'
+        f'instruction_index: {inst_index}\n'
+        f'raw_instruction: {instruction_list[inst_index]}\n'
+        f'endpoint_report: {endpoint_report}\n'
+        f'{_format_instruction_window(instruction_list, inst_index, window)}'
+    )
+
+
+def validate_instruction_moves_against_machine(
+    instruction_list: list[Any],
+    machine_model: Any,
+    *,
+    backend: str,
+    initial_assignment: dict[int, int],
+    window: int,
+) -> None:
+    edges = coupling_edge_set(machine_model)
+    current_assignment = copy.deepcopy(initial_assignment)
+    for inst_index, inst in enumerate(instruction_list):
+        head = inst[0].strip()
+        if head.startswith('Execute'):
+            next_assignment = parse_assignment(inst[2] if len(inst) >= 3 else inst[1])
+            current_assignment = next_assignment
+            continue
+        if not head.startswith('Move'):
+            continue
+        move, after_assignment = normalize_move(inst)[1:]
+        if move in edges:
+            current_assignment = after_assignment
+            continue
+        raise ValueError(
+            _format_invalid_move_diagnostics(
+                backend=backend,
+                move=move,
+                inst_index=inst_index,
+                instruction_list=instruction_list,
+                machine_model=machine_model,
+                current_assignment=current_assignment,
+                after_assignment=after_assignment,
+                window=window,
+            )
+        )
+
+
 def run_compare_scheduler(
     backend: str,
     instruction_list: list[Any],
@@ -240,8 +419,16 @@ def run_compare_scheduler(
     initial_ion_assignment: dict[int, int],
     full_initial_ion_assignment: dict[int, int] | None,
     machine_model: Any,
+    instruction_window: int = 6,
 ) -> dict[str, Any]:
     del initial_mapping
+    validate_instruction_moves_against_machine(
+        instruction_list,
+        machine_model,
+        backend=backend,
+        initial_assignment=initial_ion_assignment,
+        window=instruction_window,
+    )
     if backend == 'PGS':
         analytics_result = schedule_qccd_from_instructions_v3(
             instruction_lst=instruction_list,
@@ -365,6 +552,7 @@ def compile_case(
     pgs_move_path_mode: str | None = None,
     print_position_graph: bool = False,
     print_machine: bool = False,
+    instruction_window: int = 6,
 ) -> dict[str, Any]:
     components = backend_components(backend)
     env_value = pgs_move_path_mode if backend == 'PGS' else None
@@ -460,6 +648,7 @@ def compile_case(
                 initial_ion_assignment=data['initial_ion_assignment_qccd'],
                 full_initial_ion_assignment=data.get('initial_full_ion_assignment_qccd_pgs'),
                 machine_model=data.model,
+                instruction_window=instruction_window,
             )
 
         return {
@@ -748,6 +937,7 @@ def compile_from_matched_layout(
     congestion_override: float | None = None,
     pgs_move_path_mode: str | None = None,
     print_position_graph: bool = False,
+    instruction_window: int = 6,
 ) -> dict[str, Any]:
     env_value = pgs_move_path_mode if backend == 'PGS' else None
     with _TemporaryEnv('BQSKIT_PGS_MOVE_PATH_MODE', env_value):
@@ -807,6 +997,7 @@ def compile_from_matched_layout(
                 assignment if backend == 'CG' else pre_data.get('full_ion_assignment_qccd_pgs', assignment),
             ),
             machine_model=pre_data.model,
+            instruction_window=instruction_window,
         )
 
         return {
@@ -1218,6 +1409,7 @@ def main() -> None:
                         congestion_override=backend_overrides[backend],
                         pgs_move_path_mode=mode,
                         print_position_graph=args.print_position_graph,
+                        instruction_window=args.window,
                     )
                 else:
                     result = compile_case(
@@ -1234,6 +1426,7 @@ def main() -> None:
                         congestion_override=backend_overrides[backend],
                         pgs_move_path_mode=mode,
                         print_position_graph=args.print_position_graph,
+                        instruction_window=args.window,
                     )
                 results.append(result)
     if args.stage == 'layout':
