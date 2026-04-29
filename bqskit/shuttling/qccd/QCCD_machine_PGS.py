@@ -1,6 +1,5 @@
 """This module implements the QCCDMachineModel class."""
 from __future__ import annotations
-import copy
 import os
 import numpy as np
 from typing import Sequence
@@ -619,21 +618,17 @@ class QCCDMachineModel(MachineModel):
 
     def all_pair_travelling_time(self) -> list[list[float]]:
         """
-        Calculate all pairs matrix using Floyd-Warshall.
+        Return the cached all-pairs MOVE travel-time matrix.
 
         Returns:
             D (list[list[int]]): D[i][j] is the length of the shortest
                 path from i to j.
         """
         if self._all_pair_travelling_time_cache is None:
-            D = copy.deepcopy(self.timing_mat)
-            for k in range(self.num_positions):
-                for i in range(self.num_positions):
-                    for j in range(self.num_positions):
-                        D[i][j] = min(D[i][j], D[i][k] + D[k][j])
-            for id in range(self.num_positions):
-                D[id][id] = 0.0
-            self._all_pair_travelling_time_cache = cast(List[List[float]], D)
+            self._all_pair_travelling_time_cache = cast(
+                List[List[float]],
+                self.position_graph.move_cost_matrix.tolist(),
+            )
         return self._all_pair_travelling_time_cache
 
     def travelling_time_from_point(self,

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from typing import Sequence
 
@@ -15,10 +16,8 @@ from bqskit_local.position.state import PositionGraphState
 _logger = logging.getLogger(__name__)
 
 
-class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
-    """
-    PGS routing pass redesigned to use only standard workflow-visible data.
-    """
+class GeneralizedCachedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
+    """Cached PGS routing pass using heuristic-region reuse."""
 
     def __init__(
         self,
@@ -29,7 +28,6 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
         cg_compatibility_mode: bool = False,
-        collect_heuristic_stats: bool = False,
     ) -> None:
         if not isinstance(template_pgs, PositionGraphState):
             raise TypeError(
@@ -38,8 +36,6 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
 
         self.template_pgs = template_pgs.copy()
 
-        self.cg_compatibility_mode = cg_compatibility_mode
-
         super().__init__(
             decay_delta=decay_delta,
             decay_reset_interval=decay_reset_interval,
@@ -47,7 +43,6 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
             extended_set_size=extended_set_size,
             extended_set_weight=extended_set_weight,
             cg_compatibility_mode=cg_compatibility_mode,
-            collect_heuristic_stats=collect_heuristic_stats,
         )
 
     def _build_local_pgs(
@@ -83,10 +78,6 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         placement: Sequence[int],
         num_circuit_qudits: int,
     ) -> PositionGraphState:
-        # For benchmark circuits smaller than the target architecture, native
-        # CouplingGraph SABRE still routes over the full hardware graph. Using
-        # only the induced subgraph on the selected positions can disconnect
-        # the architecture and produce infinite heuristic scores.
         if len(placement) < self.template_pgs.num_pos:
             return self._build_local_pgs(placement, num_circuit_qudits)
 
@@ -126,8 +117,6 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         return pgs
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
-        self.reset_heuristic_stats()
-
         if getattr(data, 'placement', None) is not None:
             placement = [int(x) for x in data.placement[:circuit.num_qudits]]
         else:
@@ -141,15 +130,12 @@ class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         else:
             pgs = self._build_local_pgs(placement, circuit.num_qudits)
 
-        _logger.info(f'Routing start mapping: {pgs.logical_to_position}')
-        _logger.info(f'Routing start placement: {data.get("placement")}')
+        _logger.info(f'Cached SABRE routing start mapping: {pgs.logical_to_position}')
+        _logger.info(f'Cached SABRE routing start placement: {data.get("placement")}')
 
         self.forward_pass(circuit, pgs, modify_circuit=True)
 
         final_mapping = [int(x) for x in pgs.logical_to_position[:circuit.num_qudits]]
         data.final_mapping = final_mapping.copy()
-        data['sabre_routing_heuristic_stats'] = (
-            self.heuristic_stats() if self.collect_heuristic_stats else None
-        )
 
-        _logger.info(f'Finished routing with layout: {final_mapping}')
+        _logger.info(f'Finished cached SABRE routing with layout: {final_mapping}')

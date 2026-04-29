@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from typing import Sequence
 
@@ -14,10 +15,8 @@ from bqskit_local.position.state import PositionGraphState
 _logger = logging.getLogger(__name__)
 
 
-class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
-    """
-    PGS layout pass redesigned to use only standard workflow-visible data.
-    """
+class GeneralizedCachedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
+    """Cached PGS layout pass using heuristic-region reuse."""
 
     def __init__(
         self,
@@ -29,7 +28,6 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
         cg_compatibility_mode: bool = False,
-        collect_heuristic_stats: bool = False,
     ) -> None:
         if not isinstance(template_pgs, PositionGraphState):
             raise TypeError(
@@ -47,8 +45,6 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         self.template_pgs = template_pgs.copy()
         self.total_passes = total_passes
 
-        self.cg_compatibility_mode = cg_compatibility_mode
-
         super().__init__(
             decay_delta=decay_delta,
             decay_reset_interval=decay_reset_interval,
@@ -56,7 +52,6 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
             extended_set_size=extended_set_size,
             extended_set_weight=extended_set_weight,
             cg_compatibility_mode=cg_compatibility_mode,
-            collect_heuristic_stats=collect_heuristic_stats,
         )
 
     def _build_pgs_from_mapping(
@@ -84,8 +79,6 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
         return pgs
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
-        self.reset_heuristic_stats()
-
         if getattr(data, 'placement', None) is not None:
             start_mapping = [int(x) for x in data.placement[:circuit.num_qudits]]
         else:
@@ -100,8 +93,5 @@ class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
 
         perm = [int(x) for x in pgs.logical_to_position[:circuit.num_qudits]]
         self._apply_perm(perm, data.placement)
-        data['sabre_layout_heuristic_stats'] = (
-            self.heuristic_stats() if self.collect_heuristic_stats else None
-        )
 
-        _logger.info(f'Found layout: {perm}, new placement: {data.placement}')
+        _logger.info(f'Found cached SABRE layout: {perm}, new placement: {data.placement}')

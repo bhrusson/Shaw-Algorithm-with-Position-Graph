@@ -1,5 +1,10 @@
 from __future__ import annotations
+import cProfile
+import pstats
 from collections.abc import Mapping
+from collections.abc import Callable
+from pathlib import Path
+from typing import TypeVar
 
 from bqskit.compiler.passdata import PassData
 
@@ -9,6 +14,31 @@ from bqskit.shuttling.qccd.position_graph_state_PGS import PositionGraphState
 FULL_ASSIGNMENT_KEY = 'full_ion_assignment_qccd_pgs'
 PROGRAM_ASSIGNMENT_KEY = 'program_ion_assignment_qccd'
 PROGRAM_ION_IDS_KEY = 'program_ion_ids_qccd'
+T = TypeVar('T')
+
+
+def profiled_call(
+    profile_dir: Path | None,
+    stem: str,
+    sort_key: str,
+    func: Callable[..., T],
+    *args: object,
+    **kwargs: object,
+) -> T:
+    if profile_dir is None:
+        return func(*args, **kwargs)
+
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    profiler = cProfile.Profile()
+    try:
+        return profiler.runcall(func, *args, **kwargs)
+    finally:
+        prof_path = profile_dir / f'{stem}.prof'
+        txt_path = profile_dir / f'{stem}.prof.txt'
+        profiler.dump_stats(str(prof_path))
+        with txt_path.open('w', encoding='utf-8') as f:
+            stats = pstats.Stats(profiler, stream=f)
+            stats.strip_dirs().sort_stats(sort_key).print_stats()
 
 
 def _normalize_assignment(

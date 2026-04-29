@@ -963,6 +963,7 @@ class QCCDMappingAlgorithm:
             circuit: Circuit,
             pgs: PositionGraphState,
             modify_circuit: bool = False,
+            append_barriers: bool = True,
     ) -> None:
         """
         Apply a forward pass of the QCCD mapper using PositionGraphState.
@@ -974,6 +975,10 @@ class QCCDMappingAlgorithm:
 
             modify_circuit (bool): Whether to modify the circuit as the
                 pass is applied or not. (Default: False)
+
+            append_barriers (bool): Whether to append full-width barriers after
+                emitted moves and executes when modifying the circuit.
+                (Default: True)
         """
         # Preprocessing
         # print("The position graph: ", self.qccd_machine.position_graph)
@@ -1059,10 +1064,11 @@ class QCCDMappingAlgorithm:
                             D,
                         ):
                             continue
-                        mapped_circuit.append_gate(
-                            BarrierPlaceholder(self.qccd_machine.num_positions),
-                            barrier_qudits,
-                        )
+                        if append_barriers:
+                            mapped_circuit.append_gate(
+                                BarrierPlaceholder(self.qccd_machine.num_positions),
+                                barrier_qudits,
+                            )
                 leading_moves += brute_force_moves
             current_front = self._sorted_points(F)
             pre_assignment = (
@@ -1096,10 +1102,11 @@ class QCCDMappingAlgorithm:
                         instructions_list.append(
                             [f"Execute at {physical_location}", f"{self._assignment_from_pgs(pgs)}"],
                         )
-                        mapped_circuit.append_gate(
-                            BarrierPlaceholder(self.qccd_machine.num_positions),
-                            barrier_qudits,
-                        )
+                        if append_barriers:
+                            mapped_circuit.append_gate(
+                                BarrierPlaceholder(self.qccd_machine.num_positions),
+                                barrier_qudits,
+                            )
                     for successor in circuit.next(n):
                         if successor not in prev_executed_counts:
                             prev_executed_counts[successor] = 1
@@ -1153,10 +1160,11 @@ class QCCDMappingAlgorithm:
                                     D,
                                 ):
                                     continue
-                                mapped_circuit.append_gate(
-                                    BarrierPlaceholder(self.qccd_machine.num_positions),
-                                    barrier_qudits,
-                                )
+                                if append_barriers:
+                                    mapped_circuit.append_gate(
+                                        BarrierPlaceholder(self.qccd_machine.num_positions),
+                                        barrier_qudits,
+                                    )
                         leading_moves += brute_force_moves
                         continue
                 else:
@@ -1198,10 +1206,11 @@ class QCCDMappingAlgorithm:
                             D,
                         ):
                             continue
-                        mapped_circuit.append_gate(
-                            BarrierPlaceholder(self.qccd_machine.num_positions),
-                            barrier_qudits,
-                                )
+                        if append_barriers:
+                            mapped_circuit.append_gate(
+                                BarrierPlaceholder(self.qccd_machine.num_positions),
+                                barrier_qudits,
+                            )
                 leading_moves += brute_force_moves
                 if capture_forward_trace:
                     self._record_forward_trace(
@@ -1238,10 +1247,11 @@ class QCCDMappingAlgorithm:
                     log_pgs,
                     D,
                 ):
-                    mapped_circuit.append_gate(
-                        BarrierPlaceholder(self.qccd_machine.num_positions),
-                        barrier_qudits,
-                    )
+                    if append_barriers:
+                        mapped_circuit.append_gate(
+                            BarrierPlaceholder(self.qccd_machine.num_positions),
+                            barrier_qudits,
+                        )
 
             self.iter_count += 1
         if modify_circuit:
@@ -2578,6 +2588,20 @@ class QCCDMappingAlgorithm:
         #print("Available space: ", available_space)
         if pgs is None:
             raise ValueError('PositionGraphState is required for native distance scoring.')
+        # NOTE:
+        # The current SHAW scoring preserves the original logic by evaluating
+        # permutations of the currently available trap positions. This assigns
+        # different ions to different trap slots and includes blockage penalties
+        # for each chosen source-to-slot path before taking the minimum score.
+        #
+        # A cheaper alternative, explored briefly during profiling, is to score
+        # each trap slot independently and aggregate per-ion costs against that
+        # single endpoint instead of enumerating all slot permutations. That
+        # approach can scale better because it avoids the combinatorial growth of
+        # permutations as trap capacity increases. We are not using it here
+        # because it changes the heuristic objective. If we revisit performance
+        # optimization later, that alternate scoring rule is a reasonable
+        # candidate for further investigation.
         for space in permutations(available_space, len(positions)):
             space_distance = float(
                 sum(D[positions[i]][space[i]] for i in range(len(positions)))
@@ -2755,7 +2779,6 @@ class QCCDMappingAlgorithm:
 if __name__ == '__main__':
     from bqskit.shuttling.qccd.QCCD_util import create_testing_physical_machine
     from bqskit import Circuit
-
     physical_model = create_testing_physical_machine()
     timing_data = {'sq_timings': 30e-6,
                    'tq_timings': 40e-6,

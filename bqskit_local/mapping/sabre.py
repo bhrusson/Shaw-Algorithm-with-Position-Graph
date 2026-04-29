@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+from dataclasses import dataclass
 import logging
 from typing import Iterator
 from typing import Sequence
@@ -16,10 +17,29 @@ from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
 from bqskit.qis.graph import CouplingGraph
 
+from bqskit_local.mapping.heuristic_stats import ensure_heuristic_stats
+from bqskit_local.mapping.heuristic_stats import record_best_swap
+from bqskit_local.mapping.heuristic_stats import record_candidate
+from bqskit_local.mapping.heuristic_stats import reset_heuristic_stats
+from bqskit_local.mapping.heuristic_stats import summarize_heuristic_stats
+
 
 _logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
+
+@dataclass
+class HeuristicRegionCache:
+    gate_qudits: dict[CircuitPoint, tuple[int, ...]]
+    gate_scores: dict[CircuitPoint, float]
+    points_by_logical: dict[int, set[CircuitPoint]]
+    total_score: float
+    num_points: int
+
+
+@dataclass
+class HeuristicScoreContext:
+    front: HeuristicRegionCache
+    extend: HeuristicRegionCache
 
 
 class GeneralizedSabreAlgorithm():
@@ -51,6 +71,8 @@ class GeneralizedSabreAlgorithm():
         decay_reset_on_gate: bool = True,
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
+        collect_heuristic_stats: bool = False,
+        use_legacy_can_exe: bool = False,
     ) -> None:
         """
         Construct a GeneralizedSabreAlgorithm.
@@ -102,6 +124,12 @@ class GeneralizedSabreAlgorithm():
                 f', got {type(extended_set_weight)}',
             )
 
+        if not isinstance(use_legacy_can_exe, bool):
+            raise TypeError(
+                'Expected bool for use_legacy_can_exe'
+                f', got {type(use_legacy_can_exe)}',
+            )
+
         if decay_reset_interval < 1:
             raise ValueError('Decay reset interval must be a positive integer.')
 
@@ -113,6 +141,79 @@ class GeneralizedSabreAlgorithm():
         self.decay_reset_on_gate = decay_reset_on_gate
         self.extended_set_size = extended_set_size
         self.extended_set_weight = extended_set_weight
+        self.collect_heuristic_stats = collect_heuristic_stats
+        self.use_legacy_can_exe = use_legacy_can_exe
+        reset_heuristic_stats(self)
+
+    def reset_heuristic_stats(self) -> None:
+        """Clear any accumulated heuristic statistics."""
+        reset_heuristic_stats(self)
+
+    def heuristic_stats(self) -> dict[str, int | float | None]:
+        """Return the accumulated heuristic statistics."""
+        return summarize_heuristic_stats(ensure_heuristic_stats(self))
+
+    def _build_physical_to_logical(self, pi: Sequence[int]) -> list[int]:
+        """Build the inverse physical-to-logical mapping for scoring."""
+        physical_to_logical = [-1 for _ in range(len(pi))]
+        for logical, physical in enumerate(pi):
+            physical_to_logical[int(physical)] = int(logical)
+        return physical_to_logical
+
+    def _build_heuristic_region(
+        self,
+        circuit: Circuit,
+        points: set[CircuitPoint],
+        pi: Sequence[int],
+        D: list[list[float]],
+    ) -> HeuristicRegionCache:
+        gate_qudits: dict[CircuitPoint, tuple[int, ...]] = {}
+        gate_scores: dict[CircuitPoint, float] = {}
+        points_by_logical: dict[int, set[CircuitPoint]] = {}
+        total_score = 0.0
+
+        for point in points:
+            logical_qudits = tuple(int(q) for q in circuit[point].location)
+            score = self._get_distance(logical_qudits, pi, D)
+            gate_qudits[point] = logical_qudits
+            gate_scores[point] = score
+            total_score += score
+
+            for logical in logical_qudits:
+                points_by_logical.setdefault(logical, set()).add(point)
+
+        return HeuristicRegionCache(
+            gate_qudits=gate_qudits,
+            gate_scores=gate_scores,
+            points_by_logical=points_by_logical,
+            total_score=total_score,
+            num_points=len(points),
+        )
+
+    def _build_heuristic_context(
+        self,
+        circuit: Circuit,
+        F: set[CircuitPoint],
+        E: set[CircuitPoint],
+        pi: Sequence[int],
+        D: list[list[float]],
+    ) -> HeuristicScoreContext:
+        return HeuristicScoreContext(
+            front=self._build_heuristic_region(circuit, F, pi, D),
+            extend=self._build_heuristic_region(circuit, E, pi, D),
+        )
+
+    def _affected_region_points(
+        self,
+        region: HeuristicRegionCache,
+        swapped_logicals: Sequence[int],
+    ) -> set[CircuitPoint]:
+        affected: set[CircuitPoint] = set()
+        for logical in swapped_logicals:
+            if logical == -1:
+                continue
+            affected.update(region.points_by_logical.get(logical, set()))
+        return affected
 
     def forward_pass(
         self,
@@ -344,7 +445,33 @@ class GeneralizedSabreAlgorithm():
             return True
 
         physical_qudits = [pi[i] for i in op.location]
-        return cg.get_subgraph(physical_qudits).is_fully_connected()
+        if self.use_legacy_can_exe:
+            return cg.get_subgraph(physical_qudits).is_fully_connected()
+
+        return self._are_physical_qudits_connected(physical_qudits, cg)
+
+    def _are_physical_qudits_connected(
+        self,
+        physical_qudits: list[int],
+        cg: CouplingGraph,
+    ) -> bool:
+        """Return true if the induced physical subgraph is connected."""
+        if len(physical_qudits) == 2:
+            return physical_qudits[1] in cg._adj[physical_qudits[0]]
+
+        physical_set = set(physical_qudits)
+        frontier = {physical_qudits[0]}
+        seen: set[int] = set()
+
+        while frontier:
+            qudit = frontier.pop()
+            if qudit in seen:
+                continue
+
+            seen.add(qudit)
+            frontier.update(cg._adj[qudit].intersection(physical_set) - seen)
+
+        return len(seen) == len(physical_set)
 
     def _calc_extended_set(
         self,
@@ -371,22 +498,35 @@ class GeneralizedSabreAlgorithm():
         decay: list[float],
     ) -> tuple[int, int]:
         """Return the best swap given the current algorithm state."""
-        # Track best one
         best_score = np.inf
-        best_swap = None
-
-        # Gather all considerable swaps
+        best_swap: tuple[int, int] | None = None
         swap_candidate_list = self._obtain_swaps(circuit, F, pi, cg)
+        physical_to_logical = self._build_physical_to_logical(pi)
+        heuristic_context = self._build_heuristic_context(circuit, F, E, pi, D)
 
-        _logger.debug("Front layer F: %s", sorted(F))
-        _logger.debug("Extended set E: %s", sorted(E) if E is not None else None)
-        _logger.debug("Candidate swaps: %s", sorted(swap_candidate_list))
-            _logger.debug("Swap candidate %s score=%f with pi=%s", swap, score, pi)
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Front layer F: %s", sorted(F))
+            _logger.debug("Extended set E: %s", sorted(E) if E is not None else None)
+            _logger.debug("Candidate swaps: %s", sorted(swap_candidate_list))
 
+        collect_stats = self.collect_heuristic_stats
+        if collect_stats:
+            record_best_swap(
+                ensure_heuristic_stats(self),
+                len(F),
+                len(E),
+                len(swap_candidate_list),
+            )
 
-        # Score them, tracking the best one
-        for swap in sorted(swap_candidate_list):
-            score = self._score_swap(circuit, F, pi, D, swap, decay, E)
+        for swap in swap_candidate_list:
+            score = self._score_swap(
+                pi,
+                physical_to_logical,
+                D,
+                swap,
+                decay,
+                heuristic_context,
+            )
             if score < best_score:
                 best_score = score
                 best_swap = swap
@@ -422,49 +562,92 @@ class GeneralizedSabreAlgorithm():
 
     def _score_swap(
         self,
-        circuit: Circuit,
-        F: set[CircuitPoint],
         pi: list[int],
+        physical_to_logical: list[int],
         D: list[list[float]],
         swap: tuple[int, int],
         decay: list[float],
-        E: set[CircuitPoint],
+        heuristic_context: HeuristicScoreContext,
     ) -> float:
-        """Score the candidate swap given the current algorithm state."""
-        # Apply potential swap
-        l1, l2 = pi.index(swap[0]), pi.index(swap[1])
+        """Score a candidate swap by rescoring only affected gates."""
+        pos1, pos2 = swap
+        l1 = int(physical_to_logical[pos1])
+        l2 = int(physical_to_logical[pos2])
+        swapped_logicals = (l1, l2)
+        full_rescore_terms = (
+            heuristic_context.front.num_points
+            + heuristic_context.extend.num_points
+        )
+
         pi[l1], pi[l2] = pi[l2], pi[l1]
+        physical_to_logical[pos1], physical_to_logical[pos2] = (
+            physical_to_logical[pos2],
+            physical_to_logical[pos1],
+        )
 
-        # Calculate front set term
-        front = 0.0
-        for n in F:
-            logical_qudits = circuit[n].location
+        try:
+            front_total = heuristic_context.front.total_score
+            affected_front = self._affected_region_points(
+                heuristic_context.front,
+                swapped_logicals,
+            )
+            affected_front_count = len(affected_front)
 
-            # Disallow meaningless swaps
-            physical_qudits = [pi[i] for i in logical_qudits]
-            if swap[0] in physical_qudits and swap[1] in physical_qudits:
-                pi[l1], pi[l2] = pi[l2], pi[l1]
-                return np.inf
+            for point in affected_front:
+                logical_qudits = heuristic_context.front.gate_qudits[point]
+                physical_qudits = [int(pi[i]) for i in logical_qudits]
+                if pos1 in physical_qudits and pos2 in physical_qudits:
+                    if self.collect_heuristic_stats:
+                        record_candidate(
+                            ensure_heuristic_stats(self),
+                            full_rescore_terms,
+                            affected_front_count,
+                            0,
+                        )
+                    return np.inf
 
-            front += self._get_distance(logical_qudits, pi, D)
-        front /= len(F)
+                front_total -= heuristic_context.front.gate_scores[point]
+                front_total += self._get_distance(logical_qudits, pi, D)
 
-        # Calculate extended set term
-        extend = 0.0
-        if len(E) > 0:
-            for n in E:
-                extend += self._get_distance(circuit[n].location, pi, D)
-            extend /= len(E)
-            extend *= self.extended_set_weight
+            front = front_total / heuristic_context.front.num_points
 
-        # Calculate decay factor
-        decay_factor = max(decay[swap[0]], decay[swap[1]])
+            extend = 0.0
+            affected_extend_count = 0
+            if heuristic_context.extend.num_points > 0:
+                extend_total = heuristic_context.extend.total_score
+                affected_extend = self._affected_region_points(
+                    heuristic_context.extend,
+                    swapped_logicals,
+                )
+                affected_extend_count = len(affected_extend)
+                for point in affected_extend:
+                    extend_total -= heuristic_context.extend.gate_scores[point]
+                    extend_total += self._get_distance(
+                        heuristic_context.extend.gate_qudits[point],
+                        pi,
+                        D,
+                    )
+                extend = extend_total / heuristic_context.extend.num_points
+                extend *= self.extended_set_weight
 
-        # Undo potential swap
-        pi[l1], pi[l2] = pi[l2], pi[l1]
+            decay_factor = max(decay[pos1], decay[pos2])
 
-        # Return final score
-        return decay_factor * (front + extend)
+            if self.collect_heuristic_stats:
+                record_candidate(
+                    ensure_heuristic_stats(self),
+                    full_rescore_terms,
+                    affected_front_count,
+                    affected_extend_count,
+                )
+
+            return decay_factor * (front + extend)
+        finally:
+            pi[l1], pi[l2] = pi[l2], pi[l1]
+            physical_to_logical[pos1], physical_to_logical[pos2] = (
+                physical_to_logical[pos2],
+                physical_to_logical[pos1],
+            )
+
 
     def _apply_swap(
         self,

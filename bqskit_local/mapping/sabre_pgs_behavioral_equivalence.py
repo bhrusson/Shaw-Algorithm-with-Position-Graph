@@ -17,6 +17,11 @@ from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
 from bqskit.qis.graph import CouplingGraph
 
+from bqskit_local.mapping.heuristic_stats import ensure_heuristic_stats
+from bqskit_local.mapping.heuristic_stats import record_best_swap
+from bqskit_local.mapping.heuristic_stats import record_candidate
+from bqskit_local.mapping.heuristic_stats import reset_heuristic_stats
+from bqskit_local.mapping.heuristic_stats import summarize_heuristic_stats
 from bqskit_local.position.graph import EdgeCapability
 from bqskit_local.position.graph import PositionGraph
 from bqskit_local.position.state import PositionAssignmentTracker
@@ -76,7 +81,7 @@ class GeneralizedSabreAlgorithmPGS():
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
         cg_compatibility_mode: bool = False,
-        
+        collect_heuristic_stats: bool = False,
     ) -> None:
         """
         Construct a GeneralizedSabreAlgorithm.
@@ -151,6 +156,16 @@ class GeneralizedSabreAlgorithmPGS():
         self.extended_set_size = extended_set_size
         self.extended_set_weight = extended_set_weight
         self.cg_compatibility_mode = cg_compatibility_mode
+        self.collect_heuristic_stats = collect_heuristic_stats
+        reset_heuristic_stats(self)
+
+    def reset_heuristic_stats(self) -> None:
+        """Clear any accumulated heuristic statistics."""
+        reset_heuristic_stats(self)
+
+    def heuristic_stats(self) -> dict[str, int | float | None]:
+        """Return the accumulated heuristic statistics."""
+        return summarize_heuristic_stats(ensure_heuristic_stats(self))
 
     def _local_minimum_limit(self, num_qudits: int) -> int:
         """Return the leading-swap threshold before forcing progress."""
@@ -182,18 +197,17 @@ class GeneralizedSabreAlgorithmPGS():
         pgs: PositionState,
     ) -> None:
         pos1, pos2 = swap
-        l1 = int(pgs.position_to_logical[pos1])
-        l2 = int(pgs.position_to_logical[pos2])
+        position_to_logical = pgs.position_to_logical
+        logical_to_position = pgs.logical_to_position
+        l1 = int(position_to_logical[pos1])
+        l2 = int(position_to_logical[pos2])
 
-        pgs.position_to_logical[pos1], pgs.position_to_logical[pos2] = (
-            pgs.position_to_logical[pos2],
-            pgs.position_to_logical[pos1],
-        )
+        position_to_logical[pos1], position_to_logical[pos2] = (l2, l1)
 
         if l1 != -1:
-            pgs.logical_to_position[l1] = pos2
+            logical_to_position[l1] = pos2
         if l2 != -1:
-            pgs.logical_to_position[l2] = pos1
+            logical_to_position[l2] = pos1
 
     def _build_heuristic_region(
         self,
@@ -479,15 +493,24 @@ class GeneralizedSabreAlgorithmPGS():
         # cg.get_subgraph(physical_qudits).is_fully_connected()
         #
         # For a 2-qudit gate, this reduces to checking the execute edge.
-        # For larger gates, every pair must be connected.
-        for i in range(len(physical_positions)):
-            for j in range(i + 1, len(physical_positions)):
-                p = physical_positions[i]
-                q = physical_positions[j]
-                if not pgs.position_graph.execute_graph.has_edge(p, q):
-                    return False
+        execute_neighbors = pgs.position_graph.execute_neighbors
+        if len(physical_positions) == 2:
+            p, q = physical_positions
+            return q in execute_neighbors[p]
 
-        return True
+        physical_set = set(physical_positions)
+        frontier = {physical_positions[0]}
+        seen: set[int] = set()
+
+        while frontier:
+            p = frontier.pop()
+            if p in seen:
+                continue
+
+            seen.add(p)
+            frontier.update(execute_neighbors[p].intersection(physical_set) - seen)
+
+        return len(seen) == len(physical_set)
             
         
 
@@ -525,9 +548,18 @@ class GeneralizedSabreAlgorithmPGS():
 
         swap_candidate_list = self._obtain_swaps(circuit, F, pgs)
 
-        _logger.debug("Front layer F: %s", F)
-        _logger.debug("Extended set E: %s", E if E is not None else None)
-        _logger.debug("Candidate swaps: %s", swap_candidate_list)
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Front layer F: %s", F)
+            _logger.debug("Extended set E: %s", E if E is not None else None)
+            _logger.debug("Candidate swaps: %s", swap_candidate_list)
+
+        if self.collect_heuristic_stats:
+            record_best_swap(
+                ensure_heuristic_stats(self),
+                len(F),
+                len(E),
+                len(swap_candidate_list),
+            )
 
         scratch_pgs = self._scratch_pgs(pgs, 'score_swap')
         heuristic_context = self._build_heuristic_context(circuit, F, E, pgs, D)
@@ -547,13 +579,14 @@ class GeneralizedSabreAlgorithmPGS():
             if score < best_score:
                 best_score = score
                 best_swap = swap
-            l1, l2 = swap
-            p1 = int(pgs.logical_to_position[l1])
-            p2 = int(pgs.logical_to_position[l2])
-            _logger.debug(
-                "Swap candidate logical(%d,%d) physical(%d,%d) score=%f map=%s",
-                l1, l2, p1, p2, score, pgs.logical_to_position.tolist(),
-            )
+            if _logger.isEnabledFor(logging.DEBUG):
+                l1, l2 = swap
+                p1 = int(pgs.logical_to_position[l1])
+                p2 = int(pgs.logical_to_position[l2])
+                _logger.debug(
+                    "Swap candidate logical(%d,%d) physical(%d,%d) score=%f map=%s",
+                    l1, l2, p1, p2, score, pgs.logical_to_position.tolist(),
+                )
 
         if best_swap is None:
             raise RuntimeError('Unable to find best swap.')
@@ -605,18 +638,29 @@ class GeneralizedSabreAlgorithmPGS():
     ) -> float:
         """Score the candidate swap given the current algorithm state."""
         pos1, pos2 = swap
-        l1 = int(pgs.position_to_logical[pos1])
-        l2 = int(pgs.position_to_logical[pos2])
+        mapping = pgs.logical_to_position
+        position_to_logical = pgs.position_to_logical
+        l1 = int(position_to_logical[pos1])
+        l2 = int(position_to_logical[pos2])
         swapped_logicals = (l1, l2)
+        full_rescore_terms = (
+            heuristic_context.front.num_points
+            + heuristic_context.extend.num_points
+        )
 
-        self._apply_swap_to_state(swap, pgs)
+        position_to_logical[pos1], position_to_logical[pos2] = (l2, l1)
+        if l1 != -1:
+            mapping[l1] = pos2
+        if l2 != -1:
+            mapping[l2] = pos1
+
         try:
-            mapping = pgs.logical_to_position
             front_total = heuristic_context.front.total_score
             affected_front = self._affected_region_points(
                 heuristic_context.front,
                 swapped_logicals,
             )
+            affected_front_count = len(affected_front)
 
             for point in affected_front:
                 logical_qudits = heuristic_context.front.gate_qudits[point]
@@ -625,6 +669,13 @@ class GeneralizedSabreAlgorithmPGS():
                 # participating in the same front-layer gate.
                 physical_qudits = [int(mapping[i]) for i in logical_qudits]
                 if pos1 in physical_qudits and pos2 in physical_qudits:
+                    if self.collect_heuristic_stats:
+                        record_candidate(
+                            ensure_heuristic_stats(self),
+                            full_rescore_terms,
+                            affected_front_count,
+                            0,
+                        )
                     return float('inf')
 
                 front_total -= heuristic_context.front.gate_scores[point]
@@ -638,12 +689,14 @@ class GeneralizedSabreAlgorithmPGS():
 
             # Calculate extended set term exactly like CG version:
             extend = 0.0
+            affected_extend_count = 0
             if heuristic_context.extend.num_points > 0:
                 extend_total = heuristic_context.extend.total_score
                 affected_extend = self._affected_region_points(
                     heuristic_context.extend,
                     swapped_logicals,
                 )
+                affected_extend_count = len(affected_extend)
                 for point in affected_extend:
                     extend_total -= heuristic_context.extend.gate_scores[point]
                     extend_total += self._get_distance_from_mapping(
@@ -657,9 +710,21 @@ class GeneralizedSabreAlgorithmPGS():
             # Match CG decay logic exactly.
             decay_factor = max(decay[pos1], decay[pos2])
 
+            if self.collect_heuristic_stats:
+                record_candidate(
+                    ensure_heuristic_stats(self),
+                    full_rescore_terms,
+                    affected_front_count,
+                    affected_extend_count,
+                )
+
             return decay_factor * (front + extend)
         finally:
-            self._apply_swap_to_state(swap, pgs)
+            position_to_logical[pos1], position_to_logical[pos2] = (l1, l2)
+            if l1 != -1:
+                mapping[l1] = pos1
+            if l2 != -1:
+                mapping[l2] = pos2
     
     def _apply_swap(
         self,
@@ -702,8 +767,8 @@ class GeneralizedSabreAlgorithmPGS():
         """CG-equivalent distance heuristic from an explicit mapping."""
         if len(logical_qudits) == 2:
             q0, q1 = logical_qudits
-            p0 = int(logical_to_position[q0])
-            p1 = int(logical_to_position[q1])
+            p0 = logical_to_position[q0]
+            p1 = logical_to_position[q1]
             if p0 < 0 or p1 < 0:
                 return float('inf')
             return D[p0][p1]
@@ -711,7 +776,7 @@ class GeneralizedSabreAlgorithmPGS():
         min_term = float('inf')
 
         for q in logical_qudits:
-            q_pos = int(logical_to_position[q])
+            q_pos = logical_to_position[q]
             if q_pos < 0:
                 return float('inf')
 
@@ -719,7 +784,7 @@ class GeneralizedSabreAlgorithmPGS():
             for p in logical_qudits:
                 if p == q:
                     continue
-                p_pos = int(logical_to_position[p])
+                p_pos = logical_to_position[p]
                 if p_pos < 0:
                     return float('inf')
                 term += D[q_pos][p_pos]

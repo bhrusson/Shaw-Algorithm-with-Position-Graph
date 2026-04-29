@@ -6,10 +6,23 @@ from time import perf_counter
 
 from bqskit.compiler import CompilationTask, Compiler
 
+from bqskit_local.layout.cached_lightSABREPassPGS import (
+    GeneralizedCachedLightSABRELayoutPassPGS,
+)
+from bqskit_local.layout.cached_sabrePassPGS import (
+    GeneralizedCachedSabreLayoutPassPGS,
+)
 from bqskit_local.layout.lightSABREPassPGS import GeneralizedLightSABRELayoutPassPGS
 from bqskit_local.layout.sabrePassPGS import GeneralizedSabreLayoutPassPGS
+from bqskit_local.mapping.lightSABRE_pgs import DEFAULT_LIGHTSABRE_HEURISTIC
 from bqskit_local.mapping.setPGSPass import SetPGSPass
 from bqskit_local.position.state import PositionGraphState
+from bqskit_local.routing.cached_lightSABRERoutingPGS import (
+    GeneralizedCachedLightSABRERoutingPassPGS,
+)
+from bqskit_local.routing.cached_sabreRoutingPGS import (
+    GeneralizedCachedSabreRoutingPassPGS,
+)
 from bqskit_local.routing.lightSABRERoutingPGS import GeneralizedLightSABRERoutingPassPGS
 from bqskit_local.routing.sabreRoutingPGS import GeneralizedSabreRoutingPassPGS
 from bqskit_local.testCasesPGS.ibmEagleCommon import (
@@ -39,13 +52,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--algorithm',
-        choices=['sabre', 'lightsabre'],
+        choices=['sabre', 'sabre-cached', 'lightsabre', 'lightsabre-cached'],
         default='sabre',
         help='Which PGS mapping algorithm to run.',
     )
     parser.add_argument(
         '--heuristic',
-        default='decay',
+        default=DEFAULT_LIGHTSABRE_HEURISTIC,
         help='LightSABRE heuristic components, e.g. decay or lookahead+decay+depth.',
     )
     parser.add_argument(
@@ -83,7 +96,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    effective_cg_compat = args.cg_compat or args.algorithm == 'sabre'
+    effective_cg_compat = args.cg_compat
 
     circ = build_named_eagle_circuit(args.workload)
     pg = build_eagle_position_graph()
@@ -99,10 +112,20 @@ def main() -> None:
     print("Move neighbors of 0:", pg.get_swap_neighbors(0))
     print("Distance 0 -> 126:", pg.distance(0, 126))
 
-    if args.algorithm == 'lightsabre':
+    if args.algorithm in ('lightsabre', 'lightsabre-cached'):
+        layout_pass_cls = (
+            GeneralizedCachedLightSABRELayoutPassPGS
+            if args.algorithm == 'lightsabre-cached'
+            else GeneralizedLightSABRELayoutPassPGS
+        )
+        routing_pass_cls = (
+            GeneralizedCachedLightSABRERoutingPassPGS
+            if args.algorithm == 'lightsabre-cached'
+            else GeneralizedLightSABRERoutingPassPGS
+        )
         passes = [
             SetPGSPass(template_pgs, placement=list(range(IBM_EAGLE_NUM_QUDITS))),
-            GeneralizedLightSABRELayoutPassPGS(
+            layout_pass_cls(
                 template_pgs,
                 max_iterations=args.max_iterations,
                 layout_trials=args.layout_trials,
@@ -111,16 +134,15 @@ def main() -> None:
                 seed=args.seed,
                 cg_compatibility_mode=effective_cg_compat,
             ),
-            GeneralizedLightSABRERoutingPassPGS(
+            routing_pass_cls(
                 template_pgs,
                 heuristic=args.heuristic,
                 seed=args.seed,
                 trials=args.routing_trials,
-                decay_delta=0.5,
                 cg_compatibility_mode=effective_cg_compat,
             ),
         ]
-    else:
+    elif args.algorithm == 'sabre':
         passes = [
             SetPGSPass(template_pgs, placement=list(range(IBM_EAGLE_NUM_QUDITS))),
             GeneralizedSabreLayoutPassPGS(
@@ -129,6 +151,20 @@ def main() -> None:
                 cg_compatibility_mode=effective_cg_compat,
             ),
             GeneralizedSabreRoutingPassPGS(
+                template_pgs,
+                decay_delta=0.5,
+                cg_compatibility_mode=effective_cg_compat,
+            ),
+        ]
+    else:
+        passes = [
+            SetPGSPass(template_pgs, placement=list(range(IBM_EAGLE_NUM_QUDITS))),
+            GeneralizedCachedSabreLayoutPassPGS(
+                template_pgs,
+                total_passes=args.sabre_layout_passes,
+                cg_compatibility_mode=effective_cg_compat,
+            ),
+            GeneralizedCachedSabreRoutingPassPGS(
                 template_pgs,
                 decay_delta=0.5,
                 cg_compatibility_mode=effective_cg_compat,

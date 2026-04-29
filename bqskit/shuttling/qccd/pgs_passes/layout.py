@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import logging
 import os
+from pathlib import Path
 
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
@@ -13,6 +14,7 @@ from bqskit.shuttling.qccd.QCCD_mapping_PGS import QCCDMappingAlgorithm
 from bqskit.shuttling.qccd.pgs_passes.common import build_pgs_from_passdata
 from bqskit.shuttling.qccd.pgs_passes.common import export_pgs_views_to_passdata
 from bqskit.shuttling.qccd.pgs_passes.common import PROGRAM_ION_IDS_KEY
+from bqskit.shuttling.qccd.pgs_passes.common import profiled_call
 
 _logger = logging.getLogger(__name__)
 
@@ -43,6 +45,9 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
         cogestion_rate: float = 0.75,
         force_bruteforce: bool = False,
         assignment_key: str = 'ion_assignment_qccd',
+        profile_dir: Path | None = None,
+        profile_stem: str = 'qccd_pgs_layout',
+        profile_sort: str = 'cumulative',
     ) -> None:
         """
         Construct a QCCDLayoutPassPGS.
@@ -85,6 +90,9 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
         self.total_passes = total_passes
         self.assignment_key = assignment_key
         self.qccd_machine = None
+        self.profile_dir = profile_dir
+        self.profile_stem = profile_stem
+        self.profile_sort = profile_sort
 
         super().__init__(
             qccd_machine=None,
@@ -134,7 +142,15 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
         _logger.debug(f'Number of qudits in the circuit: {circuit.num_qudits}')
 
         for layout_pass_index in range(self.total_passes):
-            self.forward_pass(circuit, pgs=pgs, modify_circuit=False)
+            profiled_call(
+                self.profile_dir,
+                f'{self.profile_stem}__forward_{layout_pass_index + 1}',
+                self.profile_sort,
+                self.forward_pass,
+                circuit,
+                pgs=pgs,
+                modify_circuit=False,
+            )
             if _capture_layout_snapshots_enabled():
                 forward_traces.append((
                     f'forward_{layout_pass_index + 1}',
@@ -151,7 +167,14 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
                     [int(x) for x in pgs.logical_to_position.tolist()],
                 ))
 
-            self.backward_pass(circuit, pgs=pgs)
+            profiled_call(
+                self.profile_dir,
+                f'{self.profile_stem}__backward_{layout_pass_index + 1}',
+                self.profile_sort,
+                self.backward_pass,
+                circuit,
+                pgs=pgs,
+            )
             if _capture_layout_snapshots_enabled():
                 backward_traces.append((
                     f'backward_{layout_pass_index + 1}',
@@ -180,5 +203,4 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
             data['qccd_layout_wrapper_backward_traces'] = backward_traces
         if pgs_array_snapshots:
             data['qccd_layout_wrapper_pgs_arrays'] = pgs_array_snapshots
-
         data.model = self.qccd_machine

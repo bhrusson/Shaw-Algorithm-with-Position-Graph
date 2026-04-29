@@ -26,10 +26,10 @@ from bqskit_local.routing.cached_sabreRoutingPGS import (
 )
 from bqskit_local.routing.lightSABRERoutingPGS import GeneralizedLightSABRERoutingPassPGS
 from bqskit_local.routing.sabreRoutingPGS import GeneralizedSabreRoutingPassPGS
-from bqskit_local.testCasesPGS.grid16Common import (
-    GRID16_NUM_QUDITS,
-    build_16x16_challenge_circuit,
-    build_16x16_position_graph,
+from bqskit_local.testCasesPGS.grid4Common import (
+    GRID4_NUM_QUDITS,
+    build_4x4_challenge_circuit,
+    build_4x4_position_graph,
 )
 
 _logger = logging.getLogger(__name__)
@@ -37,13 +37,12 @@ logging.basicConfig(level=logging.INFO)
 
 
 def count_swaps(circuit) -> int:
-    """Count inserted swap operations in a compiled circuit."""
     return sum(1 for op in circuit if isinstance(op.gate, SwapGate))
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Run the 16x16 grid PositionGraph SABRE workflow.',
+        description='Run the 4x4 grid PositionGraph SABRE workflow.',
     )
     parser.add_argument(
         '--rounds',
@@ -59,7 +58,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         '--algorithm',
         choices=['sabre', 'sabre-cached', 'lightsabre', 'lightsabre-cached'],
-        default='sabre',
+        default='lightsabre',
         help='Which PGS mapping algorithm to run.',
     )
     parser.add_argument(
@@ -104,20 +103,20 @@ def main() -> None:
     args = parse_args()
     effective_cg_compat = args.cg_compat
 
-    circ = build_16x16_challenge_circuit(rounds=args.rounds)
-    pg = build_16x16_position_graph()
-    template_pgs = PositionGraphState(pg, radices=[2] * GRID16_NUM_QUDITS)
+    circ = build_4x4_challenge_circuit(rounds=args.rounds)
+    pg = build_4x4_position_graph()
+    template_pgs = PositionGraphState(pg, radices=[2] * GRID4_NUM_QUDITS)
 
-    print("Architecture: 16x16 grid PositionGraph")
-    print("Challenge rounds:", args.rounds)
-    print("Algorithm:", args.algorithm)
-    print("CG compatibility mode:", effective_cg_compat)
-    print("Number of qudits:", circ.num_qudits)
-    print("Number of operations:", circ.num_operations)
-    print("Number of positions:", len(pg.position_labels))
-    print("Number of directed edges:", len(pg.edge_labels))
-    print("Move neighbors of 0:", pg.get_swap_neighbors(0))
-    print("Distance 0 -> 255:", pg.distance(0, GRID16_NUM_QUDITS - 1))
+    print('Architecture: 4x4 grid PositionGraph')
+    print('Challenge rounds:', args.rounds)
+    print('Algorithm:', args.algorithm)
+    print('CG compatibility mode:', effective_cg_compat)
+    print('Number of qudits:', circ.num_qudits)
+    print('Number of operations:', circ.num_operations)
+    print('Number of positions:', len(pg.position_labels))
+    print('Number of directed edges:', len(pg.edge_labels))
+    print('Move neighbors of 0:', pg.get_swap_neighbors(0))
+    print('Distance 0 -> 15:', pg.distance(0, GRID4_NUM_QUDITS - 1))
 
     if args.algorithm in ('lightsabre', 'lightsabre-cached'):
         layout_pass_cls = (
@@ -131,7 +130,7 @@ def main() -> None:
             else GeneralizedLightSABRERoutingPassPGS
         )
         passes = [
-            SetPGSPass(template_pgs, placement=list(range(GRID16_NUM_QUDITS))),
+            SetPGSPass(template_pgs, placement=list(range(GRID4_NUM_QUDITS))),
             layout_pass_cls(
                 template_pgs,
                 max_iterations=args.max_iterations,
@@ -151,7 +150,7 @@ def main() -> None:
         ]
     elif args.algorithm == 'sabre':
         passes = [
-            SetPGSPass(template_pgs, placement=list(range(GRID16_NUM_QUDITS))),
+            SetPGSPass(template_pgs, placement=list(range(GRID4_NUM_QUDITS))),
             GeneralizedSabreLayoutPassPGS(
                 template_pgs,
                 total_passes=args.sabre_layout_passes,
@@ -165,7 +164,7 @@ def main() -> None:
         ]
     else:
         passes = [
-            SetPGSPass(template_pgs, placement=list(range(GRID16_NUM_QUDITS))),
+            SetPGSPass(template_pgs, placement=list(range(GRID4_NUM_QUDITS))),
             GeneralizedCachedSabreLayoutPassPGS(
                 template_pgs,
                 total_passes=args.sabre_layout_passes,
@@ -177,29 +176,20 @@ def main() -> None:
                 cg_compatibility_mode=effective_cg_compat,
             ),
         ]
-    print("passes", str(passes))
 
     compiler = Compiler()
     task = CompilationTask(circ, passes)
     data = task.data
 
-    _logger.info("Driver data before compile: initial_mapping=%s", data.get("initial_mapping"))
-    _logger.info("Driver data before compile: final_mapping=%s", data.get("final_mapping"))
-    _logger.info("Driver data before compile: placement=%s", data.get("placement"))
-
     start_time = perf_counter()
     compiled = compiler.compile(circ, passes, data=data)
     elapsed_time = perf_counter() - start_time
 
-    _logger.info("Driver data after compile: initial_mapping=%s", data.get("initial_mapping"))
-    _logger.info("Driver data after compile: final_mapping=%s", data.get("final_mapping"))
-    _logger.info("Driver data after compile: placement=%s", data.get("placement"))
-
-    print("Compilation runtime (s):", f"{elapsed_time:.3f}")
-    print("Original operation count:", circ.num_operations)
-    print("Compiled operation count:", compiled.num_operations)
-    print("Inserted swap count:", count_swaps(compiled))
-    print("Circuit depth:", compiled.num_cycles)
+    print('Compilation runtime (s):', f'{elapsed_time:.3f}')
+    print('Original operation count:', circ.num_operations)
+    print('Compiled operation count:', compiled.num_operations)
+    print('Inserted swap count:', count_swaps(compiled))
+    print('Circuit depth:', compiled.num_cycles)
 
 
 if __name__ == '__main__':

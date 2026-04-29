@@ -6,7 +6,11 @@ import logging
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
-from bqskit.passes.mapping.sabre import GeneralizedSabreAlgorithm
+
+from bqskit_local.mapping.heuristic_stats import ensure_heuristic_stats
+from bqskit_local.mapping.heuristic_stats import reset_heuristic_stats
+from bqskit_local.mapping.heuristic_stats import summarize_heuristic_stats
+from bqskit_local.mapping.sabre import GeneralizedSabreAlgorithm
 
 _logger = logging.getLogger(__name__)
 
@@ -26,6 +30,8 @@ class GeneralizedSabreLayoutPass(BasePass, GeneralizedSabreAlgorithm):
         decay_reset_on_gate: bool = True,
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
+        collect_heuristic_stats: bool = False,
+        use_legacy_can_exe: bool = False,
     ) -> None:
         """
         Construct a GeneralizedSabreLayoutPass.
@@ -60,15 +66,19 @@ class GeneralizedSabreLayoutPass(BasePass, GeneralizedSabreAlgorithm):
 
         self.total_passes = total_passes
         super().__init__(
-            decay_delta,
-            decay_reset_interval,
-            decay_reset_on_gate,
-            extended_set_size,
-            extended_set_weight,
+            decay_delta=decay_delta,
+            decay_reset_interval=decay_reset_interval,
+            decay_reset_on_gate=decay_reset_on_gate,
+            extended_set_size=extended_set_size,
+            extended_set_weight=extended_set_weight,
+            collect_heuristic_stats=collect_heuristic_stats,
+            use_legacy_can_exe=use_legacy_can_exe,
         )
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
         """Perform the pass's operation, see :class:`BasePass` for more."""
+        reset_heuristic_stats(self)
+
         subgraph = data.connectivity
         if not subgraph.is_fully_connected():
             raise RuntimeError('Cannot layout circuit on disconnected qudits.')
@@ -80,4 +90,9 @@ class GeneralizedSabreLayoutPass(BasePass, GeneralizedSabreAlgorithm):
             self.backward_pass(circuit, pi, subgraph)
 
         self._apply_perm(pi, data.placement)
+        data['sabre_layout_heuristic_stats'] = (
+            summarize_heuristic_stats(ensure_heuristic_stats(self))
+            if self.collect_heuristic_stats
+            else None
+        )
         _logger.info(f'Found layout: {pi}, new placement: {data.placement}')

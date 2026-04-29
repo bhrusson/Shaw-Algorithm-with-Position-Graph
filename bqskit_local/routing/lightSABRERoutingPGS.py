@@ -7,6 +7,7 @@ from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
+from bqskit_local.mapping.lightSABRE_pgs import DEFAULT_LIGHTSABRE_HEURISTIC
 from bqskit_local.mapping.lightSABRE_pgs import GeneralizedLightSABREAlgorithmPGS
 from bqskit_local.position.graph import PositionGraph
 from bqskit_local.position.state import PositionGraphState
@@ -26,7 +27,7 @@ class GeneralizedLightSABRERoutingPassPGS(BasePass, GeneralizedLightSABREAlgorit
         extended_set_size: int = 20,
         extended_set_weight: float = 0.5,
         cg_compatibility_mode: bool = False,
-        heuristic: str = 'decay',
+        heuristic: str = DEFAULT_LIGHTSABRE_HEURISTIC,
         seed: int | None = None,
         trials: int = 1,
         attempt_limit: int | None = None,
@@ -126,6 +127,37 @@ class GeneralizedLightSABRERoutingPassPGS(BasePass, GeneralizedLightSABREAlgorit
         return pgs
 
     async def run(self, circuit: Circuit, data: PassData) -> None:
+        precomputed_candidates = data.get('lightsabre_routed_layout_candidates', [])
+        if len(precomputed_candidates) > 0:
+            best_candidate = min(
+                precomputed_candidates,
+                key=lambda item: (
+                    int(item['selection_score']),
+                    tuple(item['detail_score']),
+                ),
+            )
+            best_circuit = best_candidate['circuit']
+            if not isinstance(best_circuit, Circuit):
+                raise TypeError(
+                    'Expected Circuit in lightsabre_routed_layout_candidates.',
+                )
+
+            circuit.become(best_circuit.copy())
+            data.final_mapping = list(best_candidate['final_mapping'])
+            data['lightsabre_selected_routing_placement'] = list(best_candidate['layout'])
+            data['lightsabre_total_routing_trials'] = len(precomputed_candidates)
+            data['lightsabre_selected_routing_score'] = int(best_candidate['selection_score'])
+            data['lightsabre_selected_routing_detail_score'] = tuple(best_candidate['detail_score'])
+
+            _logger.info(
+                'LightSABRE selected precomputed routed candidate score=%s detail_score=%s final_mapping=%s candidates=%d',
+                best_candidate['selection_score'],
+                best_candidate['detail_score'],
+                best_candidate['final_mapping'],
+                len(precomputed_candidates),
+            )
+            return
+
         if getattr(data, 'placement', None) is not None:
             placement = [int(x) for x in data.placement[:circuit.num_qudits]]
         else:
@@ -148,42 +180,58 @@ class GeneralizedLightSABRERoutingPassPGS(BasePass, GeneralizedLightSABREAlgorit
         for candidate in data.get('lightsabre_layout_candidates', []):
             add_candidate(candidate)
 
-        best_score: tuple[int, int, int] | None = None
+        best_selection_score: int | None = None
+        best_detail_score: tuple[int, int, int] | None = None
         best_circuit: Circuit | None = None
         best_mapping: list[int] | None = None
         best_placement: list[int] | None = None
 
-        for trial_index in range(self.trials):
-            trial_placement = candidate_placements[trial_index % len(candidate_placements)]
-            if self.cg_compatibility_mode:
-                pgs = self._build_compatibility_local_pgs(
-                    trial_placement,
-                    circuit.num_qudits,
+        global_trial_index = 0
+        for placement_index, trial_placement in enumerate(candidate_placements):
+            for local_trial_index in range(self.trials):
+                if self.cg_compatibility_mode:
+                    pgs = self._build_compatibility_local_pgs(
+                        trial_placement,
+                        circuit.num_qudits,
+                    )
+                else:
+                    pgs = self._build_local_pgs(trial_placement, circuit.num_qudits)
+
+                trial_circuit = circuit.copy()
+                self.begin_trial(global_trial_index)
+                self.forward_pass(trial_circuit, pgs, modify_circuit=True)
+
+                selection_score = self.routed_trial_selection_score(trial_circuit)
+                detail_score = self.routed_trial_score(trial_circuit)
+                final_mapping = [
+                    int(x) for x in pgs.logical_to_position[:circuit.num_qudits]
+                ]
+
+                _logger.info(
+                    'LightSABRE routing placement %d trial %d produced selection_score=%s detail_score=%s final_mapping=%s',
+                    placement_index,
+                    local_trial_index,
+                    selection_score,
+                    detail_score,
+                    final_mapping,
                 )
-            else:
-                pgs = self._build_local_pgs(trial_placement, circuit.num_qudits)
 
-            trial_circuit = circuit.copy()
-            self.begin_trial(trial_index)
-            self.forward_pass(trial_circuit, pgs, modify_circuit=True)
+                if (
+                    best_selection_score is None
+                    or selection_score < best_selection_score
+                    or (
+                        selection_score == best_selection_score
+                        and best_detail_score is not None
+                        and detail_score < best_detail_score
+                    )
+                ):
+                    best_selection_score = selection_score
+                    best_detail_score = detail_score
+                    best_circuit = trial_circuit
+                    best_mapping = final_mapping
+                    best_placement = trial_placement.copy()
 
-            score = self.routed_trial_score(trial_circuit)
-            final_mapping = [
-                int(x) for x in pgs.logical_to_position[:circuit.num_qudits]
-            ]
-
-            _logger.info(
-                'LightSABRE routing trial %d produced score=%s final_mapping=%s',
-                trial_index,
-                score,
-                final_mapping,
-            )
-
-            if best_score is None or score < best_score:
-                best_score = score
-                best_circuit = trial_circuit
-                best_mapping = final_mapping
-                best_placement = trial_placement.copy()
+                global_trial_index += 1
 
         if best_circuit is None or best_mapping is None or best_placement is None:
             raise RuntimeError('LightSABRE routing produced no successful trials.')
@@ -191,9 +239,14 @@ class GeneralizedLightSABRERoutingPassPGS(BasePass, GeneralizedLightSABREAlgorit
         circuit.become(best_circuit)
         data.final_mapping = best_mapping.copy()
         data['lightsabre_selected_routing_placement'] = best_placement.copy()
+        data['lightsabre_total_routing_trials'] = global_trial_index
+        data['lightsabre_selected_routing_score'] = best_selection_score
+        data['lightsabre_selected_routing_detail_score'] = best_detail_score
 
         _logger.info(
-            'LightSABRE selected routing score=%s final_mapping=%s',
-            best_score,
+            'LightSABRE selected routing score=%s detail_score=%s final_mapping=%s total_trials=%d',
+            best_selection_score,
+            best_detail_score,
             best_mapping,
+            global_trial_index,
         )

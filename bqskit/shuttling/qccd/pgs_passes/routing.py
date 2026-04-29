@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import logging
+from pathlib import Path
 
 from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
@@ -12,6 +13,7 @@ from bqskit.shuttling.qccd.QCCD_mapping_PGS import QCCDMappingAlgorithm
 from bqskit.shuttling.qccd.pgs_passes.common import build_pgs_from_passdata
 from bqskit.shuttling.qccd.pgs_passes.common import export_pgs_views_to_passdata
 from bqskit.shuttling.qccd.pgs_passes.common import PROGRAM_ION_IDS_KEY
+from bqskit.shuttling.qccd.pgs_passes.common import profiled_call
 
 _logger = logging.getLogger(__name__)
 
@@ -37,9 +39,17 @@ class QCCDRoutingPassPGS(BasePass):
         extended_set_size: int = 5,
         extended_set_weight: float = 0.5,
         force_bruteforce: bool = False,
+        append_barriers: bool = True,
+        profile_dir: Path | None = None,
+        profile_stem: str = 'qccd_pgs_routing',
+        profile_sort: str = 'cumulative',
     ) -> None:
         self.gate_count_weight = float(gate_count_weight)
         self.assignment_key = assignment_key
+        self.profile_dir = profile_dir
+        self.profile_stem = profile_stem
+        self.profile_sort = profile_sort
+        self.append_barriers = append_barriers
         self.algo_kwargs = {
             'cogestion_rate': cogestion_rate,
             'decay_delta': decay_delta,
@@ -74,7 +84,16 @@ class QCCDRoutingPassPGS(BasePass):
         data['initial_full_ion_assignment_qccd_pgs'] = copy.copy(initial_full_assignment)
         data['initial_program_ion_assignment_qccd'] = copy.copy(initial_program_assignment)
         data['initial_ion_assignment_qccd'] = copy.copy(initial_program_assignment)
-        instruction_list = algo.forward_pass(circuit, pgs=pgs, modify_circuit=True)
+        instruction_list = profiled_call(
+            self.profile_dir,
+            f'{self.profile_stem}__forward',
+            self.profile_sort,
+            algo.forward_pass,
+            circuit,
+            pgs=pgs,
+            modify_circuit=True,
+            append_barriers=self.append_barriers,
+        )
 
         full_assignment, program_assignment, program_ion_ids = export_pgs_views_to_passdata(
             data,

@@ -77,6 +77,7 @@ class PositionGraph:
         
         self._move_graph = self.get_projected_graph(EdgeCapability.MOVE)
         self._execute_graph = self.get_projected_graph(EdgeCapability.EXECUTE)
+        self._execute_neighbors = self._build_execute_neighbors()
         self._executable_clusters = self.fully_executable_clusters()
         self._dijkstra_shortest_path_lengths = self.digraph_all_pairs_dijkstra_path_lengths(edge_capability=EdgeCapability.MOVE)
         self._dijkstra_shortest_paths = self.all_pairs_dijkstra_shortest_paths(edge_capability=EdgeCapability.MOVE)
@@ -105,6 +106,10 @@ class PositionGraph:
     @property
     def execute_graph(self) -> rx.PyDiGraph:
         return self._execute_graph
+
+    @property
+    def execute_neighbors(self) -> dict[int, frozenset[int]]:
+        return self._execute_neighbors
     
     @property
     def swap_neighbors(self) -> dict[int, tuple[int, ...]]:
@@ -688,6 +693,17 @@ class PositionGraph:
 
         return {k: tuple(sorted(vs)) for k, vs in neighbors.items()}
 
+    def _build_execute_neighbors(self) -> dict[int, frozenset[int]]:
+        """Build an undirected execute-adjacency cache."""
+        neighbors: dict[int, set[int]] = {i: set() for i in range(len(self._pos_labels))}
+
+        for (u, v), label in self._edge_labels.items():
+            if label.has_capability(EdgeCapability.EXECUTE):
+                neighbors[u].add(v)
+                neighbors[v].add(u)
+
+        return {k: frozenset(vs) for k, vs in neighbors.items()}
+
     def get_shortest_path_tree(
         self,
         qudit_pos: int,
@@ -705,7 +721,7 @@ class PositionGraph:
         if edge_capability == EdgeCapability.MOVE:
             paths_dict = self._dijkstra_shortest_paths[qudit_pos]
             return [
-                tuple(paths_dict.get(node_index, []))
+                tuple(paths_dict[node_index]) if node_index in paths_dict else tuple()
                 for node_index in range(len(self.position_labels))
             ]
 
