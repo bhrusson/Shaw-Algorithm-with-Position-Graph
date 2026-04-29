@@ -2602,17 +2602,19 @@ class QCCDMappingAlgorithm:
         # because it changes the heuristic objective. If we revisit performance
         # optimization later, that alternate scoring rule is a reasonable
         # candidate for further investigation.
+        position_to_logical = pgs.position_to_logical
+        get_move_blockage_profile = self.qccd_machine.get_move_blockage_profile
         for space in permutations(available_space, len(positions)):
             space_distance = float(
                 sum(D[positions[i]][space[i]] for i in range(len(positions)))
             )
             for i in range(len(positions)):
-                blockage_profile = self.qccd_machine.get_move_blockage_profile(
+                blockage_profile = get_move_blockage_profile(
                     positions[i],
                     space[i],
                 )
                 for block_position, resolve_cost in blockage_profile:
-                    if pgs.get_logical_qudit_at_position(block_position) != -1:
+                    if position_to_logical[block_position] != -1:
                         space_distance += resolve_cost
             # print(f"Distance when considering space {space}: ", space_distance)
             # print(f"Current minimum distance: ", distance)
