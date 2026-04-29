@@ -751,11 +751,19 @@ class QCCDMappingAlgorithm:
         key: str,
         entry: dict[str, object],
     ) -> None:
+        if not self._should_capture_deep_trace(key):
+            return
+        if not hasattr(self, 'last_bruteforce_trace') or self.last_bruteforce_trace is None:
+            return
+        traces = self.last_bruteforce_trace.setdefault(key, [])
+        traces.append(self._snapshot_trace_value(entry))
+
+    def _should_capture_deep_trace(self, key: str) -> bool:
         probe_trace_active = (
             self._forward_probe_enabled()
             and self._active_forward_probe_step_matches()
         )
-        if not self._deep_trace_enabled() and not (
+        return self._deep_trace_enabled() or (
             probe_trace_active
             and (
                 key == 'segment_drain_trace'
@@ -765,12 +773,7 @@ class QCCDMappingAlgorithm:
                     and key in ('move_call_trace', 'move_step_trace')
                 )
             )
-        ):
-            return
-        if not hasattr(self, 'last_bruteforce_trace') or self.last_bruteforce_trace is None:
-            return
-        traces = self.last_bruteforce_trace.setdefault(key, [])
-        traces.append(self._snapshot_trace_value(entry))
+        )
 
     def _congestion_layers(
         self,
@@ -1350,7 +1353,7 @@ class QCCDMappingAlgorithm:
         gate_pos = np.array(gate_pos)[np.argsort(distance_to_trap_lst)]
         selected_end_point = np.array(selected_end_point)[np.argsort(distance_to_trap_lst)]
         ion_order = [self._logical_at_position(int(i), pgs) for i in gate_pos]
-        _logger.debug(f"Selected end point: {selected_end_point}", )
+        _logger.debug('Selected end point: %s', selected_end_point)
         # print(f"Selected end point: {selected_end_point}")
         # print("Order of moving ions: ", ion_order)
         for ion_index in range(len(ion_order)):
@@ -1394,14 +1397,15 @@ class QCCDMappingAlgorithm:
         for pos_idx in range(len(gate_pos)):
             move_source = int(gate_pos[pos_idx])
             move_target = int(selected_trap_space[len(selected_trap_space) - 1 - pos_idx])
-            self._append_deep_trace('move_call_trace', {
-                'phase': 'gate_move',
-                'pos_idx': int(pos_idx),
-                'source': move_source,
-                'target': move_target,
-                'clearing_ep': False,
-                'assignment_before': self._assignment_from_pgs(pgs),
-            })
+            if self._should_capture_deep_trace('move_call_trace'):
+                self._append_deep_trace('move_call_trace', {
+                    'phase': 'gate_move',
+                    'pos_idx': int(pos_idx),
+                    'source': move_source,
+                    'target': move_target,
+                    'clearing_ep': False,
+                    'assignment_before': self._assignment_from_pgs(pgs),
+                })
             self._status(
                 f'Trying to moving ion {gate_pos[pos_idx]}... to '
                 f'{move_target}',
@@ -1503,25 +1507,27 @@ class QCCDMappingAlgorithm:
                 for trap in self.qccd_machine.physical_graph.trap_list:
                     _, available_space = self.qccd_machine.trap_is_fully_occupied_pgs(trap.id, pgs)
                     available_spaces += available_space
-                self._append_deep_trace('segment_drain_trace', {
-                    'phase': 'trigger',
-                    'pos_idx': int(pos_idx),
-                    'ion_at_segment': [int(ion) for ion in ion_at_segment],
-                    'available_spaces': [int(space) for space in available_spaces],
-                    'assignment_before': self._assignment_from_pgs(pgs),
-                })
+                if self._should_capture_deep_trace('segment_drain_trace'):
+                    self._append_deep_trace('segment_drain_trace', {
+                        'phase': 'trigger',
+                        'pos_idx': int(pos_idx),
+                        'ion_at_segment': [int(ion) for ion in ion_at_segment],
+                        'available_spaces': [int(space) for space in available_spaces],
+                        'assignment_before': self._assignment_from_pgs(pgs),
+                    })
                 while ion_at_segment:
                     drain_source = int(self._position_of_qudit(ion_at_segment[0], pgs))
                     drain_target = int(available_spaces[0])
-                    self._append_deep_trace('move_call_trace', {
-                        'phase': 'segment_drain',
-                        'pos_idx': int(pos_idx),
-                        'source': drain_source,
-                        'target': drain_target,
-                        'logical': int(ion_at_segment[0]),
-                        'clearing_ep': False,
-                        'assignment_before': self._assignment_from_pgs(pgs),
-                    })
+                    if self._should_capture_deep_trace('move_call_trace'):
+                        self._append_deep_trace('move_call_trace', {
+                            'phase': 'segment_drain',
+                            'pos_idx': int(pos_idx),
+                            'source': drain_source,
+                            'target': drain_target,
+                            'logical': int(ion_at_segment[0]),
+                            'clearing_ep': False,
+                            'assignment_before': self._assignment_from_pgs(pgs),
+                        })
                     leading_moves += self._brute_force_move(
                         drain_source,
                         drain_target,
@@ -1541,13 +1547,14 @@ class QCCDMappingAlgorithm:
                         pos = self._position_of_qudit(ion, pgs)
                         if pos in self.qccd_machine.physical_to_position["segment_space"]:
                             ion_at_segment.append(ion)
-                    self._append_deep_trace('segment_drain_trace', {
-                        'phase': 'after_iteration',
-                        'pos_idx': int(pos_idx),
-                        'ion_at_segment': [int(ion) for ion in ion_at_segment],
-                        'available_spaces': [int(space) for space in available_spaces],
-                        'assignment_after': self._assignment_from_pgs(pgs),
-                    })
+                    if self._should_capture_deep_trace('segment_drain_trace'):
+                        self._append_deep_trace('segment_drain_trace', {
+                            'phase': 'after_iteration',
+                            'pos_idx': int(pos_idx),
+                            'ion_at_segment': [int(ion) for ion in ion_at_segment],
+                            'available_spaces': [int(space) for space in available_spaces],
+                            'assignment_after': self._assignment_from_pgs(pgs),
+                        })
                 for ion_index in range(len(ion_order)):
                     gate_pos[ion_index] = self._position_of_qudit(ion_order[ion_index], pgs)
             """
@@ -1576,14 +1583,15 @@ class QCCDMappingAlgorithm:
                 end_point_neighbors = [i for i in end_point_neighbors if i not in occupied_neighbors]
                 if not end_point_neighbors:
                     potential_blockage = [i for i in occupied_neighbors if self.qccd_machine.get_trap_id(i) is None]
-                    self._append_deep_trace('move_call_trace', {
-                        'phase': 'clear_endpoint',
-                        'pos_idx': int(pos_idx),
-                        'source': int(selected_end_point[pos_idx + 1]),
-                        'target': int(potential_blockage[0]),
-                        'clearing_ep': True,
-                        'assignment_before': self._assignment_from_pgs(pgs),
-                    })
+                    if self._should_capture_deep_trace('move_call_trace'):
+                        self._append_deep_trace('move_call_trace', {
+                            'phase': 'clear_endpoint',
+                            'pos_idx': int(pos_idx),
+                            'source': int(selected_end_point[pos_idx + 1]),
+                            'target': int(potential_blockage[0]),
+                            'clearing_ep': True,
+                            'assignment_before': self._assignment_from_pgs(pgs),
+                        })
                     leading_moves += self._brute_force_move(
                         int(selected_end_point[pos_idx + 1]), int(potential_blockage[0]),
                         pgs, clearing_ep=True, congestion_cache=congestion_cache,
@@ -1637,31 +1645,33 @@ class QCCDMappingAlgorithm:
 
         path = self.qccd_machine.get_move_path(start_position, goal_position)
         ion_status = self.qccd_machine.position_to_physical[start_position]
-        self._append_deep_trace('move_step_trace', {
-            'phase': 'move_start',
-            'source': int(start_position),
-            'target': int(goal_position),
-            'path': [int(p) for p in path],
-            'clearing_ep': bool(clearing_ep),
-            'initial_ion_status': str(ion_status),
-            'assignment_before': self._assignment_from_pgs(pgs),
-        })
+        if self._should_capture_deep_trace('move_step_trace'):
+            self._append_deep_trace('move_step_trace', {
+                'phase': 'move_start',
+                'source': int(start_position),
+                'target': int(goal_position),
+                'path': [int(p) for p in path],
+                'clearing_ep': bool(clearing_ep),
+                'initial_ion_status': str(ion_status),
+                'assignment_before': self._assignment_from_pgs(pgs),
+            })
         for idx_point in range(len(path) - 1):
             current_position = int(path[idx_point])
             next_position = int(path[idx_point + 1])
-            self._check_congestion_loop_debug(
-                phase='brute_force_move',
-                state_key=(
-                    int(current_position),
-                    int(next_position),
-                    int(goal_position),
-                    tuple(sorted(self._assignment_from_pgs(pgs).items())),
-                ),
-                detail=(
-                    f'current={int(current_position)} next={int(next_position)} '
-                    f'goal={int(goal_position)}'
-                ),
-            )
+            if self._congestion_loop_debug_enabled():
+                self._check_congestion_loop_debug(
+                    phase='brute_force_move',
+                    state_key=(
+                        int(current_position),
+                        int(next_position),
+                        int(goal_position),
+                        tuple(sorted(self._assignment_from_pgs(pgs).items())),
+                    ),
+                    detail=(
+                        f'current={int(current_position)} next={int(next_position)} '
+                        f'goal={int(goal_position)}'
+                    ),
+                )
             possible_move = (current_position, next_position)
             step_entry = {
                 'phase': 'move_step',
@@ -1714,7 +1724,8 @@ class QCCDMappingAlgorithm:
             elif ion_status == 'trap' and self.qccd_machine.position_to_physical[next_position] == 'segment':
                 ion_status = 'segment'
             step_entry['ion_status_after'] = str(ion_status)
-            step_entry['assignment_after'] = self._assignment_from_pgs(pgs)
+            if self._should_capture_deep_trace('move_step_trace'):
+                step_entry['assignment_after'] = self._assignment_from_pgs(pgs)
             self._append_deep_trace('move_step_trace', step_entry)
         return leading_moves
 
@@ -1737,29 +1748,34 @@ class QCCDMappingAlgorithm:
             raise ValueError("Too many repetitive call...")
         if congestion_cache is None:
             congestion_cache = {}
-        self._check_congestion_loop_debug(
-            phase='resolve_congestion',
-            state_key=(
-                int(target),
-                int(blockage),
-                int(original_target),
-                int(original_blockage),
-                int(num_call),
-                tuple(sorted(self._assignment_from_pgs(pgs).items())),
-            ),
-            detail=(
-                f'target={int(target)} blockage={int(blockage)} '
-                f'original_target={int(original_target)} '
-                f'original_blockage={int(original_blockage)} '
-                f'num_call={int(num_call)}'
-            ),
-        )
+        if self._congestion_loop_debug_enabled():
+            self._check_congestion_loop_debug(
+                phase='resolve_congestion',
+                state_key=(
+                    int(target),
+                    int(blockage),
+                    int(original_target),
+                    int(original_blockage),
+                    int(num_call),
+                    tuple(sorted(self._assignment_from_pgs(pgs).items())),
+                ),
+                detail=(
+                    f'target={int(target)} blockage={int(blockage)} '
+                    f'original_target={int(original_target)} '
+                    f'original_blockage={int(original_blockage)} '
+                    f'num_call={int(num_call)}'
+                ),
+            )
         # print(
         #     f"Trying to resolve blockage {blockage} from the target {target} path with ion assignment {ion_assignment}")
-        _logger.debug(
-            f"Trying to resolve blockage {blockage} from the target {target} "
-            f"path with {self._assignment_from_pgs(pgs)}"
-        )
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug(
+                '%s Trying to resolve blockage %s from the target %s path with %s',
+                self._log_prefix,
+                blockage,
+                target,
+                self._assignment_from_pgs(pgs),
+            )
         leading_moves = []
         # print("Path: {}".format(path))
         # print("Original target: ", original_target)
@@ -1823,7 +1839,7 @@ class QCCDMappingAlgorithm:
                 )
                 for blockage_neighbor in blockage_neighbors
             ])
-            _logger.debug(f"Congestion: {congestion}")
+            _logger.debug('Congestion: %s', congestion)
             congestion_rates = congestion[:, 0]
             congestion_scores = congestion[:, 1]
             # print("Cogestion rates: ", congestion_rates)
@@ -2033,6 +2049,8 @@ class QCCDMappingAlgorithm:
             tuple[tuple[tuple[int, ...], ...], tuple[tuple[int, int], ...]],
             int,
         ] = {}
+        capture_backward_trace = self._capture_backward_trace_enabled()
+        backward_probe_enabled = self._backward_probe_matches()
         if _logger.isEnabledFor(logging.DEBUG):
             _logger.debug(
                 '%s Starting backward sabre QCCD pass with ion assignment: %s.',
@@ -2047,7 +2065,11 @@ class QCCDMappingAlgorithm:
             )
             front_locations = self._format_locations(circuit, self._sorted_points(F))
             execute_locations = self._format_locations(circuit, execute_candidates)
-            pre_assignment = self._assignment_snapshot_from_pgs(pgs)
+            pre_assignment = (
+                self._assignment_snapshot_from_pgs(pgs)
+                if capture_backward_trace or backward_probe_enabled
+                else None
+            )
             self._emit_backward_probe(
                 'loop',
                 {
@@ -2126,8 +2148,16 @@ class QCCDMappingAlgorithm:
                     iter_count = 0
                     for i in range(circuit.num_qudits):
                         decay[i] = 1.0
-                post_assignment = self._assignment_snapshot_from_pgs(pgs)
+                post_assignment = (
+                    self._assignment_snapshot_from_pgs(pgs)
+                    if execute_probe_active or capture_backward_trace
+                    else None
+                )
                 if execute_probe_active:
+                    if pre_assignment is None or post_assignment is None:
+                        raise RuntimeError(
+                            'Backward execute probe requires assignment snapshots.',
+                        )
                     self._emit_backward_execute_probe(
                         {
                             'backward_pass': int(getattr(self, '_active_backward_pass_index', -1)),
@@ -2218,6 +2248,10 @@ class QCCDMappingAlgorithm:
                     circuit[self._sorted_points(F)[0]], D, pgs,
                 )
                 if brute_force_probe_active:
+                    if pre_assignment is None:
+                        raise RuntimeError(
+                            'Backward brute-force probe requires a pre-assignment snapshot.',
+                        )
                     post_assignment = self._assignment_snapshot_from_pgs(pgs)
                     brute_force_trace = self._snapshot_trace_value(
                         getattr(self, 'last_bruteforce_trace', None),
@@ -2241,7 +2275,11 @@ class QCCDMappingAlgorithm:
             self._apply_move(best_move, pgs=pgs)
             leading_moves.append(best_move)
             self.iter_count += 1
-            post_assignment = self._assignment_snapshot_from_pgs(pgs)
+            post_assignment = (
+                self._assignment_snapshot_from_pgs(pgs)
+                if capture_backward_trace or backward_probe_enabled
+                else None
+            )
             self._emit_backward_probe(
                 'applied-move',
                 {
@@ -2716,7 +2754,7 @@ class QCCDMappingAlgorithm:
         if move[0] == move[1]:
             _logger.debug('skipping self move %s', move)
             return False
-        _logger.debug('applying move %s' % str(move))
+        _logger.debug('applying move %s', move)
         l1 = self._logical_at_position(move[0], pgs)
         l2 = self._logical_at_position(move[1], pgs)
         if l1 is None and l2 is None:
@@ -2727,7 +2765,8 @@ class QCCDMappingAlgorithm:
             pgs.set_qudit_position(l1, move[1])
         else:
             pgs.swap_logical_qudits(l1, l2)
-        _logger.debug('ion assignment after move %s', self._assignment_from_pgs(pgs))
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug('ion assignment after move %s', self._assignment_from_pgs(pgs))
         return True
         # decay[move[0]] += self.decay_delta
         # decay[move[1]] += self.decay_delta
