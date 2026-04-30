@@ -6,6 +6,7 @@ import logging
 import itertools
 import os
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Iterator
 from typing import Sequence
 from itertools import permutations, combinations
@@ -23,6 +24,21 @@ _logger = logging.getLogger(__name__)
 
 
 PositionState = PositionGraphState | PositionAssignmentTracker
+
+
+@dataclass
+class ShawHeuristicRegionCache:
+    gate_qudits: dict[CircuitPoint, tuple[int, ...]]
+    gate_scores: dict[CircuitPoint, float]
+    points_by_logical: dict[int, set[CircuitPoint]]
+    points_by_dependency: dict[int, set[CircuitPoint]]
+    total_score: float
+    num_points: int
+
+
+@dataclass
+class ShawHeuristicScoreContext:
+    front: ShawHeuristicRegionCache
 
 
 class QCCDMappingAlgorithm:
@@ -2318,6 +2334,72 @@ class QCCDMappingAlgorithm:
             frontier.extend(next_points)
         return extended_set
 
+    def _build_heuristic_region(
+        self,
+        circuit: Circuit,
+        points: set[CircuitPoint],
+        pgs: PositionState,
+        D: list[list[float]],
+    ) -> ShawHeuristicRegionCache:
+        gate_qudits: dict[CircuitPoint, tuple[int, ...]] = {}
+        gate_scores: dict[CircuitPoint, float] = {}
+        points_by_logical: dict[int, set[CircuitPoint]] = {}
+        points_by_dependency: dict[int, set[CircuitPoint]] = {}
+        total_score = 0.0
+
+        for point in points:
+            logical_qudits = tuple(int(q) for q in circuit[point].location)
+            dependency_positions: set[int] = set()
+            score = self._get_distance(
+                logical_qudits,
+                D,
+                pgs,
+                dependency_positions=dependency_positions,
+            )
+            gate_qudits[point] = logical_qudits
+            gate_scores[point] = score
+            total_score += score
+
+            for logical in logical_qudits:
+                points_by_logical.setdefault(logical, set()).add(point)
+            for position in dependency_positions:
+                points_by_dependency.setdefault(position, set()).add(point)
+
+        return ShawHeuristicRegionCache(
+            gate_qudits=gate_qudits,
+            gate_scores=gate_scores,
+            points_by_logical=points_by_logical,
+            points_by_dependency=points_by_dependency,
+            total_score=total_score,
+            num_points=len(points),
+        )
+
+    def _build_heuristic_context(
+        self,
+        circuit: Circuit,
+        F: set[CircuitPoint],
+        pgs: PositionState,
+        D: list[list[float]],
+    ) -> ShawHeuristicScoreContext:
+        return ShawHeuristicScoreContext(
+            front=self._build_heuristic_region(circuit, F, pgs, D),
+        )
+
+    def _affected_region_points(
+        self,
+        region: ShawHeuristicRegionCache,
+        moved_logicals: Sequence[int],
+        changed_occupancy_positions: Sequence[int],
+    ) -> set[CircuitPoint]:
+        affected: set[CircuitPoint] = set()
+        for logical in moved_logicals:
+            if int(logical) == -1:
+                continue
+            affected.update(region.points_by_logical.get(int(logical), set()))
+        for position in changed_occupancy_positions:
+            affected.update(region.points_by_dependency.get(int(position), set()))
+        return affected
+
     def _get_best_move(
             self,
             circuit: Circuit,
@@ -2368,6 +2450,8 @@ class QCCDMappingAlgorithm:
                 'extended_locations': self._format_locations(circuit, self._sorted_points(E)),
             },
         )
+        scratch_pgs = self._scratch_pgs(pgs, 'score_move')
+        heuristic_context = self._build_heuristic_context(circuit, F, pgs, D)
         list_of_best_move = []
         move_scores = []
         # Score them, tracking the best one
@@ -2377,13 +2461,11 @@ class QCCDMappingAlgorithm:
         # list_of_best_moves = list(move_candidate_list)[list_of_best_score]
         for move in self._sorted_moves(move_candidate_list):
             score = self._score_move(
-                circuit,
-                F,
+                scratch_pgs,
                 D,
                 move,
                 decay,
-                E,
-                pgs,
+                heuristic_context,
             )
             move_scores.append((move, float(score)))
             if score < best_score:
@@ -2505,43 +2587,64 @@ class QCCDMappingAlgorithm:
 
     def _score_move(
             self,
-            circuit: Circuit,
-            F: set[CircuitPoint],
+            pgs: PositionState,
             D: list[list[float]],
             move: tuple[int, int],
             decay: list[float],
-            E: set[CircuitPoint],
-            pgs: PositionGraphState,
+            heuristic_context: ShawHeuristicScoreContext,
     ) -> float:
         """Score the candidate realizable physical moves given the current algorithm state and ion assignment."""
-        l1 = self._logical_at_position(move[0], pgs)
-        l2 = self._logical_at_position(move[1], pgs)
-        if l1 is None and l2 is None:
+        del decay
+        pos1, pos2 = (int(move[0]), int(move[1]))
+        mapping = pgs.logical_to_position
+        position_to_logical = pgs.position_to_logical
+        l1 = int(position_to_logical[pos1])
+        l2 = int(position_to_logical[pos2])
+        if l1 == -1 and l2 == -1:
             raise RuntimeError(f'The move {move} is not a valid move as there is no ion in these assignment.')
-        affected = [logical for logical in (l1, l2) if logical is not None]
-        snapshot = self._snapshot_logical_positions(pgs, affected)
+
+        changed_occupancy_positions: tuple[int, ...] = ()
+        if (l1 == -1) != (l2 == -1):
+            changed_occupancy_positions = (pos1, pos2)
+
+        position_to_logical[pos1], position_to_logical[pos2] = (l2, l1)
+        if l1 != -1:
+            mapping[l1] = pos2
+        if l2 != -1:
+            mapping[l2] = pos1
         try:
-            self._apply_move(move, pgs=pgs)
+            front_total = heuristic_context.front.total_score
+            if not np.isfinite(front_total):
+                front_total = 0.0
+                for logical_qudits in heuristic_context.front.gate_qudits.values():
+                    front_total += self._get_distance(
+                        logical_qudits,
+                        D,
+                        pgs,
+                    )
+                return front_total / heuristic_context.front.num_points
 
-            # Calculate front set term
-            front = 0.0
-            for n in F:
-                logical_qudits = circuit[n].location
-                front += self._get_distance(logical_qudits, D, pgs)
-            front /= len(F)
+            affected_front = self._affected_region_points(
+                heuristic_context.front,
+                (l1, l2),
+                changed_occupancy_positions,
+            )
 
-            # Calculate extended set term
-            extend = 0.0
-            # Match the legacy CG implementation for apples-to-apples comparison.
-            # if len(E) > 0:
-            #     for n in E:
-            #         extend += self._get_distance(circuit[n].location, D, pgs)
-            #     extend /= len(E)
-            #     extend *= self.extended_set_weight
+            for point in affected_front:
+                front_total -= heuristic_context.front.gate_scores[point]
+                front_total += self._get_distance(
+                    heuristic_context.front.gate_qudits[point],
+                    D,
+                    pgs,
+                )
 
-            return front + extend
+            return front_total / heuristic_context.front.num_points
         finally:
-            self._restore_logical_positions(pgs, snapshot)
+            position_to_logical[pos1], position_to_logical[pos2] = (l1, l2)
+            if l1 != -1:
+                mapping[l1] = pos1
+            if l2 != -1:
+                mapping[l2] = pos2
 
     # def _get_distance_from_position_to_trap(self,
     #                                         position: int,
@@ -2615,6 +2718,7 @@ class QCCDMappingAlgorithm:
             available_space: list[int],
             D: list[list[float]],
             pgs: PositionState | None = None,
+            dependency_positions: set[int] | None = None,
     ) -> float:
         """
             Get minimum distance from all the position of the gate to the trap...
@@ -2640,20 +2744,40 @@ class QCCDMappingAlgorithm:
         # because it changes the heuristic objective. If we revisit performance
         # optimization later, that alternate scoring rule is a reasonable
         # candidate for further investigation.
+        positions = tuple(int(position) for position in positions)
+        available_space = tuple(int(space) for space in available_space)
+        num_positions = len(positions)
+        if num_positions == 0:
+            return 0.0
+        if len(available_space) < num_positions:
+            return float(np.inf)
+
         position_to_logical = pgs.position_to_logical
         get_move_blockage_profile = self.qccd_machine.get_move_blockage_profile
-        for space in permutations(available_space, len(positions)):
-            space_distance = float(
-                sum(D[positions[i]][space[i]] for i in range(len(positions)))
-            )
-            for i in range(len(positions)):
-                blockage_profile = get_move_blockage_profile(
-                    positions[i],
-                    space[i],
-                )
-                for block_position, resolve_cost in blockage_profile:
+        pair_penalty_terms: list[dict[int, tuple[float, ...]]] = []
+        for position in positions:
+            position_penalty_terms: dict[int, tuple[float, ...]] = {}
+            for space in available_space:
+                penalties: list[float] = []
+                for block_position, resolve_cost in get_move_blockage_profile(
+                    position,
+                    space,
+                ):
+                    block_position = int(block_position)
+                    if dependency_positions is not None:
+                        dependency_positions.add(block_position)
                     if position_to_logical[block_position] != -1:
-                        space_distance += resolve_cost
+                        penalties.append(float(resolve_cost))
+                position_penalty_terms[space] = tuple(penalties)
+            pair_penalty_terms.append(position_penalty_terms)
+
+        for space in permutations(available_space, num_positions):
+            space_distance = float(
+                sum(D[positions[i]][space[i]] for i in range(num_positions))
+            )
+            for i, assigned_space in enumerate(space):
+                for resolve_cost in pair_penalty_terms[i][assigned_space]:
+                    space_distance += resolve_cost
             # print(f"Distance when considering space {space}: ", space_distance)
             # print(f"Current minimum distance: ", distance)
             # print("........")
@@ -2685,7 +2809,8 @@ class QCCDMappingAlgorithm:
             self,
             logical_qudits: Sequence[int],
             D: list[list[float]],
-            pgs: PositionGraphState,
+            pgs: PositionState,
+            dependency_positions: set[int] | None = None,
     ) -> float:
         """
             Calculate the expected cost w.r.t distance to connect logical qudits.
@@ -2702,10 +2827,23 @@ class QCCDMappingAlgorithm:
                 distance_to_trap = np.inf
                 for trap in self.qccd_machine.physical_graph.executable_trap_list:
                     _, available_space = self.qccd_machine.trap_is_fully_occupied_pgs(trap.id, pgs)
+                    if dependency_positions is not None:
+                        dependency_positions.update(
+                            int(position)
+                            for position in self.qccd_machine.physical_to_position[trap.id]
+                        )
                     #endpoints_trap_space = self.qccd_machine.trap_end_points[trap.id]
                     # Change to endpoints of trap space ... TODO
-                    distance_to_trap = np.min([self._get_distance_from_position_to_trap(p, available_space, D, pgs),
-                                               distance_to_trap])
+                    distance_to_trap = np.min([
+                        self._get_distance_from_position_to_trap(
+                            p,
+                            available_space,
+                            D,
+                            pgs,
+                            dependency_positions=dependency_positions,
+                        ),
+                        distance_to_trap,
+                    ])
                 return distance_to_trap
         # Multi-qudit case
         self.distance_stats['multi_qudit_calls'] += 1
@@ -2721,6 +2859,11 @@ class QCCDMappingAlgorithm:
             for trap in self.qccd_machine.physical_graph.executable_trap_list:
                 #endpoints_trap_space = self.qccd_machine.trap_end_points[trap.id]
                 _, available_space = self.qccd_machine.trap_is_fully_occupied_pgs(trap.id, pgs)
+                if dependency_positions is not None:
+                    dependency_positions.update(
+                        int(position)
+                        for position in self.qccd_machine.physical_to_position[trap.id]
+                    )
                 considering_p = []
                 for trap_p_index, p in zip(trap_p, p_list):
                     if trap_p_index == trap.id:
@@ -2736,6 +2879,7 @@ class QCCDMappingAlgorithm:
                         available_space,
                         D,
                         pgs,
+                        dependency_positions=dependency_positions,
                     )
                 total_F = np.min([total_F, considering_dist_to_F])
         # print(
