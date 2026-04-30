@@ -398,7 +398,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         '--with-barriers',
         action='store_true',
-        help='Materialize full-width barrier operations during routing and enable circuit-based scheduling stats.',
+        help='Materialize full-width barrier operations during routing.',
     )
     return parser.parse_args()
 
@@ -503,24 +503,22 @@ def main() -> None:
                 output_circuit, data = compiler.compile(circuit, workflow, request_data=True)
             compile_time = timer() - start
 
-        schedule_result: dict[str, Any] | None = None
-        if args.with_barriers:
-            with schedule_context:
-                validate_instruction_moves_against_machine(
-                    data['instruction_list'],
-                    data.model,
-                    initial_assignment=data['initial_ion_assignment_qccd'],
-                    window=args.window,
-                )
-                schedule_result = schedule_qccd_from_instructions_v3(
-                    instruction_lst=data['instruction_list'],
-                    initial_ion_assignment=data['initial_ion_assignment_qccd'],
-                    full_initial_ion_assignment=data.get('initial_full_ion_assignment_qccd_pgs'),
-                    machine_model=data.model,
-                    circuit=output_circuit,
-                    parallel=True,
-                    execute_location_mode='physical',
-                )
+        with schedule_context:
+            validate_instruction_moves_against_machine(
+                data['instruction_list'],
+                data.model,
+                initial_assignment=data['initial_ion_assignment_qccd'],
+                window=args.window,
+            )
+            schedule_result = schedule_qccd_from_instructions_v3(
+                instruction_lst=data['instruction_list'],
+                initial_ion_assignment=data['initial_ion_assignment_qccd'],
+                full_initial_ion_assignment=data.get('initial_full_ion_assignment_qccd_pgs'),
+                machine_model=data.model,
+                circuit=output_circuit,
+                parallel=True,
+                execute_location_mode='physical',
+            )
 
     runtime_us = None
     fidelity = None
@@ -547,16 +545,10 @@ def main() -> None:
     print(f"Final mapping: {data.get('final_mapping')}")
     print(f'Compile time (s): {compile_time}')
     print(f'Instruction count: {instruction_count}')
-    if schedule_result is not None:
-        print(f'Runtime (us): {runtime_us}')
-        print(f'Application fidelity: {fidelity}')
-        print(f'Execute rounds: {execute_rounds}')
-        print(f'Move rounds: {move_rounds}')
-    else:
-        print('Runtime (us): n/a (requires --with-barriers)')
-        print('Application fidelity: n/a (requires --with-barriers)')
-        print('Execute rounds: n/a (requires --with-barriers)')
-        print('Move rounds: n/a (requires --with-barriers)')
+    print(f'Runtime (us): {runtime_us}')
+    print(f'Application fidelity: {fidelity}')
+    print(f'Execute rounds: {execute_rounds}')
+    print(f'Move rounds: {move_rounds}')
     if args.pass_timings:
         print('Pass timings:')
         total_pass_time = 0.0
