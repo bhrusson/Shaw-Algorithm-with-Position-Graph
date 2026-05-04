@@ -1465,6 +1465,54 @@ class QCCDMappingAlgorithm:
             return instructions_list
 
     ########################Local minima resolution#############################
+    def get_candidate_traps(
+            self,
+            gate_pos: Sequence[int],
+            D: list[list[float]],
+            pgs: PositionGraphState,
+            executable_trap_position_items: Sequence[tuple[object, tuple[int, ...]]],
+    ) -> list[dict[str, object]]:
+        """
+            Return executable traps ordered by a cheap optimistic score.
+
+            The lower bound ignores distinct-slot assignment and blockage
+            penalties, so it is optimistic relative to the exact trap score.
+            This lets the caller safely skip remaining traps once their lower
+            bound is worse than the best exact score already found.
+        """
+        positions = tuple(int(position) for position in gate_pos)
+        position_to_logical = pgs.position_to_logical
+        candidate_traps: list[dict[str, object]] = []
+        for original_index, (trap, all_trap_space) in enumerate(
+            executable_trap_position_items,
+        ):
+            available_trap_space = [
+                position for position in all_trap_space
+                if int(position_to_logical[position]) == -1
+            ]
+            num_available_trap_space = len(available_trap_space)
+            lower_bound = 0.0
+            for position in positions:
+                row = D[position]
+                lower_bound += min(row[space] for space in all_trap_space)
+            lower_bound -= num_available_trap_space * 120e-6
+            candidate_traps.append({
+                'original_index': int(original_index),
+                'trap': trap,
+                'trap_id': trap.id,
+                'trap_space': all_trap_space,
+                'available_space': available_trap_space,
+                'available_count': int(num_available_trap_space),
+                'lower_bound': float(lower_bound),
+            })
+        candidate_traps.sort(
+            key=lambda candidate: (
+                candidate['lower_bound'],
+                candidate['original_index'],
+            ),
+        )
+        return candidate_traps
+
     def _brute_force_congestion(
             self,
             gate: Operation,
@@ -1515,41 +1563,82 @@ class QCCDMappingAlgorithm:
         selected_end_point = []
         relative_distance = np.inf
         selected_trap_id = None
-        trap_candidates: list[dict[str, object]] = []
+        selected_trap_index = None
+        candidate_traps = self.get_candidate_traps(
+            gate_pos,
+            D,
+            pgs,
+            executable_trap_position_items,
+        )
         # Select which trap to brute force in
-        for trap, all_trap_space in executable_trap_position_items:
-            # endpoints_trap_space = self.qccd_machine.trap_end_points[trap.id]
-            available_trap_space = [
-                position for position in all_trap_space
-                if int(position_to_logical[position]) == -1
-            ]
-            # Change to endpoints of trap space ... TODO
-            raw_relative_dis_to_trap = self._get_distance_from_position_to_trap(gate_pos,
-                                                                                all_trap_space,
-                                                                                D,
-                                                                                pgs)
+        for candidate_index, candidate in enumerate(candidate_traps):
+            if (
+                np.isfinite(relative_distance)
+                and float(candidate['lower_bound']) > relative_distance
+            ):
+                for pruned_candidate in candidate_traps[candidate_index:]:
+                    pruned_candidate['scored'] = False
+                    pruned_candidate['pruned'] = True
+                    pruned_candidate['raw_distance'] = None
+                    pruned_candidate['adjusted_distance'] = None
+                break
+            trap = candidate['trap']
+            all_trap_space = candidate['trap_space']
             """
                 Only need to calculate unoccupied spaces (the one near the endpoints) if exits or only the endpoints...  
             """
-            num_available_trap_space = len(available_trap_space)
+            num_available_trap_space = int(candidate['available_count'])
+            raw_relative_dis_to_trap = self._get_distance_from_position_to_trap(
+                gate_pos,
+                all_trap_space,
+                D,
+                pgs,
+            )
             relative_dis_to_trap = (
                 raw_relative_dis_to_trap - num_available_trap_space * 120e-6
             )
-            trap_candidates.append({
-                'trap_id': trap.id,
-                'trap_space': [int(x) for x in all_trap_space],
-                'available_space': [int(x) for x in available_trap_space],
-                'available_count': int(num_available_trap_space),
-                'raw_distance': float(raw_relative_dis_to_trap),
-                'adjusted_distance': float(relative_dis_to_trap),
-            })
+            candidate['scored'] = True
+            candidate['pruned'] = False
+            candidate['raw_distance'] = float(raw_relative_dis_to_trap)
+            candidate['adjusted_distance'] = float(relative_dis_to_trap)
             # print(f"Considering trap: {trap.id} with distance {relative_dis_to_trap} and number of available space :{num_available_trap_space}")
-            if relative_dis_to_trap < relative_distance:
+            original_index = int(candidate['original_index'])
+            if (
+                relative_dis_to_trap < relative_distance
+                or (
+                    relative_dis_to_trap == relative_distance
+                    and (
+                        selected_trap_index is None
+                        or original_index < selected_trap_index
+                    )
+                )
+            ):
                 selected_trap_space = all_trap_space
                 # ToDo: If there are more than two endpoints?
                 # selected_end_point = self.qccd_machine.trap_end_points[trap.id]
                 selected_trap_id = trap.id
+                selected_trap_index = original_index
                 relative_distance = relative_dis_to_trap
+        trap_candidates: list[dict[str, object]] = []
+        for candidate in sorted(
+            candidate_traps,
+            key=lambda trap_candidate: trap_candidate['original_index'],
+        ):
+            trap_candidates.append({
+                'trap_id': candidate['trap_id'],
+                'trap_space': [
+                    int(x) for x in candidate['trap_space']
+                ],
+                'available_space': [
+                    int(x) for x in candidate['available_space']
+                ],
+                'available_count': int(candidate['available_count']),
+                'lower_bound': float(candidate['lower_bound']),
+                'raw_distance': candidate.get('raw_distance'),
+                'adjusted_distance': candidate.get('adjusted_distance'),
+                'scored': bool(candidate.get('scored', False)),
+                'pruned': bool(candidate.get('pruned', False)),
+            })
         for trap_candidate in trap_candidates:
             trap_candidate['selected'] = (
                 trap_candidate['trap_id'] == selected_trap_id
@@ -2927,6 +3016,74 @@ class QCCDMappingAlgorithm:
 
         position_to_logical = pgs.position_to_logical
         get_move_blockage_profile = self.qccd_machine.get_move_blockage_profile
+        rows = [D[position] for position in positions]
+        position_indices = range(num_positions)
+        if num_positions == 1:
+            position = positions[0]
+            row = rows[0]
+            for space in available_space:
+                space_distance = float(row[space])
+                if space_distance >= distance:
+                    continue
+                for block_position, resolve_cost in get_move_blockage_profile(
+                    position,
+                    space,
+                ):
+                    block_position = int(block_position)
+                    if dependency_positions is not None:
+                        dependency_positions.add(block_position)
+                    if int(position_to_logical[block_position]) != -1:
+                        space_distance += float(resolve_cost)
+                        if space_distance >= distance:
+                            break
+                if space_distance < distance:
+                    distance = space_distance
+            return distance
+
+        if num_positions == 2:
+            position0, position1 = positions
+            row0 = rows[0]
+            row1 = rows[1]
+            penalty0: dict[int, tuple[float, ...]] = {}
+            penalty1: dict[int, tuple[float, ...]] = {}
+            for space in available_space:
+                penalties: list[float] = []
+                for block_position, resolve_cost in get_move_blockage_profile(
+                    position0,
+                    space,
+                ):
+                    block_position = int(block_position)
+                    if dependency_positions is not None:
+                        dependency_positions.add(block_position)
+                    if int(position_to_logical[block_position]) != -1:
+                        penalties.append(float(resolve_cost))
+                penalty0[space] = tuple(penalties)
+
+                penalties = []
+                for block_position, resolve_cost in get_move_blockage_profile(
+                    position1,
+                    space,
+                ):
+                    block_position = int(block_position)
+                    if dependency_positions is not None:
+                        dependency_positions.add(block_position)
+                    if int(position_to_logical[block_position]) != -1:
+                        penalties.append(float(resolve_cost))
+                penalty1[space] = tuple(penalties)
+
+            for space0 in available_space:
+                for space1 in available_space:
+                    if space1 == space0:
+                        continue
+                    space_distance = float(row0[space0] + row1[space1])
+                    for resolve_cost in penalty0[space0]:
+                        space_distance += resolve_cost
+                    for resolve_cost in penalty1[space1]:
+                        space_distance += resolve_cost
+                    if space_distance < distance:
+                        distance = space_distance
+            return distance
+
         pair_penalty_terms: list[dict[int, tuple[float, ...]]] = []
         for position in positions:
             position_penalty_terms: dict[int, tuple[float, ...]] = {}
@@ -2939,22 +3096,23 @@ class QCCDMappingAlgorithm:
                     block_position = int(block_position)
                     if dependency_positions is not None:
                         dependency_positions.add(block_position)
-                    if position_to_logical[block_position] != -1:
+                    if int(position_to_logical[block_position]) != -1:
                         penalties.append(float(resolve_cost))
                 position_penalty_terms[space] = tuple(penalties)
             pair_penalty_terms.append(position_penalty_terms)
 
         for space in permutations(available_space, num_positions):
-            space_distance = float(
-                sum(D[positions[i]][space[i]] for i in range(num_positions))
-            )
+            space_distance = 0.0
+            for i in position_indices:
+                space_distance += rows[i][space[i]]
             for i, assigned_space in enumerate(space):
                 for resolve_cost in pair_penalty_terms[i][assigned_space]:
                     space_distance += resolve_cost
             # print(f"Distance when considering space {space}: ", space_distance)
             # print(f"Current minimum distance: ", distance)
             # print("........")
-            distance = min(space_distance, distance)
+            if space_distance < distance:
+                distance = space_distance
         """
             Only consider the endpoint
         """
@@ -2998,13 +3156,17 @@ class QCCDMappingAlgorithm:
                 return 0.0
             else:
                 distance_to_trap = np.inf
-                for trap in self.qccd_machine.physical_graph.executable_trap_list:
-                    _, available_space = self.qccd_machine.trap_is_fully_occupied_pgs(trap.id, pgs)
+                position_to_logical = pgs.position_to_logical
+                position_cache = self._machine_position_cache()
+                for trap, trap_positions in position_cache[
+                    'executable_trap_position_items'
+                ]:
+                    available_space = [
+                        position for position in trap_positions
+                        if int(position_to_logical[position]) == -1
+                    ]
                     if dependency_positions is not None:
-                        dependency_positions.update(
-                            int(position)
-                            for position in self.qccd_machine.physical_to_position[trap.id]
-                        )
+                        dependency_positions.update(trap_positions)
                     #endpoints_trap_space = self.qccd_machine.trap_end_points[trap.id]
                     # Change to endpoints of trap space ... TODO
                     distance_to_trap = np.min([
@@ -3029,14 +3191,18 @@ class QCCDMappingAlgorithm:
             total_F = 0.0
         else:
             total_F = np.inf
-            for trap in self.qccd_machine.physical_graph.executable_trap_list:
+            position_to_logical = pgs.position_to_logical
+            position_cache = self._machine_position_cache()
+            for trap, trap_positions in position_cache[
+                'executable_trap_position_items'
+            ]:
                 #endpoints_trap_space = self.qccd_machine.trap_end_points[trap.id]
-                _, available_space = self.qccd_machine.trap_is_fully_occupied_pgs(trap.id, pgs)
+                available_space = [
+                    position for position in trap_positions
+                    if int(position_to_logical[position]) == -1
+                ]
                 if dependency_positions is not None:
-                    dependency_positions.update(
-                        int(position)
-                        for position in self.qccd_machine.physical_to_position[trap.id]
-                    )
+                    dependency_positions.update(trap_positions)
                 considering_p = []
                 for trap_p_index, p in zip(trap_p, p_list):
                     if trap_p_index == trap.id:

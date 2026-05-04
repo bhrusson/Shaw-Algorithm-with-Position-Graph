@@ -97,28 +97,6 @@ class QCCDMachineModel(MachineModel):
         self.timing_mat = []
         self.calculate_timing_matrix()
 
-    # PGS-only state and cache helpers.
-    @property
-    def num_positions(self) -> int:
-        return self.total_num_positions
-
-    def _build_position_graph_state(self) -> PositionGraphState:
-        return PositionGraphState(
-            self.position_graph,
-            radices=tuple([2] * self.total_num_positions),
-            gateSet=self.gate_set,
-        )
-
-    def _rebuild_position_to_trap_id_cache(self) -> None:
-        self._position_to_trap_id = {}
-        for trap in self.physical_graph.trap_list:
-            for position in self.physical_to_position[trap.id]:
-                self._position_to_trap_id[int(position)] = trap.id
-
-    def _read_move_path_mode(self) -> str:
-        return os.getenv('BQSKIT_PGS_MOVE_PATH_MODE', 'hops').lower()
-
-    # Shared machine-model methods aligned with QCCD_machine.py.
     def calculate_timing_matrix(self) -> None:
         self._all_pair_travelling_time_cache = None
         self._move_blockage_profile_cache = {}
@@ -391,6 +369,26 @@ class QCCDMachineModel(MachineModel):
             return True, []
         else:
             return False, unoccupied_space
+
+    @property
+    def num_positions(self) -> int:
+        return self.total_num_positions
+
+    def _build_position_graph_state(self) -> PositionGraphState:
+        return PositionGraphState(
+            self.position_graph,
+            radices=tuple([2] * self.total_num_positions),
+            gateSet=self.gate_set,
+        )
+
+    def _rebuild_position_to_trap_id_cache(self) -> None:
+        self._position_to_trap_id = {}
+        for trap in self.physical_graph.trap_list:
+            for position in self.physical_to_position[trap.id]:
+                self._position_to_trap_id[int(position)] = trap.id
+
+    def _read_move_path_mode(self) -> str:
+        return os.getenv('BQSKIT_PGS_MOVE_PATH_MODE', 'hops').lower()
 
     # PGS-only state-construction helpers.
     def build_pgs_from_assignment(self, ion_assignment: dict[int, int]) -> PositionGraphState:
