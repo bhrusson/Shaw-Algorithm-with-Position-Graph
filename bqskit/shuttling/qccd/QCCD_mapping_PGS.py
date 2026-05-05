@@ -2055,53 +2055,58 @@ class QCCDMappingAlgorithm:
             Physical function
         """
         leading_moves = []
-        start_position = int(position)
-        goal_position = int(trap_space)
-        if self._logical_at_position(start_position, pgs) is None:
-            reverse_logical = self._logical_at_position(goal_position, pgs)
+        position = int(position)
+        trap_space = int(trap_space)
+        if self._logical_at_position(position, pgs) is None:
+            reverse_logical = self._logical_at_position(trap_space, pgs)
             if reverse_logical is None:
                 raise RuntimeError(
                     f'Cannot brute-force move between empty positions '
-                    f'{start_position} and {goal_position}.',
+                    f'{position} and {trap_space}.',
                 )
-            start_position, goal_position = goal_position, start_position
+            position, trap_space = trap_space, position
 
-        path = self.qccd_machine.get_move_path(start_position, goal_position)
-        ion_status = self.qccd_machine.position_to_physical[start_position]
+        moving_logical = self._logical_at_position(position, pgs)
+        if moving_logical is None:
+            raise RuntimeError(
+                f'Cannot brute-force move from empty position {position}.',
+            )
+        path = self.qccd_machine.get_move_path(position, trap_space)
+        ion_status = self.qccd_machine.position_to_physical[position]
         if self._should_capture_deep_trace('move_step_trace'):
             self._append_deep_trace('move_step_trace', {
                 'phase': 'move_start',
-                'source': int(start_position),
-                'target': int(goal_position),
+                'source': int(position),
+                'target': int(trap_space),
                 'path': [int(p) for p in path],
                 'clearing_ep': bool(clearing_ep),
                 'initial_ion_status': str(ion_status),
                 'assignment_before': self._assignment_from_pgs(pgs),
             })
         for idx_point in range(len(path) - 1):
-            current_position = int(path[idx_point])
-            next_position = int(path[idx_point + 1])
+            ion_pos = int(path[idx_point])
+            blockage = int(path[idx_point + 1])
             if self._congestion_loop_debug_enabled():
                 self._check_congestion_loop_debug(
                     phase='brute_force_move',
                     state_key=(
-                        int(current_position),
-                        int(next_position),
-                        int(goal_position),
+                        int(ion_pos),
+                        int(blockage),
+                        int(trap_space),
                         tuple(sorted(self._assignment_from_pgs(pgs).items())),
                     ),
                     detail=(
-                        f'current={int(current_position)} next={int(next_position)} '
-                        f'goal={int(goal_position)}'
+                        f'current={int(ion_pos)} next={int(blockage)} '
+                        f'goal={int(trap_space)}'
                     ),
                 )
-            possible_move = (current_position, next_position)
-            next_occupied = self._is_occupied(next_position, pgs)
+            possible_move = (ion_pos, blockage)
+            next_occupied = self._is_occupied(blockage, pgs)
             step_entry = {
                 'phase': 'move_step',
                 'step_index': int(idx_point),
-                'source': int(current_position),
-                'target': int(next_position),
+                'source': int(ion_pos),
+                'target': int(blockage),
                 'ion_status_before': str(ion_status),
                 'next_occupied': bool(next_occupied),
             }
@@ -2114,7 +2119,7 @@ class QCCDMappingAlgorithm:
                     context='bruteforce empty neighbor',
                 )
                 step_entry['decision'] = 'empty_neighbor'
-            elif ion_status == 'trap' and self.qccd_machine.position_to_physical[next_position] == 'trap':
+            elif ion_status == 'trap' and self.qccd_machine.position_to_physical[blockage] == 'trap':
                 self._apply_and_append_move(
                     leading_moves,
                     possible_move,
@@ -2123,29 +2128,52 @@ class QCCDMappingAlgorithm:
                 )
                 step_entry['decision'] = 'trap_inner_swap'
             else:
-                blockage = next_position
                 step_entry['decision'] = 'resolve_congestion'
                 step_entry['blockage'] = int(blockage)
                 if congestion_cache is None:
                     congestion_cache = {}
                 leading_moves += self._resolve_congestion(
-                    current_position,
+                    ion_pos,
                     path,
                     blockage,
                     pgs,
-                    current_position,
+                    ion_pos,
                     blockage,
                     congestion_cache=congestion_cache,
                 )
-                self._apply_and_append_move(
-                    leading_moves,
-                    possible_move,
-                    pgs,
-                    context='bruteforce after congestion resolution',
-                )
-            if ion_status == 'segment' and self.qccd_machine.position_to_physical[next_position] == 'trap':
+                ion_at_source = self._logical_at_position(ion_pos, pgs)
+                ion_at_blockage = self._logical_at_position(blockage, pgs)
+                if ion_at_source is None and ion_at_blockage is None:
+                    current_ion_pos = self._position_of_qudit(moving_logical, pgs)
+                    if current_ion_pos == trap_space:
+                        step_entry['decision'] = 'resolved_to_goal'
+                        if self._should_capture_deep_trace('move_step_trace'):
+                            step_entry['assignment_after'] = self._assignment_from_pgs(pgs)
+                        self._append_deep_trace('move_step_trace', step_entry)
+                        return leading_moves
+                    step_entry['decision'] = 'reroute_stale_empty_step'
+                    step_entry['actual_source'] = int(current_ion_pos)
+                    if self._should_capture_deep_trace('move_step_trace'):
+                        step_entry['assignment_after'] = self._assignment_from_pgs(pgs)
+                    self._append_deep_trace('move_step_trace', step_entry)
+                    leading_moves += self._brute_force_move(
+                        current_ion_pos,
+                        trap_space,
+                        pgs,
+                        clearing_ep=clearing_ep,
+                        congestion_cache=congestion_cache,
+                    )
+                    return leading_moves
+                else:
+                    self._apply_and_append_move(
+                        leading_moves,
+                        possible_move,
+                        pgs,
+                        context='bruteforce after congestion resolution',
+                    )
+            if ion_status == 'segment' and self.qccd_machine.position_to_physical[blockage] == 'trap':
                 ion_status = 'trap'
-            elif ion_status == 'trap' and self.qccd_machine.position_to_physical[next_position] == 'segment':
+            elif ion_status == 'trap' and self.qccd_machine.position_to_physical[blockage] == 'segment':
                 ion_status = 'segment'
             step_entry['ion_status_after'] = str(ion_status)
             if self._should_capture_deep_trace('move_step_trace'):
