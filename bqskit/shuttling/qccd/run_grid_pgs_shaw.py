@@ -342,6 +342,18 @@ def validate_instruction_moves_against_machine(
 
 
 def parse_args() -> argparse.Namespace:
+    def parse_bool(value: str | bool) -> bool:
+        if isinstance(value, bool):
+            return value
+        normalized = value.strip().lower()
+        if normalized in {'1', 'true', 't', 'yes', 'y', 'on'}:
+            return True
+        if normalized in {'0', 'false', 'f', 'no', 'n', 'off'}:
+            return False
+        raise argparse.ArgumentTypeError(
+            f'Expected a boolean value, got {value!r}.',
+        )
+
     parser = argparse.ArgumentParser(
         description='Run SHAW with the PGS backend on a grid architecture and interpret instruction_list.',
     )
@@ -400,6 +412,14 @@ def parse_args() -> argparse.Namespace:
         action='store_true',
         help='Materialize full-width barrier operations during routing.',
     )
+    parser.add_argument(
+        '--with-scheduler',
+        nargs='?',
+        const=True,
+        default=True,
+        type=parse_bool,
+        help='Run post-compile instruction validation and scheduling. Default: true.',
+    )
     return parser.parse_args()
 
 
@@ -414,7 +434,7 @@ def main() -> None:
         print(f'Grid: {args.grid_cols}x{args.grid_rows}')
         print(f'Num layout passes: {args.num_layout_passes}')
         print('Mapper backend: PGS')
-        print('Schedule backend: new')
+        print(f'Schedule backend: {"new" if args.with_scheduler else "disabled"}')
         print(f'Routing mode: {args.routing_mode}')
         print(f'Seed: {args.seed}')
 
@@ -503,22 +523,24 @@ def main() -> None:
                 output_circuit, data = compiler.compile(circuit, workflow, request_data=True)
             compile_time = timer() - start
 
-        with schedule_context:
-            validate_instruction_moves_against_machine(
-                data['instruction_list'],
-                data.model,
-                initial_assignment=data['initial_ion_assignment_qccd'],
-                window=args.window,
-            )
-            schedule_result = schedule_qccd_from_instructions_v3(
-                instruction_lst=data['instruction_list'],
-                initial_ion_assignment=data['initial_ion_assignment_qccd'],
-                full_initial_ion_assignment=data.get('initial_full_ion_assignment_qccd_pgs'),
-                machine_model=data.model,
-                circuit=output_circuit,
-                parallel=True,
-                execute_location_mode='physical',
-            )
+        schedule_result = None
+        if args.with_scheduler:
+            with schedule_context:
+                validate_instruction_moves_against_machine(
+                    data['instruction_list'],
+                    data.model,
+                    initial_assignment=data['initial_ion_assignment_qccd'],
+                    window=args.window,
+                )
+                schedule_result = schedule_qccd_from_instructions_v3(
+                    instruction_lst=data['instruction_list'],
+                    initial_ion_assignment=data['initial_ion_assignment_qccd'],
+                    full_initial_ion_assignment=data.get('initial_full_ion_assignment_qccd_pgs'),
+                    machine_model=data.model,
+                    circuit=output_circuit,
+                    parallel=True,
+                    execute_location_mode='physical',
+                )
 
     runtime_us = None
     fidelity = None

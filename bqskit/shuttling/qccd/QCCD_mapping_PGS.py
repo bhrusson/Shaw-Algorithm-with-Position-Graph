@@ -150,6 +150,10 @@ class QCCDMappingAlgorithm:
             tuple[int, int, int, int],
             tuple[tuple[int, ...], ...],
         ] = {}
+        self._candidate_trap_base_bound_cache_value: dict[
+            tuple[int, tuple[tuple[object, tuple[int, ...]], ...], tuple[int, ...]],
+            tuple[float, ...],
+        ] = {}
         self.distance_stats: dict[str, int] = {
             'calls': 0,
             'single_qudit_calls': 0,
@@ -261,6 +265,73 @@ class QCCDMappingAlgorithm:
         position_cache['segment_space_set'] = set(position_cache['segment_space'])
         self._machine_position_cache_value = (cache_key, position_cache)
         return position_cache
+
+    def _candidate_trap_signature(
+            self,
+            executable_trap_position_items: Sequence[tuple[object, tuple[int, ...]]],
+    ) -> tuple[tuple[object, tuple[int, ...]], ...]:
+        return tuple(
+            (trap.id, trap_positions)
+            for trap, trap_positions in executable_trap_position_items
+        )
+
+    def _candidate_trap_min_distance_cache(
+            self,
+            D: list[list[float]],
+            executable_trap_position_items: Sequence[tuple[object, tuple[int, ...]]],
+    ) -> tuple[tuple[float, ...], ...]:
+        position_graph = self.qccd_machine.position_graph
+        trap_signature = self._candidate_trap_signature(
+            executable_trap_position_items,
+        )
+        cache_key = (len(D), trap_signature)
+        cached = getattr(
+            position_graph,
+            '_qccd_candidate_trap_min_distance_cache',
+            None,
+        )
+        if cached is not None and cached[0] == cache_key:
+            return cached[1]
+
+        min_distance_cache: list[tuple[float, ...]] = []
+        for _, trap_positions in executable_trap_position_items:
+            min_distance_cache.append(tuple(
+                float(min(D[position][space] for space in trap_positions))
+                for position in range(len(D))
+            ))
+        frozen_cache = tuple(min_distance_cache)
+        setattr(
+            position_graph,
+            '_qccd_candidate_trap_min_distance_cache',
+            (cache_key, frozen_cache),
+        )
+        return frozen_cache
+
+    def _candidate_trap_base_bound_cache(
+            self,
+            gate_pos: Sequence[int],
+            D: list[list[float]],
+            executable_trap_position_items: Sequence[tuple[object, tuple[int, ...]]],
+    ) -> tuple[float, ...]:
+        trap_signature = self._candidate_trap_signature(
+            executable_trap_position_items,
+        )
+        positions = tuple(sorted(int(position) for position in gate_pos))
+        cache_key = (len(D), trap_signature, positions)
+        cached = self._candidate_trap_base_bound_cache_value.get(cache_key)
+        if cached is not None:
+            return cached
+
+        min_distances_by_trap = self._candidate_trap_min_distance_cache(
+            D,
+            executable_trap_position_items,
+        )
+        base_bounds = tuple(
+            float(sum(min_distances_to_trap[position] for position in positions))
+            for min_distances_to_trap in min_distances_by_trap
+        )
+        self._candidate_trap_base_bound_cache_value[cache_key] = base_bounds
+        return base_bounds
 
     # PGS-only state helpers.
     def _make_pgs(self, ion_assignment: dict[int, int]) -> PositionGraphState:
@@ -452,6 +523,58 @@ class QCCDMappingAlgorithm:
         self._apply_move(canonical_move, pgs=pgs)
         leading_moves.append(tuple(sorted(canonical_move)))
         return True
+
+    def _apply_or_route_move(
+        self,
+        leading_moves: list[tuple[int, int]],
+        move: tuple[int, int],
+        pgs: PositionGraphState,
+        *,
+        context: str = '',
+        congestion_cache: dict[tuple[object, ...], tuple[float, float]] | None = None,
+    ) -> bool:
+        """Apply an adjacent move, or route a non-adjacent recovery move."""
+        canonical_move = (int(move[0]), int(move[1]))
+        if canonical_move[0] == canonical_move[1]:
+            return self._apply_and_append_move(
+                leading_moves,
+                canonical_move,
+                pgs,
+                context=context,
+            )
+
+        neighbors = {
+            int(neighbor)
+            for neighbor in self.qccd_machine.get_move_neighbors(canonical_move[0])
+        }
+        if canonical_move[1] in neighbors:
+            return self._apply_and_append_move(
+                leading_moves,
+                canonical_move,
+                pgs,
+                context=context,
+            )
+
+        path = [
+            int(position)
+            for position in self.qccd_machine.get_move_path(
+                canonical_move[0],
+                canonical_move[1],
+            )
+        ]
+        message = f'Routing non-adjacent move {canonical_move} via {path}'
+        if context:
+            message += f' ({context})'
+        self._debug_compare(message)
+        _logger.debug(message)
+        routed_moves = self._brute_force_move(
+            canonical_move[0],
+            canonical_move[1],
+            pgs,
+            congestion_cache=congestion_cache,
+        )
+        leading_moves += routed_moves
+        return bool(routed_moves)
 
     @property
     def _log_prefix(self) -> str:
@@ -1480,8 +1603,12 @@ class QCCDMappingAlgorithm:
             This lets the caller safely skip remaining traps once their lower
             bound is worse than the best exact score already found.
         """
-        positions = tuple(int(position) for position in gate_pos)
         position_to_logical = pgs.position_to_logical
+        base_bounds_by_trap = self._candidate_trap_base_bound_cache(
+            gate_pos,
+            D,
+            executable_trap_position_items,
+        )
         candidate_traps: list[dict[str, object]] = []
         for original_index, (trap, all_trap_space) in enumerate(
             executable_trap_position_items,
@@ -1491,10 +1618,7 @@ class QCCDMappingAlgorithm:
                 if int(position_to_logical[position]) == -1
             ]
             num_available_trap_space = len(available_trap_space)
-            lower_bound = 0.0
-            for position in positions:
-                row = D[position]
-                lower_bound += min(row[space] for space in all_trap_space)
+            lower_bound = base_bounds_by_trap[original_index]
             lower_bound -= num_available_trap_space * 120e-6
             candidate_traps.append({
                 'original_index': int(original_index),
@@ -2193,11 +2317,12 @@ class QCCDMappingAlgorithm:
                     leading_moves += self._resolve_congestion(blockage, [], target, pgs,
                                                                     original_target, original_blockage, num_call + 1,
                                                                     congestion_cache=congestion_cache)
-                    self._apply_and_append_move(
+                    self._apply_or_route_move(
                         leading_moves,
                         (blockage, target),
                         pgs,
                         context=f'resolve reverse target step 1 num_call={num_call}',
+                        congestion_cache=congestion_cache,
                     )
                     # print(
                     #     f"Perform move (2) {(blockage, target)} to try resolving the blockage at {blockage}")
@@ -2210,11 +2335,12 @@ class QCCDMappingAlgorithm:
                         leading_moves += self._resolve_congestion(target, [], blockage, pgs,
                                                                   original_target, original_blockage, num_call+1,
                                                                   congestion_cache=congestion_cache)
-                    self._apply_and_append_move(
+                    self._apply_or_route_move(
                         leading_moves,
                         (blockage, target),
                         pgs,
                         context=f'resolve reverse target step 2 num_call={num_call}',
+                        congestion_cache=congestion_cache,
                     )
                     # print(
                     #     f"Perform move (2') {(blockage, target)} to try resolving the blockage at {blockage}")
@@ -2248,11 +2374,12 @@ class QCCDMappingAlgorithm:
             leading_moves += self._resolve_congestion(blockage, [], target, pgs,
                                                       original_target, original_blockage, num_call+1,
                                                       congestion_cache=congestion_cache)
-            self._apply_and_append_move(
+            self._apply_or_route_move(
                 leading_moves,
                 (blockage, target),
                 pgs,
                 context=f'resolve deadend step 1 num_call={num_call}',
+                congestion_cache=congestion_cache,
             )
             # print(
             #     f"Perform move (4) {(blockage, target)} to try resolving the blockage at {blockage}")
@@ -2265,11 +2392,12 @@ class QCCDMappingAlgorithm:
                 leading_moves += self._resolve_congestion(target, [], blockage, pgs,
                                                           original_target, original_blockage, num_call+1,
                                                           congestion_cache=congestion_cache)
-            self._apply_and_append_move(
+            self._apply_or_route_move(
                 leading_moves,
                 (blockage, target),
                 pgs,
                 context=f'resolve deadend step 2 num_call={num_call}',
+                congestion_cache=congestion_cache,
             )
             # print(
             #     f"Perform move (4') {(blockage, target)} to try resolving the blockage at {blockage}")
@@ -3237,6 +3365,22 @@ class QCCDMappingAlgorithm:
         if move[0] == move[1]:
             _logger.debug('skipping self move %s', move)
             return False
+        neighbors = {
+            int(neighbor)
+            for neighbor in self.qccd_machine.get_move_neighbors(move[0])
+        }
+        if move[1] not in neighbors:
+            path = [
+                int(position)
+                for position in self.qccd_machine.get_move_path(
+                    move[0],
+                    move[1],
+                )
+            ]
+            raise RuntimeError(
+                f'The move {move} is not a valid physical move because it '
+                f'is not an edge. Suggested path: {path}.',
+            )
         _logger.debug('applying move %s', move)
         l1 = self._logical_at_position(move[0], pgs)
         l2 = self._logical_at_position(move[1], pgs)
