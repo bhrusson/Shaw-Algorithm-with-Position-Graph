@@ -150,10 +150,6 @@ class QCCDMappingAlgorithm:
             tuple[int, int, int, int],
             tuple[tuple[int, ...], ...],
         ] = {}
-        self._candidate_trap_base_bound_cache_value: dict[
-            tuple[int, tuple[tuple[object, tuple[int, ...]], ...], tuple[int, ...]],
-            tuple[float, ...],
-        ] = {}
         self.distance_stats: dict[str, int] = {
             'calls': 0,
             'single_qudit_calls': 0,
@@ -307,31 +303,21 @@ class QCCDMappingAlgorithm:
         )
         return frozen_cache
 
-    def _candidate_trap_base_bound_cache(
+    def _candidate_trap_base_bounds(
             self,
             gate_pos: Sequence[int],
             D: list[list[float]],
             executable_trap_position_items: Sequence[tuple[object, tuple[int, ...]]],
     ) -> tuple[float, ...]:
-        trap_signature = self._candidate_trap_signature(
-            executable_trap_position_items,
-        )
-        positions = tuple(sorted(int(position) for position in gate_pos))
-        cache_key = (len(D), trap_signature, positions)
-        cached = self._candidate_trap_base_bound_cache_value.get(cache_key)
-        if cached is not None:
-            return cached
-
+        positions = tuple(int(position) for position in gate_pos)
         min_distances_by_trap = self._candidate_trap_min_distance_cache(
             D,
             executable_trap_position_items,
         )
-        base_bounds = tuple(
+        return tuple(
             float(sum(min_distances_to_trap[position] for position in positions))
             for min_distances_to_trap in min_distances_by_trap
         )
-        self._candidate_trap_base_bound_cache_value[cache_key] = base_bounds
-        return base_bounds
 
     # PGS-only state helpers.
     def _make_pgs(self, ion_assignment: dict[int, int]) -> PositionGraphState:
@@ -1604,7 +1590,7 @@ class QCCDMappingAlgorithm:
             bound is worse than the best exact score already found.
         """
         position_to_logical = pgs.position_to_logical
-        base_bounds_by_trap = self._candidate_trap_base_bound_cache(
+        base_bounds_by_trap = self._candidate_trap_base_bounds(
             gate_pos,
             D,
             executable_trap_position_items,
