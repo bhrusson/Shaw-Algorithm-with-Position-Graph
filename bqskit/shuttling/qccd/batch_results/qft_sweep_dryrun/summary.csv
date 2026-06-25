@@ -1,1 +1,0 @@
-benchmark,num_qudits,grid_cols,grid_rows,duration_s,timed_out,return_code,label,compile_time_s,runtime_us,fidelity,instructions,execute_rounds,move_rounds,stdout_file

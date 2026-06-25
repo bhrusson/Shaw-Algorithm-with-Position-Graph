@@ -1,9 +1,0 @@
-benchmark,num_qudits,grid_cols,grid_rows,duration_s,timed_out,return_code,label,compile_time_s,runtime_us,fidelity,instructions,execute_rounds,move_rounds,stdout_file
-QFT_wsq_16_compiled,16,2,2,31.40440839999974,False,0,CG,20.09271,60572.0,1.829252e-06,1001,69,376,QFT_wsq_16_compiled__grid_2x2.txt
-QFT_wsq_16_compiled,16,2,2,31.40440839999974,False,0,PGS,6.091041,46308.0,1.829252e-06,1001,69,376,QFT_wsq_16_compiled__grid_2x2.txt
-QFT_wsq_32_compiled,32,3,3,270.68642940000063,False,0,CG,240.311204,157063.0,0.0,2765,183,1021,QFT_wsq_32_compiled__grid_3x3.txt
-QFT_wsq_32_compiled,32,3,3,270.68642940000063,False,0,PGS,24.03064,124213.0,0.0,2298,183,894,QFT_wsq_32_compiled__grid_3x3.txt
-QFT_wsq_64_compiled,64,4,4,2327.967579,False,0,CG,2142.668937,403656.0,0.0,8505,419,2734,QFT_wsq_64_compiled__grid_4x4.txt
-QFT_wsq_64_compiled,64,4,4,2327.967579,False,0,PGS,173.021481,297577.0,0.0,7765,419,2726,QFT_wsq_64_compiled__grid_4x4.txt
-QFT_wsq_128_compiled,128,6,6,41533.96790429999,False,0,CG,39075.137014,786558.0,0.0,16452,842,5130,QFT_wsq_128_compiled__grid_6x6.txt
-QFT_wsq_128_compiled,128,6,6,41533.96790429999,False,0,PGS,2418.399115,619951.0,0.0,16623,842,4942,QFT_wsq_128_compiled__grid_6x6.txt
