@@ -13,8 +13,7 @@ import numpy as np
 from bqskit.ir.circuit import Circuit
 from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
-from ..old.QCCD_machine import QCCDMachineModel
-#from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
 from bqskit.ir.gates.barrier import BarrierPlaceholder
 
 _logger = logging.getLogger(__name__)

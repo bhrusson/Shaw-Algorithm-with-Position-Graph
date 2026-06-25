@@ -7,15 +7,15 @@ from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
-from bqskit_local.mapping.sabre_pgs_behavioral_equivalence import (
+from bqskit.superconducting.mapping.sabre_pgs import (
     GeneralizedSabreAlgorithmPGS,
 )
-from bqskit_local.position.state import PositionGraphState
+from bqskit.superconducting.position.state import PositionGraphState
 
 _logger = logging.getLogger(__name__)
 
 
-class GeneralizedCachedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
+class GeneralizedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
     """Cached PGS layout pass using heuristic-region reuse."""
 
     def __init__(
@@ -94,4 +94,4 @@ class GeneralizedCachedSabreLayoutPassPGS(BasePass, GeneralizedSabreAlgorithmPGS
         perm = [int(x) for x in pgs.logical_to_position[:circuit.num_qudits]]
         self._apply_perm(perm, data.placement)
 
-        _logger.info(f'Found cached SABRE layout: {perm}, new placement: {data.placement}')
+        _logger.info(f'Found SABRE layout: {perm}, new placement: {data.placement}')

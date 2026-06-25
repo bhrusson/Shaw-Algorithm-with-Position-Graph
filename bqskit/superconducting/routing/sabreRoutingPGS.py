@@ -7,16 +7,16 @@ from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
-from bqskit_local.mapping.sabre_pgs_behavioral_equivalence import (
+from bqskit.superconducting.mapping.sabre_pgs import (
     GeneralizedSabreAlgorithmPGS,
 )
-from bqskit_local.position.graph import PositionGraph
-from bqskit_local.position.state import PositionGraphState
+from bqskit.superconducting.position.graph import PositionGraph
+from bqskit.superconducting.position.state import PositionGraphState
 
 _logger = logging.getLogger(__name__)
 
 
-class GeneralizedCachedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
+class GeneralizedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPGS):
     """Cached PGS routing pass using heuristic-region reuse."""
 
     def __init__(
@@ -130,12 +130,12 @@ class GeneralizedCachedSabreRoutingPassPGS(BasePass, GeneralizedSabreAlgorithmPG
         else:
             pgs = self._build_local_pgs(placement, circuit.num_qudits)
 
-        _logger.info(f'Cached SABRE routing start mapping: {pgs.logical_to_position}')
-        _logger.info(f'Cached SABRE routing start placement: {data.get("placement")}')
+        _logger.info(f'SABRE routing start mapping: {pgs.logical_to_position}')
+        _logger.info(f'SABRE routing start placement: {data.get("placement")}')
 
         self.forward_pass(circuit, pgs, modify_circuit=True)
 
         final_mapping = [int(x) for x in pgs.logical_to_position[:circuit.num_qudits]]
         data.final_mapping = final_mapping.copy()
 
-        _logger.info(f'Finished cached SABRE routing with layout: {final_mapping}')
+        _logger.info(f'Finished SABRE routing with layout: {final_mapping}')

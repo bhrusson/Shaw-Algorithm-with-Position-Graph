@@ -8,8 +8,8 @@ from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
-from bqskit.shuttling.qccd.QCCD_machine_PGS import QCCDMachineModel
-from bqskit.shuttling.qccd.QCCD_mapping_PGS import QCCDMappingAlgorithm
+from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
 from bqskit.shuttling.qccd.pgs_passes.common import build_pgs_from_passdata
 from bqskit.shuttling.qccd.pgs_passes.common import export_pgs_views_to_passdata
 from bqskit.shuttling.qccd.pgs_passes.common import PROGRAM_ION_IDS_KEY
@@ -43,12 +43,18 @@ class QCCDRoutingPassPGS(BasePass):
         profile_dir: Path | None = None,
         profile_stem: str = 'qccd_pgs_routing',
         profile_sort: str = 'cumulative',
+        trace_memory: bool = False,
+        trace_memory_depth: int = 5,
+        trace_memory_top: int = 20,
     ) -> None:
         self.gate_count_weight = float(gate_count_weight)
         self.assignment_key = assignment_key
         self.profile_dir = profile_dir
         self.profile_stem = profile_stem
         self.profile_sort = profile_sort
+        self.trace_memory = trace_memory
+        self.trace_memory_depth = trace_memory_depth
+        self.trace_memory_top = trace_memory_top
         self.append_barriers = append_barriers
         self.algo_kwargs = {
             'cogestion_rate': cogestion_rate,
@@ -84,16 +90,22 @@ class QCCDRoutingPassPGS(BasePass):
         data['initial_full_ion_assignment_qccd_pgs'] = copy.copy(initial_full_assignment)
         data['initial_program_ion_assignment_qccd'] = copy.copy(initial_program_assignment)
         data['initial_ion_assignment_qccd'] = copy.copy(initial_program_assignment)
-        instruction_list = profiled_call(
-            self.profile_dir,
-            f'{self.profile_stem}__forward',
-            self.profile_sort,
-            algo.forward_pass,
-            circuit,
-            pgs=pgs,
-            modify_circuit=True,
-            append_barriers=self.append_barriers,
-        )
+        try:
+            instruction_list = profiled_call(
+                self.profile_dir,
+                f'{self.profile_stem}__forward',
+                self.profile_sort,
+                algo.forward_pass,
+                circuit,
+                pgs=pgs,
+                modify_circuit=True,
+                append_barriers=self.append_barriers,
+                trace_memory=self.trace_memory,
+                trace_memory_depth=self.trace_memory_depth,
+                trace_memory_top=self.trace_memory_top,
+            )
+        finally:
+            algo._shutdown_routing_executor()
 
         full_assignment, program_assignment, program_ion_ids = export_pgs_views_to_passdata(
             data,

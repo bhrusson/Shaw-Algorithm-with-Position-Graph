@@ -8,6 +8,7 @@ import os
 import pickle
 import random
 import re
+import tracemalloc
 from contextlib import nullcontext
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -27,10 +28,10 @@ from bqskit.passes import SetModelPass
 from bqskit.passes import UnfoldPass
 from bqskit.passes import UpdateDataPass
 
-from bqskit.shuttling.QCCD_schedule_new import print_event_trace
-from bqskit.shuttling.QCCD_schedule_new import schedule_qccd_from_instructions_v3
+from bqskit.shuttling.qccd.QCCD_schedule import print_event_trace
+from bqskit.shuttling.qccd.QCCD_schedule import schedule_qccd_from_instructions_v3
 from bqskit.shuttling.qccd import create_grid_physical_machine
-from bqskit.shuttling.qccd.QCCD_machine_PGS import QCCDMachineModel
+from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
 from bqskit.shuttling.qccd.pgs_passes import QCCDLayoutPassPGS
 from bqskit.shuttling.qccd.pgs_passes import QCCDRoutingPassPGS
 
@@ -381,6 +382,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--save-pkl', action='store_true')
     parser.add_argument('--save-qasm', action='store_true')
     parser.add_argument(
+        '--result-dir',
+        type=Path,
+        default=Path('outputs/qccd_grid'),
+        help='Directory for optional --save-pkl and --save-qasm outputs.',
+    )
+    parser.add_argument(
         '--summary-only',
         action='store_true',
         help='Suppress verbose internal output and print only the final summary.',
@@ -419,6 +426,23 @@ def parse_args() -> argparse.Namespace:
         default=True,
         type=parse_bool,
         help='Run post-compile instruction validation and scheduling. Default: true.',
+    )
+    parser.add_argument(
+        '--trace-memory',
+        action='store_true',
+        help='Trace Python allocations during compile with tracemalloc.',
+    )
+    parser.add_argument(
+        '--trace-memory-depth',
+        type=int,
+        default=5,
+        help='Number of traceback frames tracemalloc stores per allocation.',
+    )
+    parser.add_argument(
+        '--trace-memory-top',
+        type=int,
+        default=20,
+        help='Number of top tracemalloc allocation lines to print.',
     )
     return parser.parse_args()
 
@@ -485,6 +509,9 @@ def main() -> None:
             profile_dir=args.profile_dir,
             profile_stem=f'{stem}__layout',
             profile_sort=args.profile_sort,
+            trace_memory=args.trace_memory,
+            trace_memory_depth=args.trace_memory_depth,
+            trace_memory_top=args.trace_memory_top,
         )),
         ('qccd_routing_pgs', QCCDRoutingPassPGS(
             gate_count_weight,
@@ -494,6 +521,9 @@ def main() -> None:
             profile_stem=f'{stem}__routing',
             profile_sort=args.profile_sort,
             append_barriers=args.with_barriers,
+            trace_memory=args.trace_memory,
+            trace_memory_depth=args.trace_memory_depth,
+            trace_memory_top=args.trace_memory_top,
         )),
         ('post_routing_apply_placement', ApplyPlacement()),
         ('final_unfold', UnfoldPass()),
@@ -518,10 +548,27 @@ def main() -> None:
 
     with verbose_context:
         with Compiler() as compiler:
+            memory_current_mb = None
+            memory_peak_mb = None
+            memory_top_stats: list[str] = []
+            if args.trace_memory:
+                tracemalloc.start(max(1, int(args.trace_memory_depth)))
             start = timer()
             with compile_context:
                 output_circuit, data = compiler.compile(circuit, workflow, request_data=True)
             compile_time = timer() - start
+            if args.trace_memory:
+                current, peak = tracemalloc.get_traced_memory()
+                memory_current_mb = current / 1024 / 1024
+                memory_peak_mb = peak / 1024 / 1024
+                snapshot = tracemalloc.take_snapshot()
+                memory_top_stats = [
+                    str(stat)
+                    for stat in snapshot.statistics('lineno')[
+                        :max(0, int(args.trace_memory_top))
+                    ]
+                ]
+                tracemalloc.stop()
 
         schedule_result = None
         if args.with_scheduler:
@@ -585,6 +632,14 @@ def main() -> None:
         print(f'  {"total_profiled_pass_time":<28} {total_pass_time:10.6f}s')
     if args.profile_dir is not None:
         print(f'Profile directory: {args.profile_dir}')
+    if args.trace_memory:
+        print(f'Tracemalloc current MB: {memory_current_mb:.3f}')
+        print(f'Tracemalloc peak MB: {memory_peak_mb:.3f}')
+        if args.profile_dir is not None:
+            print(f'Per-pass tracemalloc files: {args.profile_dir / "*.mem.txt"}')
+        print('Tracemalloc top allocations:')
+        for stat in memory_top_stats:
+            print(f'  {stat}')
     print('Summary:')
     print_sweep_style_summary(
         label='PGS',
@@ -599,13 +654,14 @@ def main() -> None:
     if args.print_events and schedule_result is not None:
         print_event_trace(schedule_result)
 
-    result_dir = Path('bqskit/shuttling/qccd/paper_result_grid')
-    result_dir.mkdir(parents=True, exist_ok=True)
+    result_dir = args.result_dir
 
     if args.save_qasm:
+        result_dir.mkdir(parents=True, exist_ok=True)
         output_circuit.save(str(result_dir / f'{stem}.qasm'))
 
     if args.save_pkl:
+        result_dir.mkdir(parents=True, exist_ok=True)
         result = [
             None if schedule_result is None else schedule_result['runtime'],
             compile_time,

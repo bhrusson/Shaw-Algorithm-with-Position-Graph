@@ -1,6 +1,7 @@
 from __future__ import annotations
 import cProfile
 import pstats
+import tracemalloc
 from collections.abc import Mapping
 from collections.abc import Callable
 from pathlib import Path
@@ -8,8 +9,8 @@ from typing import TypeVar
 
 from bqskit.compiler.passdata import PassData
 
-from bqskit.shuttling.qccd.QCCD_machine_PGS import QCCDMachineModel
-from bqskit.shuttling.qccd.position_graph_state_PGS import PositionGraphState
+from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+from bqskit.shuttling.qccd.position_graph_state import PositionGraphState
 
 FULL_ASSIGNMENT_KEY = 'full_ion_assignment_qccd_pgs'
 PROGRAM_ASSIGNMENT_KEY = 'program_ion_assignment_qccd'
@@ -23,22 +24,51 @@ def profiled_call(
     sort_key: str,
     func: Callable[..., T],
     *args: object,
+    trace_memory: bool = False,
+    trace_memory_depth: int = 5,
+    trace_memory_top: int = 20,
     **kwargs: object,
 ) -> T:
-    if profile_dir is None:
+    if profile_dir is None and not trace_memory:
         return func(*args, **kwargs)
 
-    profile_dir.mkdir(parents=True, exist_ok=True)
-    profiler = cProfile.Profile()
+    if profile_dir is not None:
+        profile_dir.mkdir(parents=True, exist_ok=True)
+    profiler = cProfile.Profile() if profile_dir is not None else None
+    if trace_memory:
+        tracemalloc.start(max(1, int(trace_memory_depth)))
     try:
+        if profiler is None:
+            return func(*args, **kwargs)
         return profiler.runcall(func, *args, **kwargs)
     finally:
-        prof_path = profile_dir / f'{stem}.prof'
-        txt_path = profile_dir / f'{stem}.prof.txt'
-        profiler.dump_stats(str(prof_path))
-        with txt_path.open('w', encoding='utf-8') as f:
-            stats = pstats.Stats(profiler, stream=f)
-            stats.strip_dirs().sort_stats(sort_key).print_stats()
+        memory_lines: list[str] = []
+        if trace_memory:
+            current, peak = tracemalloc.get_traced_memory()
+            snapshot = tracemalloc.take_snapshot()
+            memory_lines.append(f'current_mb={current / 1024 / 1024:.6f}')
+            memory_lines.append(f'peak_mb={peak / 1024 / 1024:.6f}')
+            memory_lines.append('top_allocations:')
+            for stat in snapshot.statistics('lineno')[
+                :max(0, int(trace_memory_top))
+            ]:
+                memory_lines.append(f'  {stat}')
+            tracemalloc.stop()
+
+        if profile_dir is not None and profiler is not None:
+            prof_path = profile_dir / f'{stem}.prof'
+            txt_path = profile_dir / f'{stem}.prof.txt'
+            profiler.dump_stats(str(prof_path))
+            with txt_path.open('w', encoding='utf-8') as f:
+                stats = pstats.Stats(profiler, stream=f)
+                stats.strip_dirs().sort_stats(sort_key).print_stats()
+            if memory_lines:
+                mem_path = profile_dir / f'{stem}.mem.txt'
+                mem_path.write_text('\n'.join(memory_lines) + '\n', encoding='utf-8')
+        elif memory_lines:
+            print(f'Tracemalloc {stem}:')
+            for line in memory_lines:
+                print(line)
 
 
 def _normalize_assignment(

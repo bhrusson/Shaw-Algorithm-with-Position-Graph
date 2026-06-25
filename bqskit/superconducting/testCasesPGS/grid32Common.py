@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from bqskit.qis.graph import CouplingGraph
 
-from bqskit_local.position.graph import EdgeCapability
-from bqskit_local.position.graph import EdgeLabel
-from bqskit_local.position.graph import PositionCapability
-from bqskit_local.position.graph import PositionGraph
-from bqskit_local.position.graph import PositionLabel
+from bqskit.superconducting.position.graph import EdgeCapability
+from bqskit.superconducting.position.graph import EdgeLabel
+from bqskit.superconducting.position.graph import PositionCapability
+from bqskit.superconducting.position.graph import PositionGraph
+from bqskit.superconducting.position.graph import PositionLabel
 
 
 GRID32_ROWS = 32

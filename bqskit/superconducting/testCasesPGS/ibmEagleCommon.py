@@ -3,7 +3,7 @@ from __future__ import annotations
 from bqskit.ir.circuit import Circuit
 from bqskit.ir.gates import CNOTGate
 from bqskit.ir.gates import HGate
-from bqskit_local.position.graph import (
+from bqskit.superconducting.position.graph import (
     EdgeCapability,
     EdgeLabel,
     PositionCapability,

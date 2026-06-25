@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import asyncio
@@ -10,34 +10,22 @@ from time import perf_counter
 
 from bqskit.compiler import CompilationTask
 from bqskit.compiler import Compiler
+from bqskit.compiler import MachineModel
 from bqskit.ir.circuit import Circuit
+from bqskit.ir.gates import CNOTGate
+from bqskit.ir.gates import HGate
+from bqskit.passes.mapping.layout.sabre import GeneralizedSabreLayoutPass
+from bqskit.passes.mapping.routing.sabre import GeneralizedSabreRoutingPass
+from bqskit.passes import SetModelPass
+from bqskit.qis.graph import CouplingGraph
 
 from bqskit.superconducting.benchmark_circuits import resolve_benchmark_circuit_path
-from bqskit.superconducting.layout.sabrePassPGS import (
-    GeneralizedSabreLayoutPassPGS,
-)
-from bqskit.superconducting.mapping.setPGSPass import SetPGSPass
-from bqskit.superconducting.position.graph import EdgeLabel
-from bqskit.superconducting.position.graph import PositionGraph
-from bqskit.superconducting.position.state import PositionGraphState
-from bqskit.superconducting.routing.sabreRoutingPGS import (
-    GeneralizedSabreRoutingPassPGS,
-)
-from bqskit.superconducting.testCasesPGS.grid16Common import GRID16_NUM_QUDITS
-from bqskit.superconducting.testCasesPGS.grid16Common import build_16x16_grid_edges
-from bqskit.superconducting.testCasesPGS.grid16Common import build_16x16_position_graph
 from bqskit.superconducting.testCasesPGS.grid32Common import GRID32_NUM_QUDITS
 from bqskit.superconducting.testCasesPGS.grid32Common import build_32x32_grid_edges
-from bqskit.superconducting.testCasesPGS.grid32Common import build_32x32_position_graph
-from bqskit.superconducting.testCasesPGS.grid8Common import GRID8_NUM_QUDITS
-from bqskit.superconducting.testCasesPGS.grid8Common import build_8x8_grid_edges
-from bqskit.superconducting.testCasesPGS.grid8Common import build_8x8_position_graph
 from bqskit.superconducting.testCasesPGS.ibmEagleCommon import IBM_EAGLE_NUM_QUDITS
 from bqskit.superconducting.testCasesPGS.ibmEagleCommon import IBM_EAGLE_UNDIRECTED_COUPLING_MAP
-from bqskit.superconducting.testCasesPGS.ibmEagleCommon import build_eagle_position_graph
 from bqskit.superconducting.testCasesPGS.square_grid_common import (
     build_square_grid_edges,
-    build_square_grid_position_graph,
     format_square_grid_architecture,
     parse_square_grid_architecture,
     square_grid_num_qudits,
@@ -49,18 +37,13 @@ from bqskit.superconducting.testCasesPGS.synthetic_multiqudit import (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Run cached PositionGraph SABRE on benchmark QASM circuits.',
+        description='Run native BQSKit CouplingGraph SABRE on benchmark QASM circuits.',
     )
     parser.add_argument('input_filename', help='Benchmark circuit filename without .qasm.')
     parser.add_argument(
         '--architecture',
         default='ibm-eagle',
         help='Target architecture, e.g. ibm-eagle, grid-8x8, or grid-12x12.',
-    )
-    parser.add_argument(
-        '--cg-compat',
-        action='store_true',
-        help='Match CouplingGraph SABRE tie-breaking behavior.',
     )
     parser.add_argument(
         '--sabre-layout-passes',
@@ -152,112 +135,102 @@ def select_connected_subset(
     return order
 
 
-def build_template_pgs(
+def build_model(
     architecture: str,
     num_circuit_qudits: int,
-) -> tuple[str, PositionGraphState, list[int]]:
-    def build_subset_template(
-        base_graph: PositionGraph,
-        edges: list[tuple[int, int]],
-        num_nodes: int,
-        architecture_name: str,
-    ) -> tuple[str, PositionGraphState, list[int]]:
+) -> tuple[str, MachineModel, list[int]]:
+    if architecture == 'ibm-eagle':
         selected_nodes = select_connected_subset(
-            edges,
+            IBM_EAGLE_UNDIRECTED_COUPLING_MAP,
             num_circuit_qudits,
-            num_nodes,
+            IBM_EAGLE_NUM_QUDITS,
         )
         index_of = {node: i for i, node in enumerate(selected_nodes)}
-        compact_pos_labels = [
-            base_graph.position_labels[node]
-            for node in selected_nodes
-        ]
-        compact_edge_labels: dict[tuple[int, int], EdgeLabel] = {
-            (index_of[u], index_of[v]): label
-            for (u, v), label in base_graph.edge_labels.items()
+        compact_edges = [
+            (index_of[u], index_of[v])
+            for u, v in IBM_EAGLE_UNDIRECTED_COUPLING_MAP
             if u in index_of and v in index_of
-        }
-        graph = PositionGraph(compact_pos_labels, compact_edge_labels)
-        pgs = PositionGraphState(graph, radices=[2] * num_circuit_qudits)
-        return architecture_name, pgs, selected_nodes
-
-    if architecture == 'ibm-eagle':
-        return build_subset_template(
-            build_eagle_position_graph(),
-            IBM_EAGLE_UNDIRECTED_COUPLING_MAP,
-            IBM_EAGLE_NUM_QUDITS,
-            'IBM Eagle / Washington PositionGraph subset',
+        ]
+        coupling_graph = CouplingGraph(compact_edges, num_circuit_qudits)
+        model = MachineModel(
+            num_qudits=num_circuit_qudits,
+            coupling_graph=coupling_graph,
+            gate_set={CNOTGate(), HGate()},
         )
+        return 'IBM Eagle / Washington subset', model, selected_nodes
 
     if architecture == 'grid-32x32':
-        return build_subset_template(
-            build_32x32_position_graph(),
-            build_32x32_grid_edges(),
+        grid_edges = build_32x32_grid_edges()
+        selected_nodes = select_connected_subset(
+            grid_edges,
+            num_circuit_qudits,
             GRID32_NUM_QUDITS,
-            '32x32 grid PositionGraph subset',
         )
-
-    if architecture == 'grid-16x16':
-        return build_subset_template(
-            build_16x16_position_graph(),
-            build_16x16_grid_edges(),
-            GRID16_NUM_QUDITS,
-            '16x16 grid PositionGraph subset',
+        index_of = {node: i for i, node in enumerate(selected_nodes)}
+        compact_edges = [
+            (index_of[u], index_of[v])
+            for u, v in grid_edges
+            if u in index_of and v in index_of
+        ]
+        coupling_graph = CouplingGraph(compact_edges, num_circuit_qudits)
+        model = MachineModel(
+            num_qudits=num_circuit_qudits,
+            coupling_graph=coupling_graph,
+            gate_set={CNOTGate(), HGate()},
         )
-
-    if architecture == 'grid8x8':
-        return build_subset_template(
-            build_8x8_position_graph(),
-            build_8x8_grid_edges(),
-            GRID8_NUM_QUDITS,
-            '8x8 grid PositionGraph subset',
-        )
+        return '32x32 grid subset', model, selected_nodes
 
     square_grid_dims = parse_square_grid_architecture(architecture)
     if square_grid_dims is not None:
         rows, cols = square_grid_dims
-        return build_subset_template(
-            build_square_grid_position_graph(rows, cols),
-            build_square_grid_edges(rows, cols),
+        grid_edges = build_square_grid_edges(rows, cols)
+        selected_nodes = select_connected_subset(
+            grid_edges,
+            num_circuit_qudits,
             square_grid_num_qudits(rows, cols),
-            format_square_grid_architecture(rows, cols),
         )
+        index_of = {node: i for i, node in enumerate(selected_nodes)}
+        compact_edges = [
+            (index_of[u], index_of[v])
+            for u, v in grid_edges
+            if u in index_of and v in index_of
+        ]
+        coupling_graph = CouplingGraph(compact_edges, num_circuit_qudits)
+        model = MachineModel(
+            num_qudits=num_circuit_qudits,
+            coupling_graph=coupling_graph,
+            gate_set={CNOTGate(), HGate()},
+        )
+        return format_square_grid_architecture(rows, cols), model, selected_nodes
 
     raise ValueError(f'Unsupported architecture: {architecture}.')
 
-
 def main() -> None:
     args = parse_args()
-    effective_cg_compat = args.cg_compat
 
     circuit = load_circuit(args.input_filename)
-    architecture_name, template_pgs, selected_nodes = build_template_pgs(
+    architecture_name, model, selected_nodes = build_model(
         args.architecture,
         circuit.num_qudits,
     )
 
     print(f'Input filename: {args.input_filename}')
-    print('Algorithm: SABRE-PGS')
+    print('Algorithm: SABRE-CG')
     print(f'Architecture: {architecture_name}')
     print(f'Architecture nodes: {selected_nodes}')
-    print(f'CG compatibility mode: {effective_cg_compat}')
     print(f'SABRE layout passes: {args.sabre_layout_passes}')
     print(f'Number of qudits: {circuit.num_qudits}')
     print(f'Number of operations: {circuit.num_operations}')
-    print(f'Number of positions: {template_pgs.num_pos}')
-    print(f'Number of directed edges: {len(template_pgs.position_graph.edge_labels)}')
+    print(f'Architecture qudits: {model.num_qudits}')
+    print(f'Number of undirected couplings: {len(model.coupling_graph)}')
 
     passes = [
-        SetPGSPass(template_pgs, placement=list(range(circuit.num_qudits))),
-        GeneralizedSabreLayoutPassPGS(
-            template_pgs,
+        SetModelPass(model),
+        GeneralizedSabreLayoutPass(
             total_passes=args.sabre_layout_passes,
-            cg_compatibility_mode=effective_cg_compat,
         ),
-        GeneralizedSabreRoutingPassPGS(
-            template_pgs,
+        GeneralizedSabreRoutingPass(
             decay_delta=0.5,
-            cg_compatibility_mode=effective_cg_compat,
         ),
     ]
     print('passes', str(passes))
@@ -287,7 +260,6 @@ def main() -> None:
         print(f'Profile summary: {args.profile_output}.txt')
     print(f'Original operation count: {circuit.num_operations}')
     print(f'Compiled operation count: {compiled.num_operations}')
-
 
 if __name__ == '__main__':
     main()

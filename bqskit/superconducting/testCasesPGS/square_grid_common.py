@@ -4,11 +4,11 @@ import re
 
 from bqskit.qis.graph import CouplingGraph
 
-from bqskit_local.position.graph import EdgeCapability
-from bqskit_local.position.graph import EdgeLabel
-from bqskit_local.position.graph import PositionCapability
-from bqskit_local.position.graph import PositionGraph
-from bqskit_local.position.graph import PositionLabel
+from bqskit.superconducting.position.graph import EdgeCapability
+from bqskit.superconducting.position.graph import EdgeLabel
+from bqskit.superconducting.position.graph import PositionCapability
+from bqskit.superconducting.position.graph import PositionGraph
+from bqskit.superconducting.position.graph import PositionLabel
 
 
 GRID_ARCHITECTURE_RE = re.compile(r'^grid-?(?P<rows>\d+)x(?P<cols>\d+)$')

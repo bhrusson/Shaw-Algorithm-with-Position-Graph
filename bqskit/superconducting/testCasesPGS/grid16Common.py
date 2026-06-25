@@ -5,7 +5,7 @@ from bqskit.ir.gates import CNOTGate
 from bqskit.ir.gates import HGate
 from bqskit.qis.graph import CouplingGraph
 
-from bqskit_local.position.graph import (
+from bqskit.superconducting.position.graph import (
     EdgeCapability,
     EdgeLabel,
     PositionCapability,

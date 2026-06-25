@@ -5,6 +5,7 @@ import copy
 import logging
 import itertools
 import os
+from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Iterator
@@ -15,9 +16,9 @@ import numpy as np
 from bqskit.ir.circuit import Circuit
 from bqskit.ir.operation import Operation
 from bqskit.ir.point import CircuitPoint
-from bqskit.shuttling.qccd.QCCD_machine_PGS import QCCDMachineModel
-from bqskit.shuttling.qccd.position_graph_state_PGS import PositionAssignmentTracker
-from bqskit.shuttling.qccd.position_graph_state_PGS import PositionGraphState
+from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+from bqskit.shuttling.qccd.position_graph_state import PositionAssignmentTracker
+from bqskit.shuttling.qccd.position_graph_state import PositionGraphState
 from bqskit.ir.gates.barrier import BarrierPlaceholder
 
 _logger = logging.getLogger(__name__)
@@ -224,6 +225,26 @@ class QCCDMappingAlgorithm:
         self._congestion_loop_debug_enabled_cached = self._env_flag(
             'BQSKIT_QCCD_CONGESTION_LOOP_DEBUG',
         )
+        self._routing_workers_cached = self._read_int_env(
+            'BQSKIT_QCCD_ROUTING_WORKERS',
+            default=1,
+            minimum=1,
+        )
+        self._routing_parallel_threshold_cached = self._read_int_env(
+            'BQSKIT_QCCD_ROUTING_PARALLEL_THRESHOLD',
+            default=4,
+            minimum=1,
+        )
+
+    def _read_int_env(self, key: str, default: int, minimum: int) -> int:
+        raw_value = os.getenv(key)
+        if raw_value is None or raw_value.strip() == '':
+            return int(default)
+        try:
+            value = int(raw_value)
+        except ValueError:
+            return int(default)
+        return max(int(minimum), value)
 
     def _machine_position_cache(self) -> dict[str, object]:
         cache_key = id(self.qccd_machine)
@@ -289,12 +310,29 @@ class QCCDMappingAlgorithm:
         if cached is not None and cached[0] == cache_key:
             return cached[1]
 
-        min_distance_cache: list[tuple[float, ...]] = []
-        for _, trap_positions in executable_trap_position_items:
-            min_distance_cache.append(tuple(
+        def score_trap_min_distances(
+                trap_item: tuple[object, tuple[int, ...]],
+        ) -> tuple[float, ...]:
+            _, trap_positions = trap_item
+            return tuple(
                 float(min(D[position][space] for space in trap_positions))
                 for position in range(len(D))
+            )
+
+        worker_count = self._routing_worker_count(
+            len(executable_trap_position_items),
+        )
+        if worker_count > 1:
+            executor = self._routing_thread_executor(worker_count)
+            min_distance_cache = list(executor.map(
+                score_trap_min_distances,
+                executable_trap_position_items,
             ))
+        else:
+            min_distance_cache = [
+                score_trap_min_distances(trap_item)
+                for trap_item in executable_trap_position_items
+            ]
         frozen_cache = tuple(min_distance_cache)
         setattr(
             position_graph,
@@ -314,10 +352,38 @@ class QCCDMappingAlgorithm:
             D,
             executable_trap_position_items,
         )
+
+        def score_base_bound(min_distances_to_trap: tuple[float, ...]) -> float:
+            return float(
+                sum(min_distances_to_trap[position] for position in positions),
+            )
+
+        worker_count = self._routing_worker_count(len(min_distances_by_trap))
+        if worker_count > 1:
+            executor = self._routing_thread_executor(worker_count)
+            return tuple(executor.map(score_base_bound, min_distances_by_trap))
+
         return tuple(
-            float(sum(min_distances_to_trap[position] for position in positions))
+            score_base_bound(min_distances_to_trap)
             for min_distances_to_trap in min_distances_by_trap
         )
+
+    def _routing_worker_count(self, task_count: int) -> int:
+        workers = int(getattr(self, '_routing_workers_cached', 1))
+        threshold = int(getattr(self, '_routing_parallel_threshold_cached', 4))
+        if workers <= 1 or task_count < threshold:
+            return 1
+        return min(workers, max(1, int(task_count)))
+
+    def _routing_thread_executor(self, desired_workers: int) -> ThreadPoolExecutor:
+        executor = getattr(self, '_routing_executor', None)
+        executor_workers = getattr(self, '_routing_executor_workers', None)
+        if executor is None or executor_workers != desired_workers:
+            self._shutdown_routing_executor()
+            executor = ThreadPoolExecutor(max_workers=desired_workers)
+            self._routing_executor = executor
+            self._routing_executor_workers = desired_workers
+        return executor
 
     # PGS-only state helpers.
     def _make_pgs(self, ion_assignment: dict[int, int]) -> PositionGraphState:
@@ -1595,10 +1661,12 @@ class QCCDMappingAlgorithm:
             D,
             executable_trap_position_items,
         )
-        candidate_traps: list[dict[str, object]] = []
-        for original_index, (trap, all_trap_space) in enumerate(
-            executable_trap_position_items,
-        ):
+        indexed_traps = list(enumerate(executable_trap_position_items))
+
+        def build_candidate(
+                indexed_trap: tuple[int, tuple[object, tuple[int, ...]]],
+        ) -> dict[str, object]:
+            original_index, (trap, all_trap_space) = indexed_trap
             available_trap_space = [
                 position for position in all_trap_space
                 if int(position_to_logical[position]) == -1
@@ -1606,7 +1674,7 @@ class QCCDMappingAlgorithm:
             num_available_trap_space = len(available_trap_space)
             lower_bound = base_bounds_by_trap[original_index]
             lower_bound -= num_available_trap_space * 120e-6
-            candidate_traps.append({
+            return {
                 'original_index': int(original_index),
                 'trap': trap,
                 'trap_id': trap.id,
@@ -1614,7 +1682,17 @@ class QCCDMappingAlgorithm:
                 'available_space': available_trap_space,
                 'available_count': int(num_available_trap_space),
                 'lower_bound': float(lower_bound),
-            })
+            }
+
+        worker_count = self._routing_worker_count(len(indexed_traps))
+        if worker_count > 1:
+            executor = self._routing_thread_executor(worker_count)
+            candidate_traps = list(executor.map(build_candidate, indexed_traps))
+        else:
+            candidate_traps = [
+                build_candidate(indexed_trap)
+                for indexed_trap in indexed_traps
+            ]
         candidate_traps.sort(
             key=lambda candidate: (
                 candidate['lower_bound'],
@@ -1622,6 +1700,169 @@ class QCCDMappingAlgorithm:
             ),
         )
         return candidate_traps
+
+    def _score_congestion_candidate_trap(
+            self,
+            candidate: dict[str, object],
+            gate_pos: Sequence[int],
+            D: list[list[float]],
+            pgs: PositionGraphState,
+    ) -> tuple[int, float, float]:
+        all_trap_space = candidate['trap_space']
+        num_available_trap_space = int(candidate['available_count'])
+        raw_relative_dis_to_trap = self._get_distance_from_position_to_trap(
+            gate_pos,
+            all_trap_space,
+            D,
+            pgs,
+        )
+        relative_dis_to_trap = (
+            raw_relative_dis_to_trap - num_available_trap_space * 120e-6
+        )
+        return (
+            int(candidate['original_index']),
+            float(raw_relative_dis_to_trap),
+            float(relative_dis_to_trap),
+        )
+
+    def _select_congestion_trap(
+            self,
+            candidate_traps: list[dict[str, object]],
+            gate_pos: Sequence[int],
+            D: list[list[float]],
+            pgs: PositionGraphState,
+    ) -> tuple[object, object, int | None, float]:
+        workers = int(getattr(self, '_routing_workers_cached', 1))
+        threshold = int(getattr(self, '_routing_parallel_threshold_cached', 4))
+        if workers > 1 and len(candidate_traps) >= threshold:
+            desired_workers = self._routing_worker_count(len(candidate_traps))
+            executor = self._routing_thread_executor(desired_workers)
+
+            selected_candidate: dict[str, object] | None = None
+            relative_distance = float(np.inf)
+            selected_trap_index: int | None = None
+            candidate_index = 0
+            while candidate_index < len(candidate_traps):
+                if (
+                    np.isfinite(relative_distance)
+                    and float(candidate_traps[candidate_index]['lower_bound'])
+                    > relative_distance
+                ):
+                    break
+
+                batch_size = 1 if not np.isfinite(relative_distance) else desired_workers
+                batch: list[dict[str, object]] = []
+                while (
+                    candidate_index < len(candidate_traps)
+                    and len(batch) < batch_size
+                    and (
+                        not np.isfinite(relative_distance)
+                        or float(candidate_traps[candidate_index]['lower_bound'])
+                        <= relative_distance
+                    )
+                ):
+                    batch.append(candidate_traps[candidate_index])
+                    candidate_index += 1
+
+                scored_candidates = list(executor.map(
+                    lambda candidate: self._score_congestion_candidate_trap(
+                        candidate,
+                        gate_pos,
+                        D,
+                        pgs,
+                    ),
+                    batch,
+                ))
+                for candidate, scored_candidate in zip(batch, scored_candidates):
+                    _, raw_distance, adjusted_distance = scored_candidate
+                    candidate['scored'] = True
+                    candidate['pruned'] = False
+                    candidate['raw_distance'] = raw_distance
+                    candidate['adjusted_distance'] = adjusted_distance
+                    original_index = int(candidate['original_index'])
+                    if (
+                        adjusted_distance < relative_distance
+                        or (
+                            adjusted_distance == relative_distance
+                            and (
+                                selected_trap_index is None
+                                or original_index < selected_trap_index
+                            )
+                        )
+                    ):
+                        selected_candidate = candidate
+                        selected_trap_index = original_index
+                        relative_distance = adjusted_distance
+
+            for pruned_candidate in candidate_traps[candidate_index:]:
+                pruned_candidate['scored'] = False
+                pruned_candidate['pruned'] = True
+                pruned_candidate['raw_distance'] = None
+                pruned_candidate['adjusted_distance'] = None
+            if selected_candidate is None:
+                return [], None, None, relative_distance
+            return (
+                selected_candidate['trap_space'],
+                selected_candidate['trap_id'],
+                selected_trap_index,
+                relative_distance,
+            )
+
+        selected_trap_space = []
+        relative_distance = np.inf
+        selected_trap_id = None
+        selected_trap_index = None
+        for candidate_index, candidate in enumerate(candidate_traps):
+            if (
+                np.isfinite(relative_distance)
+                and float(candidate['lower_bound']) > relative_distance
+            ):
+                for pruned_candidate in candidate_traps[candidate_index:]:
+                    pruned_candidate['scored'] = False
+                    pruned_candidate['pruned'] = True
+                    pruned_candidate['raw_distance'] = None
+                    pruned_candidate['adjusted_distance'] = None
+                break
+            raw_relative_dis_to_trap, relative_dis_to_trap = (
+                self._score_congestion_candidate_trap(
+                    candidate,
+                    gate_pos,
+                    D,
+                    pgs,
+                )[1:]
+            )
+            candidate['scored'] = True
+            candidate['pruned'] = False
+            candidate['raw_distance'] = float(raw_relative_dis_to_trap)
+            candidate['adjusted_distance'] = float(relative_dis_to_trap)
+            original_index = int(candidate['original_index'])
+            if (
+                relative_dis_to_trap < relative_distance
+                or (
+                    relative_dis_to_trap == relative_distance
+                    and (
+                        selected_trap_index is None
+                        or original_index < selected_trap_index
+                    )
+                )
+            ):
+                selected_trap_space = candidate['trap_space']
+                selected_trap_id = candidate['trap_id']
+                selected_trap_index = original_index
+                relative_distance = relative_dis_to_trap
+        return (
+            selected_trap_space,
+            selected_trap_id,
+            selected_trap_index,
+            float(relative_distance),
+        )
+
+    def _shutdown_routing_executor(self) -> None:
+        executor = getattr(self, '_routing_executor', None)
+        if executor is not None:
+            executor.shutdown(wait=True)
+            self._routing_executor = None
+            self._routing_executor_workers = None
 
     def _brute_force_congestion(
             self,
@@ -1669,66 +1910,24 @@ class QCCDMappingAlgorithm:
                 gate_pos,
                 self._assignment_from_pgs(pgs),
             )
-        selected_trap_space = []
         selected_end_point = []
-        relative_distance = np.inf
-        selected_trap_id = None
-        selected_trap_index = None
         candidate_traps = self.get_candidate_traps(
             gate_pos,
             D,
             pgs,
             executable_trap_position_items,
         )
-        # Select which trap to brute force in
-        for candidate_index, candidate in enumerate(candidate_traps):
-            if (
-                np.isfinite(relative_distance)
-                and float(candidate['lower_bound']) > relative_distance
-            ):
-                for pruned_candidate in candidate_traps[candidate_index:]:
-                    pruned_candidate['scored'] = False
-                    pruned_candidate['pruned'] = True
-                    pruned_candidate['raw_distance'] = None
-                    pruned_candidate['adjusted_distance'] = None
-                break
-            trap = candidate['trap']
-            all_trap_space = candidate['trap_space']
-            """
-                Only need to calculate unoccupied spaces (the one near the endpoints) if exits or only the endpoints...  
-            """
-            num_available_trap_space = int(candidate['available_count'])
-            raw_relative_dis_to_trap = self._get_distance_from_position_to_trap(
-                gate_pos,
-                all_trap_space,
-                D,
-                pgs,
-            )
-            relative_dis_to_trap = (
-                raw_relative_dis_to_trap - num_available_trap_space * 120e-6
-            )
-            candidate['scored'] = True
-            candidate['pruned'] = False
-            candidate['raw_distance'] = float(raw_relative_dis_to_trap)
-            candidate['adjusted_distance'] = float(relative_dis_to_trap)
-            # print(f"Considering trap: {trap.id} with distance {relative_dis_to_trap} and number of available space :{num_available_trap_space}")
-            original_index = int(candidate['original_index'])
-            if (
-                relative_dis_to_trap < relative_distance
-                or (
-                    relative_dis_to_trap == relative_distance
-                    and (
-                        selected_trap_index is None
-                        or original_index < selected_trap_index
-                    )
-                )
-            ):
-                selected_trap_space = all_trap_space
-                # ToDo: If there are more than two endpoints?
-                # selected_end_point = self.qccd_machine.trap_end_points[trap.id]
-                selected_trap_id = trap.id
-                selected_trap_index = original_index
-                relative_distance = relative_dis_to_trap
+        (
+            selected_trap_space,
+            selected_trap_id,
+            selected_trap_index,
+            relative_distance,
+        ) = self._select_congestion_trap(
+            candidate_traps,
+            gate_pos,
+            D,
+            pgs,
+        )
         trap_candidates: list[dict[str, object]] = []
         for candidate in sorted(
             candidate_traps,

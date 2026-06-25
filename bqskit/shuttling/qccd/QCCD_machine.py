@@ -14,12 +14,12 @@ from bqskit.ir.gates.parameterized.rzz import RZZGate
 from bqskit.compiler import MachineModel
 from bqskit.compiler.gateset import GateSet
 from bqskit.compiler.gateset import GateSetLike
-from bqskit_local.position.graph import EdgeCapability
-from bqskit_local.position.graph import EdgeLabel
-from bqskit_local.position.graph import PositionCapability
-from bqskit_local.position.graph import PositionGraph
-from bqskit_local.position.graph import PositionLabel
-from bqskit_local.position.state import PositionGraphState
+from bqskit.superconducting.position.graph import EdgeCapability
+from bqskit.superconducting.position.graph import EdgeLabel
+from bqskit.superconducting.position.graph import PositionCapability
+from bqskit.superconducting.position.graph import PositionGraph
+from bqskit.superconducting.position.graph import PositionLabel
+from bqskit.superconducting.position.state import PositionGraphState
 from bqskit.shuttling.qccd.QCCD_physical_components import QCCD_physical_machine
 
 if TYPE_CHECKING:

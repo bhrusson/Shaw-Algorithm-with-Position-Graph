@@ -9,8 +9,8 @@ from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
-from bqskit.shuttling.qccd.QCCD_machine_PGS import QCCDMachineModel
-from bqskit.shuttling.qccd.QCCD_mapping_PGS import QCCDMappingAlgorithm
+from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+from bqskit.shuttling.qccd.QCCD_mapping import QCCDMappingAlgorithm
 from bqskit.shuttling.qccd.pgs_passes.common import build_pgs_from_passdata
 from bqskit.shuttling.qccd.pgs_passes.common import export_pgs_views_to_passdata
 from bqskit.shuttling.qccd.pgs_passes.common import PROGRAM_ION_IDS_KEY
@@ -48,6 +48,9 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
         profile_dir: Path | None = None,
         profile_stem: str = 'qccd_pgs_layout',
         profile_sort: str = 'cumulative',
+        trace_memory: bool = False,
+        trace_memory_depth: int = 5,
+        trace_memory_top: int = 20,
     ) -> None:
         """
         Construct a QCCDLayoutPassPGS.
@@ -93,6 +96,9 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
         self.profile_dir = profile_dir
         self.profile_stem = profile_stem
         self.profile_sort = profile_sort
+        self.trace_memory = trace_memory
+        self.trace_memory_depth = trace_memory_depth
+        self.trace_memory_top = trace_memory_top
 
         super().__init__(
             qccd_machine=None,
@@ -141,55 +147,64 @@ class QCCDLayoutPassPGS(QCCDMappingAlgorithm, BasePass):
         _logger.debug(f'Machine model: {machine_model}')
         _logger.debug(f'Number of qudits in the circuit: {circuit.num_qudits}')
 
-        for layout_pass_index in range(self.total_passes):
-            profiled_call(
-                self.profile_dir,
-                f'{self.profile_stem}__forward_{layout_pass_index + 1}',
-                self.profile_sort,
-                self.forward_pass,
-                circuit,
-                pgs=pgs,
-                modify_circuit=False,
-            )
-            if _capture_layout_snapshots_enabled():
-                forward_traces.append((
-                    f'forward_{layout_pass_index + 1}',
-                    copy.deepcopy(getattr(self, 'last_forward_trace', [])),
-                ))
-            if _capture_layout_snapshots_enabled():
-                snapshots.append((
-                    f'forward_{layout_pass_index + 1}',
-                    copy.deepcopy(self._program_assignment_from_pgs(pgs, program_ion_ids)),
-                ))
-            if _capture_layout_pgs_arrays_enabled():
-                pgs_array_snapshots.append((
-                    f'forward_{layout_pass_index + 1}',
-                    [int(x) for x in pgs.logical_to_position.tolist()],
-                ))
+        try:
+            for layout_pass_index in range(self.total_passes):
+                profiled_call(
+                    self.profile_dir,
+                    f'{self.profile_stem}__forward_{layout_pass_index + 1}',
+                    self.profile_sort,
+                    self.forward_pass,
+                    circuit,
+                    pgs=pgs,
+                    modify_circuit=False,
+                    trace_memory=self.trace_memory,
+                    trace_memory_depth=self.trace_memory_depth,
+                    trace_memory_top=self.trace_memory_top,
+                )
+                if _capture_layout_snapshots_enabled():
+                    forward_traces.append((
+                        f'forward_{layout_pass_index + 1}',
+                        copy.deepcopy(getattr(self, 'last_forward_trace', [])),
+                    ))
+                if _capture_layout_snapshots_enabled():
+                    snapshots.append((
+                        f'forward_{layout_pass_index + 1}',
+                        copy.deepcopy(self._program_assignment_from_pgs(pgs, program_ion_ids)),
+                    ))
+                if _capture_layout_pgs_arrays_enabled():
+                    pgs_array_snapshots.append((
+                        f'forward_{layout_pass_index + 1}',
+                        [int(x) for x in pgs.logical_to_position.tolist()],
+                    ))
 
-            profiled_call(
-                self.profile_dir,
-                f'{self.profile_stem}__backward_{layout_pass_index + 1}',
-                self.profile_sort,
-                self.backward_pass,
-                circuit,
-                pgs=pgs,
-            )
-            if _capture_layout_snapshots_enabled():
-                backward_traces.append((
-                    f'backward_{layout_pass_index + 1}',
-                    copy.deepcopy(getattr(self, 'last_backward_trace', [])),
-                ))
-            if _capture_layout_snapshots_enabled():
-                snapshots.append((
-                    f'backward_{layout_pass_index + 1}',
-                    copy.deepcopy(self._program_assignment_from_pgs(pgs, program_ion_ids)),
-                ))
-            if _capture_layout_pgs_arrays_enabled():
-                pgs_array_snapshots.append((
-                    f'backward_{layout_pass_index + 1}',
-                    [int(x) for x in pgs.logical_to_position.tolist()],
-                ))
+                profiled_call(
+                    self.profile_dir,
+                    f'{self.profile_stem}__backward_{layout_pass_index + 1}',
+                    self.profile_sort,
+                    self.backward_pass,
+                    circuit,
+                    pgs=pgs,
+                    trace_memory=self.trace_memory,
+                    trace_memory_depth=self.trace_memory_depth,
+                    trace_memory_top=self.trace_memory_top,
+                )
+                if _capture_layout_snapshots_enabled():
+                    backward_traces.append((
+                        f'backward_{layout_pass_index + 1}',
+                        copy.deepcopy(getattr(self, 'last_backward_trace', [])),
+                    ))
+                if _capture_layout_snapshots_enabled():
+                    snapshots.append((
+                        f'backward_{layout_pass_index + 1}',
+                        copy.deepcopy(self._program_assignment_from_pgs(pgs, program_ion_ids)),
+                    ))
+                if _capture_layout_pgs_arrays_enabled():
+                    pgs_array_snapshots.append((
+                        f'backward_{layout_pass_index + 1}',
+                        [int(x) for x in pgs.logical_to_position.tolist()],
+                    ))
+        finally:
+            self._shutdown_routing_executor()
 
         export_pgs_views_to_passdata(
             data,

@@ -5,7 +5,7 @@ from bqskit.compiler.basepass import BasePass
 from bqskit.compiler.passdata import PassData
 from bqskit.ir.circuit import Circuit
 
-from bqskit_local.position.state import PositionGraphState
+from bqskit.superconducting.position.state import PositionGraphState
 
 
 class SetPGSPass(BasePass):
