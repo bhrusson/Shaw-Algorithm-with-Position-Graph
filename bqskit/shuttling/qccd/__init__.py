@@ -7,4 +7,4 @@ from .QCCD_topology import QCCDSubtopologySelectionPass
 from .QCCD_schedule import print_event_trace
 from .QCCD_schedule import schedule_qccd_from_instructions_v3
 
-schedule_QCCD = schedule_qccd_from_instructions_v3
+#schedule_QCCD = schedule_qccd_from_instructions_v3
