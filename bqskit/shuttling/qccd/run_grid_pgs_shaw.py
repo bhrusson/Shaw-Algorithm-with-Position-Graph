@@ -32,6 +32,7 @@ from bqskit.shuttling.qccd.QCCD_schedule import print_event_trace
 from bqskit.shuttling.qccd.QCCD_schedule import schedule_qccd_from_instructions_v3
 from bqskit.shuttling.qccd import create_grid_physical_machine
 from bqskit.shuttling.qccd.QCCD_machine import QCCDMachineModel
+from bqskit.shuttling.qccd.benchmark_paths import resolve_benchmark_circuit_path
 from bqskit.shuttling.qccd.pgs_passes import QCCDLayoutPassPGS
 from bqskit.shuttling.qccd.pgs_passes import QCCDRoutingPassPGS
 
@@ -482,7 +483,7 @@ def main() -> None:
         timing_data=TIMING_DATA,
     )
 
-    circuit_path = Path('bqskit/shuttling/qccd/benchmark_circuits') / f'{args.input_filename}.qasm'
+    circuit_path = resolve_benchmark_circuit_path(args.input_filename)
     circuit = Circuit.from_file(str(circuit_path))
     ion_assignment = build_assignment(machine_model, circuit.num_qudits, args.seed)
     congestion = congestion_rate(machine_model, circuit.num_qudits)

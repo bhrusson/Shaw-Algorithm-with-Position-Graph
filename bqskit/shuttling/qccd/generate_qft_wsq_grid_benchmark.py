@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from bqskit.shuttling.qccd.benchmark_paths import benchmark_circuits_dir
+
 
 def build_qasm(num_qudits: int, window: int, repetitions: int) -> str:
     if num_qudits < 2:
@@ -31,10 +33,7 @@ def build_qasm(num_qudits: int, window: int, repetitions: int) -> str:
 
 
 def default_output_path(num_qudits: int) -> Path:
-    return (
-        Path('bqskit/shuttling/qccd/benchmark_circuits')
-        / f'QFT_wsq_{num_qudits}_compiled_grid.qasm'
-    )
+    return benchmark_circuits_dir() / f'QFT_wsq_{num_qudits}_compiled_grid.qasm'
 
 
 def parse_args() -> argparse.Namespace:
